@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(src/msg_list_window.cpp)
 
-AM_INIT_AUTOMAKE(manitou,1.2.0)
+AM_INIT_AUTOMAKE(manitou,1.2.1)
 AM_CONFIG_HEADER(config.h)
 
 AC_CANONICAL_HOST
