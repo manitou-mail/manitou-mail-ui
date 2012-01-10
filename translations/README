@@ -1,0 +1,24 @@
+Translation files for Manitou-Mail user interface.
+
+This directory contains *.ts text files for manitou Qt user's interface.
+Each of these files are named manitou_xx.ts where xx is the code
+of the language (ex: manitou_fr.ts for french).
+
+At launch time, manitou gets the language from its environment
+(typically through the LANG variable), then searches for a compiled
+version of a translation files, named manitou_xx.qm and uses it
+if available. The files should have been installed under
+the $datadir/manitou/translations directory, where $datadir
+defaults to $prefix/share and $prefix defaults to /usr/local.
+
+The ts files are maintained using Trolltech Qt 'linguist' application.
+See http://doc.trolltech.com/4.3/linguist-manual.html for a complete
+documentation.
+Compilation of translation files is done by the 'lrelease' Qt utility.
+
+Both 'linguist' and 'lrelease' are part of Trolltech GPL source code
+archives for the Qt library.
+
+When using a pre-compiled libqt package set up by a third party, these
+tools may be available separately from the library; for example
+they're in the qt4-dev-tools and libqt4-dev in debian distributions.

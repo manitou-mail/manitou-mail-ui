@@ -1,0 +1,204 @@
+ v1.2.0, Dec 27 2011
+--------------------------
+user interface
+- drag&drop for attached files has been implemented in the composer.
+- the filter action editor has been redesigned.
+- filter expressions can now be evaluated in the interface.
+- new dynamic column for recipients in the main list for outgoing messages.
+- migration to the new Qt assistant.
+- compatible with Qt-4.7 and Qt-4.8
+
+manitou-mdx
+- new filter functions on age, date, mail size and inequality comparators.
+- new filter actions set and remove header field, and set identity.
+- new outgoing plugins outgoing_header and attach_uploader_ssh
+- added --dry-run option to database operations of manitou-mgr
+
+ v1.1.0, Aug 5 2011
+--------------------------
+user interface
+- templates
+- mailings
+- performance improvements in full text search
+
+manitou-mdx
+- some MIME bugfixes on attachments
+- mailings
+
+ v1.0.2, Sep 23 2010
+--------------------------
+user interface
+- bugfix in tags with hierarchies set by filter rules
+- automatic database reconnection
+- headers are no longer printed on a separate page
+- enable clipboard copy in the attached mail view.
+
+manitou-mdx
+- new config parameter log_filter_hits
+
+ v1.0.1, Aug 20 2010
+--------------------------
+user interface
+- instant notification of new mail
+- window title now displays the database name
+- dynamic signatures
+- bugfixes on message counters
+- fixed possible crash when mime_types was empty
+
+manitou-mgr
+- new fields on users table
+- populate the mime_types table at initialization
+
+ v1.0.0, Aug 11 2010
+--------------------------
+documentation
+- improved and converted from html to docbook format
+
+user interface
+- full-featured HTML composer based on webkit
+- global notepad
+- improved main listview
+
+manitou-mdx
+- multipart/alternative supported for outgoing mail
+- more Unix-like standard daemon behavior (fork, pidfile, syslog)
+- automatic reconnect to the database and other improvements in robustness
+- notify for new mail
+- new plugin spam_learner that automates calls to sa-learn
+
+ v0.9.12, Jul 9 2009
+--------------------------
+user interface
+- new email address completion and headers layout in the email composer
+- bugfixes on empty attachments
+- bugfixes in html viewer
+- partial load for large messages
+
+manitou-mgr
+- new commands to create database, schemas and query the inverted word index
+
+manitou-mdx
+- new plugin: trashcan_purge
+- fixed missing full text indexing for outgoing messages
+
+ v0.9.11, Dec 6 2008
+--------------------------
+user interface
+- use webkit to display HTML and text contents
+- show filter logs
+
+manitou-mdx and database
+- support for content_id in attachments
+- enhancements in filters: logs, new actions and functions
+
+ v0.9.10, Nov 4 2008
+--------------------------
+user interface
+- full Qt4 port, no longer depends on the Qt3support library
+
+manitou-mdx and database
+- lots of referential integrity constraints
+- merged trashed_mail and mail tables
+- tnef_decoder and pdfindexer new plugins
+- new print-size option for manitou-mgr
+
+ v0.9.9, Dec 9 2007
+--------------------------
+user interface
+- easier selection of a temporary identity when composing mail
+- shared attachment contents for outgoing mails, based on SHA1 fingeprint
+
+manitou-mdx
+- new manitou-mgr utility with hash-attachments and merge-attachments actions
+- test for the existence of an attachment within the database before importing
+(shared attachments)
+
+ v0.9.8, Nov 18 2007
+--------------------------
+user interface
+- Qt4 port
+- improvements on attachment handling
+- various bugfixes
+- Windows version builds on MinGW
+
+manitou-mdx
+- improved mixing large imports with other processing
+- accept multiple encodings for outgoing mail
+- compute SHA1 fingerprint of attachments
+
+ v0.9.7, Apr 22 2006
+--------------------------
+user interface
+- bugfix on preferred font loading in composition window
+- builds on SunOS and *BSD systems and with gcc-2.95.x
+- zoom on sql sentence in query selection dialog
+- progress bar for attachment downloads
+- improved and enriched help system using Qt assistant
+- improved URLs recognition in message body
+- new "Fetching" section in Preferences
+- optional pre-fetching of messages bodies when idle
+- improved tag editor with drag and drop support
+- allow the display of raw headers when available
+- bugfix in preferences on the attachments download path
+- bugfix in filters editor when the focus is still in an
+  edited field on validation.
+- revamped, faster search engine
+
+manitou-mdx
+- new config parameter 'detach_text_plain' to transfer unnamed
+text/plain attached parts into the message body
+- speed up the bayesian classifier plugin by caching statistics
+- optionally save raw mail files into large objects
+- improved parsing of non-conformant Date fields.
+- modularization
+- new build scripts conforming to standard Perl practice
+
+ v0.9.6, May 20 2005
+---------------------
+manitou-mdx
+- admin plugins with built-in scheduler
+- don't barf on unknown encoding in headers
+- new bayesian classifier plugin
+- new attachments uploader outgoing plugin
+- fix charset of outgoing mail for unicode databases
+- fix use of default temp directory
+- avoid newlines in mail.subject field
+- take timezones into account for sender dates
+
+user interface
+- french translation.
+- web URLs are optionally clickable in messages bodies.
+- tag counters are updated real-time in the quick query panel.
+- tags are sorted in the quick query panel.
+- when composing under Windows, timezone format has been fixed for
+  RFC compliance.
+- query execution times are displayed in the status bar.
+- bugfix in selection of tagged messages in contextual menu.
+- fallback to first identity when no default is defined in message
+  composition.
+- space bar now scrolls a page when the focus is inside the body panel.
+- text encapsulating forwarded messages is now user-configurable.
+- spurious newline after the signature is removed.
+- bugfix on wrapping a line on tabs at display time.
+- added default identity selection in preferences dialog.
+- keep attachments directory in composition window.
+- message bodies can be edited and saved.
+- properly disconnect non-primary db connections.
+- improved status refresh in threaded display.
+- improved text extraction in "reply (quote selected text)" command.
+- optional auto-selection of recipient when forwarding.
+- improved quoting of messages containing several text/plain attachments.
+
+ v0.9.5, March 24 2005
+-----------------------
+manitou-mdx
+- accept attachment filenames containing unencoded 8 bits characters.
+- new option --skip for mbox partial import.
+- correct use of index_words parameter for outgoing mail.
+- new plugin (mswordindexer) using vwware (http://wvware.sourceforge.net)
+  to index msword attachments.
+- bugfix for busy loop when the no_send parameter is used.
+
+user interface
+- windows version available.
+- bugfix on priorities lesser than 0 in message properties.

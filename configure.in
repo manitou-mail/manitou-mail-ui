@@ -1,0 +1,113 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(src/msg_list_window.cpp)
+
+AM_INIT_AUTOMAKE(manitou,1.2.0)
+AM_CONFIG_HEADER(config.h)
+
+AC_CANONICAL_HOST
+
+dnl Checks for programs.
+AC_PROG_CXX
+AC_PROG_INSTALL
+AC_LANG(C++)
+AC_PROG_RANLIB
+
+AT_WITH_QT([+webkit +network],[+assistant])
+AT_REQUIRE_QT_VERSION([4.5.0])
+
+dnl Check for multithread libraries
+case "$host" in
+ *-*-freebsd* | *-*-openbsd*)
+   LIBS="-pthread $LIBS"
+   ;;
+ *-pc-mingw32)
+   LIBS="-lwsock32 -lwinmm"
+   ;;
+esac
+
+AC_FUNC_STRERROR_R
+
+AC_CHECK_DECLS(getopt_long,
+   [],
+   [EXTRAOBJ="$EXTRAOBJ getopt.o getopt1.o"],
+   [#include <getopt.h>])
+
+dnl Checks for pgsql
+AC_CHECK_PROG(pgconfig, pg_config, pg_config)
+
+if test "x$pgconfig" = "x"; then
+  AC_MSG_WARN([Couldn't find pg_config in PATH.])
+else
+  AC_MSG_CHECKING([for PostgreSQL version according to pg_config])
+  pg_version=`pg_config --version | sed -e 's/PostgreSQL\ *//'`
+  AC_MSG_RESULT([$pg_version])
+  dnl extract major and minor version numbers for pg
+  pgvnum=`echo $pg_version | sed -e 's/^\([[0-9]][[0-9]]*\)\.\([[0-9]][[0-9]]*\).*/\1 \2/g'`
+  OIFS=$IFS; IFS=" "; set -- $pgvnum ; IFS=$OIFS
+  if test $1 -lt 8 -o $1 -eq 8 -a $2 -lt 2; then
+    AC_MSG_ERROR([PostgreSQL version 8.2 or later is required])
+  fi
+fi
+
+AC_ARG_WITH(pgsql_includes,
+	[  --with-pgsql-includes=DIR	Specify postgresql includes location],
+	if test x$withval != x; then
+	  PG_INCLUDE_DIR="$withval"
+	fi
+)
+
+if test x$PG_INCLUDE_DIR = "x"; then
+  if test "x$pgconfig" = "x"; then
+    if test -d /usr/local/pgsql/include; then
+      PG_INCLUDE_DIR="/usr/local/pgsql/include"
+    elif test -d /usr/include/pgsql; then
+      PG_INCLUDE_DIR="/usr/include/pgsql"
+    elif test -d /usr/include/postgresql; then
+      PG_INCLUDE_DIR="/usr/include/postgresql"
+    fi
+  else
+    if test -z "$PG_INCLUDE_DIR"; then
+      PG_INCLUDE_DIR=`pg_config --includedir`
+    fi
+  fi
+fi
+
+save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS -I$PG_INCLUDE_DIR"
+
+AC_ARG_WITH(pgsql_libs,
+  [  --with-pgsql-libs=DIR	Specify postgresql libraries location],
+    if test x$withval != x; then
+      PG_LIB_DIR="$withval"
+    fi
+)
+if test x$PG_LIB_DIR = "x"; then
+  if test -z $pgconfig; then
+    if test -d /usr/local/pgsql/lib; then
+      PG_LIB_DIR="/usr/local/pgsql/lib"
+    fi
+  else
+    PG_LIB_DIR=`$pgconfig --libdir`
+  fi
+fi
+
+save_LIBS=$LIBS
+PG_LIBS="-L$PG_LIB_DIR -lpq"
+
+AC_CHECK_HEADERS(libpq-fe.h, true, AC_MSG_ERROR([Unable to find libpq-fe.h]))
+LIBS="$LIBS $PG_LIBS"
+AC_CHECK_LIB(pq, PQconnectdb, true, AC_MSG_ERROR([Unable to use -lpq]))
+AC_DEFINE(HAVE_PGSQL, 1, [Use postgres backend])
+CXXFLAGS="$CXXFLAGS -I$PG_INCLUDE_DIR -DWITH_PGSQL"
+
+LIBS=$save_LIBS
+CPPFLAGS=$save_CPPFLAGS
+
+dnl THREADS_LIBS="-lpthread"
+
+AC_SUBST(PG_LIBS)
+AC_SUBST(EXTRAOBJ)
+
+dnl AC_SUBST(THREADS_LIBS)
+AC_OUTPUT(Makefile src/Makefile src/xface/Makefile xpm/Makefile xpm/html/Makefile translations/Makefile)
+
