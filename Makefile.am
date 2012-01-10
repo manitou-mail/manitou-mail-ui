@@ -1,1 +1,1 @@
-SUBDIRS = src xpm help translations xpm/html
+SUBDIRS = src icons icons/html translations 

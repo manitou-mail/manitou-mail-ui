@@ -109,5 +109,5 @@ AC_SUBST(PG_LIBS)
 AC_SUBST(EXTRAOBJ)
 
 dnl AC_SUBST(THREADS_LIBS)
-AC_OUTPUT(Makefile src/Makefile src/xface/Makefile xpm/Makefile xpm/html/Makefile translations/Makefile)
+AC_OUTPUT(Makefile src/Makefile src/xface/Makefile icons/Makefile icons/html/Makefile translations/Makefile)
 
