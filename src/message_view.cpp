@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -17,15 +17,12 @@
    Boston, MA 02111-1307, USA.
 */
 
-/* message_view combines headers_view and body_view stacked vertically
-   with a shared scrollbar */
-
 #include "db.h"
 #include "main.h"
 
 #include "message_view.h"
-#include "headers_view.h"
 #include "body_view.h"
+#include "browser.h"
 #include "mail_displayer.h"
 #include "msg_list_window.h"
 
@@ -45,7 +42,7 @@
 #include <QWebElement>
 #endif
 
-message_view::message_view(QWidget* parent, msg_list_window* sub_parent) : QScrollArea(parent)
+message_view::message_view(QWidget* parent, msg_list_window* sub_parent) : QWidget(parent)
 {
   m_pmsg=NULL;
   m_content_type_shown = 0;
@@ -58,54 +55,71 @@ message_view::message_view(QWidget* parent, msg_list_window* sub_parent) : QScro
   setPalette(pal);
 
   enable_page_nav(false, false);
-  m_headersv = new headers_view();
   m_bodyv = new body_view();
   QVBoxLayout* top_layout=new QVBoxLayout(this);
-  m_frame = new QFrame();
-  m_frame->setFrameStyle(QFrame::Box | QFrame::Raised);
-  m_frame->setLineWidth(0);
-  m_frame->setMinimumSize(QSize(200,200));
+  top_layout->setContentsMargins(0,0,0,0);
+  top_layout->setSpacing(0);
 
-//  m_frame->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-  top_layout->addWidget(m_frame);
-  QVBoxLayout* l =new QVBoxLayout(m_frame);
+  top_layout->addWidget(m_bodyv);
 
-  l->setContentsMargins(0,0,0,0);
-  l->setSpacing(0);
-  l->addWidget(m_headersv);
-  l->setStretchFactor(m_headersv, 0);
-
-  l->addWidget(m_bodyv);
-  l->setStretchFactor(m_bodyv, 1);
-
-  this->setWidget(m_frame);	// for the scrollarea
-
-  connect(m_bodyv, SIGNAL(wheel(QWheelEvent*)), this, SLOT(wheel_body(QWheelEvent*)));
   connect(m_bodyv, SIGNAL(loadFinished(bool)), this, SLOT(load_finished(bool)));
   connect(m_bodyv, SIGNAL(external_contents_requested()), this,
 	  SLOT(ask_for_external_contents()));
-  connect(m_bodyv, SIGNAL(key_space_pressed()), this, SLOT(page_down()));
   connect(m_bodyv, SIGNAL(popup_body_context_menu()), SIGNAL(popup_body_context_menu()));
   if (m_parent) {
     connect(m_bodyv->page(),
 	    SIGNAL(linkHovered(const QString&,const QString, const QString&)),
-	    m_parent, SLOT(show_status_message(const QString&)));
+	    this, SLOT(display_link(const QString&)));
   }
-  connect(m_headersv, SIGNAL(fetch_ext_contents()), this, SLOT(allow_external_contents()));
-  connect(m_headersv, SIGNAL(to_text()), this, SLOT(show_text_part()));
-  connect(m_headersv, SIGNAL(to_html()), this, SLOT(show_html_part()));
-  connect(m_headersv, SIGNAL(complete_load_request()), this, SLOT(complete_body_load()));
-  m_header_has_selection=false;
-  connect(m_headersv, SIGNAL(copyAvailable(bool)), this, SLOT(headers_own_selection(bool)));
-  connect(m_headersv, SIGNAL(selectionChanged()), this, SLOT(headers_selection_changed()));
-  connect(m_headersv, SIGNAL(msg_display_request()), this, SIGNAL(on_demand_show_request()));
-  connect(m_bodyv->page(), SIGNAL(selectionChanged()), this, SLOT(body_selection_changed()));
+  connect(m_bodyv, SIGNAL(linkClicked(const QUrl&)), this, SLOT(link_clicked(const QUrl&)));
+
 }
 
 void
-message_view::headers_own_selection(bool yes)
+message_view::display_link(const QString& link)
 {
-  m_header_has_selection=yes;
+  if (m_parent && link.indexOf("#manitou-")!=0) {
+    m_parent->show_status_message(link);
+  }
+}
+
+void
+message_view::link_clicked(const QUrl& url)
+{
+  if (url.scheme()=="mailto") {
+    // TODO: use more headers, particularly "body"
+    mail_header header;
+    if (!url.path().isEmpty())
+      header.m_to=url.path();
+    if (url.hasQueryItem("subject")) {
+      header.m_subject=url.queryItemValue("subject");
+    }
+    gl_pApplication->start_new_mail(header);
+  }
+  else if (url.scheme().isEmpty()) {
+    const QString cmd=url.toString();
+    if (cmd=="#manitou-fetch") {
+      allow_external_contents();
+    }
+    else if (cmd=="#manitou-to_text") {
+      show_text_part();
+    }
+    else if (cmd=="#manitou-to_html") {
+      show_html_part();
+    }
+    else if (cmd=="#manitou-show") {
+      emit on_demand_show_request();
+      display_commands();
+    }
+    else if (cmd=="#manitou-complete_load") {
+      complete_body_load();
+      enable_command("complete_load", false);
+      display_commands();
+    }    
+  }
+  else {
+    browser::open_url(url);
+  }
 }
 
 QSize
@@ -123,29 +137,6 @@ static inline int max(int a, int b)
   return a>b?a:b;
 }
 
-void
-message_view::resizeEvent(QResizeEvent* event)
-{
-  int xr=event->size().width();
-  int yr=event->size().height();
-  /* Resizing the frame triggers a resize of m_bodyv, which triggers rendering
-     with the new width, which updates contentsSize() that we need to know
-     the new height. Then we resize the frame to that height. */
-  m_frame->resize(xr, yr);
-  // pass an arbitrary height at this point (but non zero); the final
-  // height will be known only after rendering with 'xr' width
-  m_headersv->resize(xr, 100);
-
-  int vp_height=m_bodyv->page()->mainFrame()->contentsSize().height() +
-    m_headersv->height() + 2*m_frame->frameWidth();
-  xr = m_bodyv->page()->mainFrame()->contentsSize().width();
-  if (m_headersv->width() > xr) {
-    xr = m_headersv->width();
-  }
-  m_frame->resize(xr, vp_height);
-
-  QScrollArea::resizeEvent(event);
-}
 
 void
 message_view::keyPressEvent(QKeyEvent* event)
@@ -153,29 +144,18 @@ message_view::keyPressEvent(QKeyEvent* event)
   if (event->modifiers()==0 && event->key()==Qt::Key_Space) {
     page_down();
   }
-  QScrollArea::keyPressEvent(event);
-}
-
-// this slot is to be connected to the body_view's wheelEvent
-void
-message_view::wheel_body(QWheelEvent* e)
-{
-  QScrollArea::wheelEvent(e);
+  QWidget::keyPressEvent(event);
 }
 
 void
 message_view::load_finished(bool ok)
 {
   if (ok) {
-    DBG_PRINTF(5, "load_finished");
+    DBG_PRINTF(3, "load_finished");
     m_bodyv->set_loaded(true);
     if (!m_highlight_words.empty()) {
       m_bodyv->highlight_terms(m_highlight_words);
     }
-    resize_frame();
-    int h = height();
-    resize(width(),h-1);
-    resize(width(),h);
   }
   else {
     DBG_PRINTF(2, "load_finished not OK");
@@ -189,38 +169,17 @@ message_view::reset_state()
   m_has_html_part=false;
   m_bodyv->set_loaded(false);
   m_ext_contents=false;
-  m_headersv->reset_commands();
   m_zoom_factor=1.0;
   m_bodyv->setTextSizeMultiplier(m_zoom_factor);
   m_highlight_words.clear();
 }
 
-void
-message_view::resize_frame()
-{
-  int w=m_bodyv->page()->mainFrame()->contentsSize().width()+
-    2*m_frame->frameWidth();
-  int h=m_headersv->height()+m_bodyv->page()->mainFrame()->contentsSize().height()
-    + 2*m_frame->frameWidth();
-  m_frame->resize(w,h);
-}
-
 // content_type is 1 if contents come from text part, 2 if html part
 void
-message_view::set_html_contents(const QString& headers, const QString& html_body,
-				int content_type)
+message_view::set_html_contents(const QString& html_body, int content_type)
 {
   m_ext_contents=false;
   m_bodyv->set_loaded(false);
-  /* header contents _must_ be set before displaying the body */
-  m_headersv->set_contents(headers);
-
-  if (m_parent) { // hack: do this only if inside a msg_list_window,
-		  // for in other contexts, attachments capabilities are lacking
-		  // to switch between alternate representations
-    m_headersv->enable_command("to_text", content_type==2 && m_has_text_part);
-    m_headersv->enable_command("to_html", content_type==1 && m_has_html_part);
-  }
   m_content_type_shown = content_type;
   m_bodyv->display(html_body);
 }
@@ -253,7 +212,6 @@ message_view::enable_page_nav(bool back, bool forward)
 void
 message_view::highlight_terms(const std::list<searched_text>& lst)
 {
-  m_headersv->highlight_terms(lst);
   if (m_bodyv->is_loaded()) {
     m_bodyv->highlight_terms(lst);
   }
@@ -265,10 +223,15 @@ message_view::highlight_terms(const std::list<searched_text>& lst)
 void
 message_view::page_down()
 {
-  QScrollBar* bar = verticalScrollBar();
-  if (bar) {
-    bar->setValue(bar->value()+bar->pageStep());
-  }
+  QWebFrame* frame = m_bodyv->page()->mainFrame();
+  if (!frame)
+    return;
+  QPoint pos = frame->scrollPosition();
+  int y = m_bodyv->geometry().height() + pos.y();
+  if (y > frame->contentsSize().height()-frame->geometry().height())
+    y = frame->contentsSize().height()-frame->geometry().height();
+  pos.setY(y);
+  frame->setScrollPosition(pos);
 }
 
 void
@@ -282,11 +245,8 @@ message_view::set_wrap(bool b)
 void
 message_view::set_show_on_demand(bool b)
 {
-  DBG_PRINTF(3, "set_show_on_demand(%d)", (int)b);
-  m_headersv->set_show_on_demand(b);
+  DBG_PRINTF(4, "set_show_on_demand(%d)", (int)b);
   if (b) {
-    m_bodyv->clear();
-    m_bodyv->page()->setViewportSize(QSize(m_headersv->width(), 10));
     m_bodyv->clear();
     update();
   }
@@ -300,68 +260,22 @@ void
 message_view::print()
 {
   QPrinter printer;
-  QPrintDialog *dialog = new QPrintDialog(&printer, this);
-  dialog->setWindowTitle(tr("Print Document"));
-  if (dialog->exec() != QDialog::Accepted)
-    return;
-
-  delete dialog;
-  m_pmsg->fetch_body_text(false);
-  QString html_body = m_bodyv->page()->mainFrame()->toHtml();
-
-  mail_displayer disp(this);
-  body_view* printview = new body_view(NULL);
-  printview->set_mail_item(m_bodyv->mail_item());
-  printview->display(html_body);
-
-  const display_prefs& prefs = m_parent->get_display_prefs();
-  QString h = disp.sprint_headers(prefs.m_show_headers_level, m_pmsg);
-  QString hmore = disp.sprint_additional_headers(prefs, m_pmsg);
-  h.append(hmore);
-  printview->prepend_body_fragment(h);
-
-  printview->print(&printer);
-  delete printview;
+  QPrintDialog dialog(&printer, this);
+  dialog.setWindowTitle(tr("Print message"));
+  if (dialog.exec() == QDialog::Accepted)
+    m_bodyv->print(&printer);
 }
 
 void
 message_view::setFont(const QFont& font)
 {
-  m_headersv->setFont(font);
-  QString s="body {";
-  if (!font.family().isEmpty()) {
-    s.append("font-family:\"" + font.family() + "\";");
-  }
-  if (font.pointSize()>1) {
-    s.append(QString("font-size:%1 pt;").arg(font.pointSize()));
-  }
-  else if (font.pixelSize()>1) {
-    s.append(QString("font-size:%1 px;").arg(font.pixelSize()));
-  }
-  if (font.bold()) {
-    s.append("font-weight: bold;");
-  }
-  if (font.style()==QFont::StyleItalic) {
-    s.append("font-style: italic;");
-  }
-  else if (font.style()==QFont::StyleOblique) {
-    s.append("font-style: oblique;");
-  }
-  s.append("}\n");
-  m_bodyv->set_body_style(s);
-  //  m_bodyv->redisplay();
-}
-
-const QFont
-message_view::font() const
-{
-  return m_headersv->font();
+  QWidget::setFont(font);
+  m_bodyv->set_font(font);
 }
 
 void
 message_view::clear()
 {
-  m_headersv->clear();
   m_bodyv->clear();
 }
 
@@ -369,44 +283,25 @@ message_view::clear()
 void
 message_view::copy()
 {
-  if (m_header_has_selection)
-    m_headersv->copy();
-  else {
-    m_bodyv->page()->triggerAction(QWebPage::Copy);
-  }
+  m_bodyv->page()->triggerAction(QWebPage::Copy);
 }
 
-void
-message_view::headers_selection_changed()
-{
-  /* body and headers are two widgets glued together to appear as a
-     single text pane. That's why when a selection is made in one, we
-     clear the selection in the other */
-  m_bodyv->clear_selection();
-}
-
-void
-message_view::body_selection_changed()
-{
-  /* body and headers are two widgets glued together to appear as a
-     single text pane. That's why when a selection is made in one, we
-     clear the selection in the other */
-  m_headersv->clear_selection();
-}
 
 void
 message_view::allow_external_contents()
 {
   m_bodyv->authorize_external_contents(true);
   m_ext_contents=true;
-  m_bodyv->redisplay();
-  m_headersv->enable_command("fetch", false);
+  enable_command("fetch", false);
+  QString html_body = m_bodyv->page()->mainFrame()->toHtml();
+  m_bodyv->page()->mainFrame()->setHtml(html_body, QUrl("/"));
+  display_commands();
 }
 
 void
 message_view::ask_for_external_contents()
 {
-  m_headersv->enable_command("fetch", true);
+  enable_command("fetch", true);
 }
 
 /*
@@ -426,7 +321,7 @@ message_view::display_body(const display_prefs& prefs, int preferred_format)
 
   /* First we try to fetch html contents from body.bodyhtml
      If it's empty, we look for an HTML part (even if we won't load it later) */
-  attachment* html_attachment;
+  attachment* html_attachment=NULL;
   QString body_html = m_pmsg->get_body_html(); // from the body table
   if (body_html.isEmpty())
     html_attachment = m_pmsg->body_html_attached_part(); // from the attachments
@@ -461,9 +356,10 @@ message_view::display_body(const display_prefs& prefs, int preferred_format)
 
   // Format headers
   mail_displayer disp(this);
-  QString h = disp.sprint_headers(prefs.m_show_headers_level, m_pmsg);
-  QString hmore = disp.sprint_additional_headers(prefs, m_pmsg);
-  h.append(hmore);
+  QString h = QString("<div id=\"manitou-header\">%1%2%3</div><p>")
+    .arg(disp.sprint_headers(prefs.m_show_headers_level, m_pmsg))
+    .arg(disp.sprint_additional_headers(prefs, m_pmsg))
+    .arg(QString("<div id=\"manitou-commands\"></div>"));
 
   set_wrap(prefs.m_wrap_lines);
 
@@ -472,21 +368,88 @@ message_view::display_body(const display_prefs& prefs, int preferred_format)
 
   if (preferred_format==1 || body_html.isEmpty()) {
     QString b2 = disp.text_body_to_html(body_text, prefs);
-    b2.prepend("<html>");
-    b2.append("</html>");
-    set_html_contents(h, b2, 1);
+    b2.prepend(h);
+    b2.prepend("<html><body>");
+    b2.append("</body></html>");
+    set_html_contents(b2, 1);
     // partial load?
     if (m_pmsg->body_length()>0 && m_pmsg->body_fetched_length() < m_pmsg->body_length()) {
       if (m_parent) {
-	m_headersv->enable_command("complete_load", true);
+	enable_command("complete_load", true);
 	QString msg = QString(tr("Partial load (%1%)")).arg(m_pmsg->body_fetched_length()*100/ m_pmsg->body_length());
 	m_parent->blip_status_message(msg);
       }
     }
+    if (m_parent) {
+      enable_command("to_html", m_has_html_part);
+    }
   }
   else {
-    set_html_contents(h, body_html, 2);
+    set_html_contents(body_html, 2);
+    prepend_body_fragment(h);
+    if (m_parent)
+      enable_command("to_text", m_has_text_part);
   }
+  display_commands();
+}
+
+void
+message_view::prepend_body_fragment(const QString& fragment)
+{
+  QWebPage* page = m_bodyv->page();
+  page->settings()->setAttribute(QWebSettings::JavascriptEnabled, true);
+  QString s = fragment;
+  s.replace("'", "\\'");
+  s.replace("\n", "\\n");
+  QString js = QString("try {var b=document.getElementsByTagName('body')[0]; var p=document.createElement('div'); p.innerHTML='%1'; b.insertBefore(p, b.firstChild); 1;} catch(e) { e; }").arg(s);
+  QVariant v = page->mainFrame()->evaluateJavaScript(js);
+  page->settings()->setAttribute(QWebSettings::JavascriptEnabled, false);
+}
+
+void
+message_view::reset_commands()
+{
+  m_enabled_commands.clear();
+}
+
+void
+message_view::display_commands()
+{
+  QWebPage* page = m_bodyv->page();
+  page->settings()->setAttribute(QWebSettings::JavascriptEnabled, true);
+  QString s = command_links();
+  s.replace("'", "\\'");
+  QString js = QString("try {var p=document.getElementById(\"manitou-commands\"); p.innerHTML='%1'; 1;} catch(e) { e; }").arg(s);
+  QVariant v = page->mainFrame()->evaluateJavaScript(js);
+  page->settings()->setAttribute(QWebSettings::JavascriptEnabled, false);
+}
+
+void
+message_view::enable_command(const QString command, bool enable)
+{
+  m_enabled_commands.insert(command, enable);
+/*  display_commands();*/
+}
+
+QString
+message_view::command_links()
+{
+  static const char* commands[] = {
+    "fetch", QT_TR_NOOP("Fetch external contents"),
+    "to_text", QT_TR_NOOP("Show text part"),
+    "to_html", QT_TR_NOOP("Show HTML part"),
+    "complete_load", QT_TR_NOOP("Complete load")
+  };
+
+  QString line;
+  for (uint i=0; i<sizeof(commands)/sizeof(commands[0]); i+=2) {
+    if (m_enabled_commands.contains(commands[i])) {
+      const QString cmd=commands[i];
+      if (m_enabled_commands.value(cmd))
+	line.append(QString(" &nbsp;&nbsp;&nbsp;<a id=\"%1\" href=\"#manitou-%1\">%2</a>").arg(cmd).arg(tr(commands[i+1])));
+    }
+  }
+  return line;
 }
 
 void
@@ -494,8 +457,9 @@ message_view::show_text_part()
 {
   if (m_parent)
     display_body(m_parent->get_display_prefs(), 1);
-  m_headersv->enable_command("to_html", m_has_html_part);
-  m_headersv->enable_command("to_text", false);
+  enable_command("to_html", m_has_html_part);
+  enable_command("to_text", false);
+  display_commands();
 }
 
 void
@@ -503,8 +467,9 @@ message_view::show_html_part()
 {
   if (m_parent)
     display_body(m_parent->get_display_prefs(), 2);
-  m_headersv->enable_command("to_text", m_has_text_part);
-  m_headersv->enable_command("to_html", false);
+  enable_command("to_text", m_has_text_part);
+  enable_command("to_html", false);
+  display_commands();
 }
 
 void
@@ -518,25 +483,7 @@ message_view::change_zoom(int direction)
     m_zoom_factor=1.0;
 
   m_bodyv->setTextSizeMultiplier(m_zoom_factor);
-  /* By setting a zero height, we force webkit to recompute the height
-     instead of reusing the previous one, otherwise our outer frame's
-     size wouldn't be adjusted */
-  QSize s=m_bodyv->page()->viewportSize();
-  s.setHeight(0);
-  m_bodyv->page()->setViewportSize(s);
-  resize_frame();
 }
-
-#if 0
-void
-message_view::set_partial_load(int percentage)
-{
-  Q_UNUSED(percentage);
-  if (m_parent) {
-    m_headersv->enable_command("complete_load", true);
-  }
-}
-#endif
 
 void
 message_view::complete_body_load()

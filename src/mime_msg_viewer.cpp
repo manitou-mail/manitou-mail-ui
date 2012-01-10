@@ -66,7 +66,10 @@ mime_msg_viewer::mime_msg_viewer(const char* msg, const display_prefs& prefs)
   //mail_html.append("<hr>");
   QString body_html;
   format_body(body_html, msg+hlen, prefs);
-  m_view->set_html_contents(header_html, body_html, 1); // content-type=text
+  body_html.append("<html><body>");
+  body_html.prepend("</body></html>");
+  m_view->set_html_contents(body_html, 1); // content-type=text
+  m_view->prepend_body_fragment(header_html);
   resize(800,600);
 }
 

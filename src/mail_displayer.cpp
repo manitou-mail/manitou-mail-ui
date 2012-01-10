@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -22,7 +22,6 @@
 #include "app_config.h"
 #include "db.h"
 #include "body_view.h"
-#include "headers_view.h"
 #include "message_view.h"
 #include "tags.h"
 #include "xface/xface.h"
@@ -198,8 +197,9 @@ mail_displayer::sprint_headers(int show_headers_level, mail_msg* msg)
   uint nPos=0;
   uint nEnd=h.length();
   QString sOutput;
-  QString s_xface;
-  QString s_face;
+  QString s_xface, s_face;
+  uint face_offset=0;
+  uint xface_offset=0;
   QString hfontsz_o;		// <big> or empty
   QString hfontsz_c;		// </big> or empty
 
@@ -214,23 +214,12 @@ mail_displayer::sprint_headers(int show_headers_level, mail_msg* msg)
       if (nPosLf==-1)
 	nPosLf=nEnd;
       if (h.mid(nPos,7) == "X-Face:" && s_face.isEmpty()) {
-	QString contents = h.mid(nPos+7, nPosLf-(nPos+7));
-	xface_to_xpm(contents.toLatin1().constData(), s_xface);
-	if (!msg_widget->headers()->set_xface(s_xface)) {
-	  s_xface.truncate(0); // on failure
-	}
+	xface_offset = nPos+7;
       }
       if (h.mid(nPos,5) == "Face:") {
 	s_face = h.mid(nPos+5, nPosLf-(nPos+5));
-	s_face.replace(" ", ""); // TODO: fix spurious spaces at import time
-	QByteArray b = QByteArray::fromBase64(s_face.toLatin1().constData());
-	if (!msg_widget->headers()->set_face(b)) {
-	  DBG_PRINTF(2, "Failed to set Face");
-	  s_face.truncate(0); // on failure
-	}
-	else {
-	  s_xface.truncate(0); // If both are present, prefer Face to X-Face
-	}
+	face_offset = nPos+5;
+	xface_offset = 0;
       }
 
       // see if we have to display this header
@@ -254,17 +243,21 @@ mail_displayer::sprint_headers(int show_headers_level, mail_msg* msg)
       if (sLines[j].length()>0)
 	sOutput+=sLines[j];
     }
-    if (!s_face.isEmpty()) {
-      QString st = "<table><tr><td width=50><font color=\"blue\">Face: </font><br>";
-      st += "<img valign=\"center\" src=\"/xface.xpm\">";
-      st += "</td>";
-      sOutput = st + "<td>" + sOutput + "</td></tr></table>\n";
+    QString hface;
+    QString hface_url;
+    if (face_offset) {
+      hface = "Face:";
+      hface_url = QString("face?id=%1&o=%2").arg(msg->get_id()).arg(face_offset);
     }
-    else if (!s_xface.isEmpty()) {
-      QString st = "<table><tr><td width=50><font color=\"blue\">X-Face: </font><br>";
-      st += "<img valign=\"center\" src=\"/xface.xpm\">";
+    else if (xface_offset) {
+      hface = "<nobr>X-Face:</nobr>";
+      hface_url = QString("xface?id=%1&o=%2").arg(msg->get_id()).arg(xface_offset);
+    }
+    if (!hface.isEmpty()) {
+      QString st = "<table><tr><td width=50 valign=top><font color=\"blue\">"+hface+"</font><br>";
+      st += "<img src=\"manitou://"+hface_url+"\">";
       st += "</td>";
-      sOutput = st + "<td>" + sOutput + "</td></tr></table>\n";
+      sOutput = st + "<td>" + sOutput + "</td></tr></table>";
     }
   }
   else if (show_headers_level==3) {
@@ -309,7 +302,7 @@ mail_displayer::text_body_to_html(const QString &b, const display_prefs& prefs)
   int startline=0;
   int endline;
 
-  QString b2="<body>";
+  QString b2;
   int quoted_lines=0;
   static const char* quoted_text_font="<font color=\"#5ca730\">";
   static const char* quoted_ellipsis_font="<font color=\"#4d8b28\">";
@@ -344,7 +337,7 @@ mail_displayer::text_body_to_html(const QString &b, const display_prefs& prefs)
 	  if (quoted_lines-quoted_text_lines_shown>0) {
 	    b2.append(quoted_ellipsis_font);
 	    b2.append("<b>&gt; ");
-	    b2.append(QObject::tr("[Hidden quoted text (%1 lines)]").arg(quoted_lines-quoted_text_lines_shown));
+	    b2.append(QObject::tr("[Collapsed quoted text (%1 lines)]").arg(quoted_lines-quoted_text_lines_shown));
 	    b2.append("</b></font><br>");
 	  }
 	  if (last_folded_line_was_newline)
@@ -364,7 +357,6 @@ mail_displayer::text_body_to_html(const QString &b, const display_prefs& prefs)
   // line is zapped. The right fix is to move the whole expansion of
   // quoted text in a separate function:
   // startline = expand_quoted_text(&body_text, startline, &html_quoted_text);
-  b2.append("</body>");
   return b2;
 }
 

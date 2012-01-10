@@ -29,7 +29,7 @@ manitou_SOURCES = main.cpp main.h msg_list_window.cpp db.cpp \
  mail_displayer.cpp bitvector.h bitvector.cpp message_port.cpp \
  message_port.h msgs_page_list.h msgs_page_list.cpp sha1.cpp sha1.h \
  attachment_listview.h attachment_listview.cpp filter_log.cpp filter_log.h \
- headers_view.h headers_view.cpp message_view.h message_view.cpp \
+ message_view.h message_view.cpp \
  app_config.cpp app_config.h ui_controls.h edit_address_widget.cpp edit_address_widget.h \
  html_editor.h html_editor.cpp notepad.h notepad.cpp db_listener.h db_listener.cpp \
  msg_status_cache.h msg_status_cache.cpp mailing_wizard.cpp mailing_wizard.h \
@@ -48,7 +48,7 @@ MOC_OBJS = main.moc.o msg_list_window.moc.o newmailwidget.moc.o tagsbox.moc.o \
 	preferences.moc.o about.moc.o login.moc.o edit_rules.moc.o \
 	user_queries.moc.o headers_groupview.moc.o body_edit.moc.o \
 	sql_editor.moc.o browser.moc.o message_port.moc.o \
-	body_view.moc.o attachment_listview.moc.o headers_view.moc.o \
+	body_view.moc.o attachment_listview.moc.o \
 	message_view.moc.o ui_controls.moc.o attachment.moc.o \
 	edit_address_widget.moc.o html_editor.moc.o notepad.moc.o \
 	db_listener.moc.o msg_status_cache.moc.o mime_msg_viewer.moc.o \

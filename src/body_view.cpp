@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -19,41 +19,29 @@
 
 #include "main.h"
 #include "body_view.h"
-#include "browser.h"
 #include "mailheader.h"
 #include "attachment.h"
 #include "db.h"
-
+#include "xface/xface.h"
 
 #include <QDebug>
-#include <QTextEdit>
-#include <QPrintDialog>
-#include <QPrinter>
 #include <QKeyEvent>
-#include <QFocusEvent>
-#include <QMouseEvent>
 #include <QPainter>
-#include <QScrollBar>
-#include <QFrame>
+#include <QTextEdit>
 #include <QWebPage>
 #include <QWebFrame>
 #include <QTimer>
-#include <QScrollArea>
 
 body_view::body_view(QWidget* parent) : QWebView(parent)
 {
   m_pmsg=NULL;
   m_loaded=false;
-  connect(this, SIGNAL(linkClicked(const QUrl&)), SLOT(link_clicked(const QUrl&)));
 
   page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
   m_netman = new network_manager(this);
   page()->setNetworkAccessManager(m_netman);
   connect(m_netman, SIGNAL(external_contents_requested()), this,
 	  SLOT(ask_perm_for_contents()));
-//  setMinimumSize(QSize(200,200));
-  page()->mainFrame()->setScrollBarPolicy(Qt::Horizontal, Qt::ScrollBarAlwaysOff);
-  page()->mainFrame()->setScrollBarPolicy(Qt::Vertical, Qt::ScrollBarAlwaysOff);
 
   QWebSettings* settings=page()->settings();
   settings->setAttribute(QWebSettings::PrivateBrowsingEnabled, true);
@@ -62,7 +50,7 @@ body_view::body_view(QWidget* parent) : QWebView(parent)
   settings->setAttribute(QWebSettings::PluginsEnabled, false);
   settings->setAttribute(QWebSettings::LinksIncludedInFocusChain, false);
   
-  set_body_style("");
+  set_body_style();
 }
 
 body_view::~body_view()
@@ -70,14 +58,6 @@ body_view::~body_view()
   delete m_netman;
 }
 
-void
-body_view::wheelEvent(QWheelEvent* e)
-{
-  /* As of Qt-4.5, our QWebView instance won't handle this event so as
-     a workaround we emit it for the larger scrollarea to handle
-     it. */
-  emit wheel(e);
-}
 
 void
 body_view::set_mail_item(mail_msg* p)
@@ -105,19 +85,57 @@ body_view::display(const QString& html_body)
 void
 body_view::force_style_sheet()
 {
+#if QT_VERSION<0x040600
   /* we use a different dummy URL each time to avoid webkit cache
      (and we don't use QWebSettings::setObjectCacheCapacities since it appears
      to have adverse side effects) */
   static int counter;
+  
   page()->settings()->setUserStyleSheetUrl(QString("style://manitou-%1").arg(++counter));
+#endif
 }
 
 void
-body_view::set_body_style(const QString& s)
+body_view::set_body_style()
 {
-  m_netman->m_body_style=s;
-  m_netman->m_body_style.append("span.searchword-manitou { background-color: yellow;}");
+  static const char* default_style =
+    "span.searchword-manitou { background-color:yellow;}\n";
+  QString body_style=QString("body { margin: 5px; padding: 0px; background-color: #ffffff; %1}\n").arg(m_font_css);
+  QString header_style=QString("div#manitou-header { text-align:left; color:#000000; background-color: #ffffff; %1}\n").arg(m_font_css);
+#if QT_VERSION<0x040600
+  m_netman->m_body_style=default_style + body_style + header_style;
   force_style_sheet();
+#else
+  QString style = default_style + body_style + header_style;
+  QByteArray b = style.toAscii().toBase64();
+  page()->settings()->setUserStyleSheetUrl(QUrl(QString("data:text/css;charset=utf-8;base64,")+QString(b)));  
+#endif
+}
+
+void
+body_view::set_font(const QFont& font)
+{
+  QString s;
+  if (!font.family().isEmpty()) {
+    s.append("font-family:\"" + font.family() + "\";");
+  }
+  if (font.pointSize()>1) {
+    s.append(QString("font-size:%1 pt;").arg(font.pointSize()));
+  }
+  else if (font.pixelSize()>1) {
+    s.append(QString("font-size:%1 px;").arg(font.pixelSize()));
+  }
+  if (font.bold()) {
+    s.append("font-weight: bold;");
+  }
+  if (font.style()==QFont::StyleItalic) {
+    s.append("font-style: italic;");
+  }
+  else if (font.style()==QFont::StyleOblique) {
+    s.append("font-style: oblique;");
+  }
+  m_font_css=s;
+  set_body_style();
 }
 
 void
@@ -125,21 +143,6 @@ body_view::redisplay()
 {
   m_loaded=false;
   setHtml(m_html_text, QUrl("/"));
-}
-
-void
-body_view::paintEvent(QPaintEvent* event)
-{
-  QPainter painter(this);
-  page()->mainFrame()->render(&painter, event->region());
-}
-
-void
-body_view::resizeEvent(QResizeEvent* e)
-{
-  if (page()!=NULL) {
-    page()->setViewportSize(e->size());
-  }
 }
 
 void
@@ -166,45 +169,6 @@ body_view::set_wrap(bool on)
 }
 
 
-// private slot
-void
-body_view::link_clicked(const QUrl& url)
-{
-  if (url.scheme()=="mailto") {
-    // TODO: use more headers, particularly "body"
-    mail_header header;
-    if (!url.path().isEmpty())
-      header.m_to=url.path();
-    if (url.hasQueryItem("subject")) {
-      header.m_subject=url.queryItemValue("subject");
-    }
-    gl_pApplication->start_new_mail(header);
-  }
-  else {
-    browser::open_url(url);
-  }
-}
-
-// TODO: reflect that on the parent scrollarea
-void
-body_view::focusInEvent(QFocusEvent* e)
-{
-#ifndef TODO_WEBKIT
-  setFrameStyle(QFrame::WinPanel+QFrame::Plain);
-#endif
-  QWebView::focusInEvent(e);
-}
-
-// TODO: reflect that on the parent scrollarea
-void
-body_view::focusOutEvent(QFocusEvent* e)
-{
-#ifndef TODO_WEBKIT
-  setFrameStyle(QFrame::WinPanel+QFrame::Sunken);
-#endif
-  QWebView::focusOutEvent(e);
-}
-
 //static
 void
 body_view::rich_to_plain(QString& s)
@@ -226,16 +190,6 @@ body_view::contextMenuEvent(QContextMenuEvent* e)
 }
 
 void
-body_view::keyPressEvent(QKeyEvent* e)
-{
-  if (e->modifiers()==0 && e->key()==Qt::Key_Space) {
-    emit key_space_pressed();
-  }
-  QWebView::keyPressEvent(e);
-}
-
-
-void
 body_view::clear()
 {
   setHtml("<html><body></body></html>");
@@ -255,7 +209,7 @@ body_view::prepend_body_fragment(const QString& fragment)
   page()->settings()->setAttribute(QWebSettings::JavascriptEnabled, true);
   QString s = fragment;
   s.replace("'", "\\'");
-  QString js = QString("try {var b=document.getElementsByTagName('body')[0]; var p=document.createElement('div'); p.innerHTML='%1'; p.style.marginBottom='12px'; b.insertBefore(p, b.firstChild); 1;} catch(e) { e; }").arg(s);
+  QString js = QString("try {var b=document.getElementsByTagName('body')[0]; var p=document.createElement('div'); p.innerHTML='%1'; p.id='manitou-header'; b.insertBefore(p, b.firstChild); body.style.cssText=''; 1;} catch(e) { e; }").arg(s);
   QVariant v = page()->mainFrame()->evaluateJavaScript(js);
   page()->settings()->setAttribute(QWebSettings::JavascriptEnabled, false);
 }
@@ -330,6 +284,59 @@ body_view::ask_perm_for_contents()
 }
 
 
+internal_img_network_reply::internal_img_network_reply(const QNetworkRequest& req, const QString& encoded_img, int type, QObject* parent) : QNetworkReply(parent)
+{
+  /* internal_img_network_reply is modeled after:
+     http://qt.gitorious.org/qt-labs/graphics-dojo/blobs/master/url-rendering/main.cpp
+  */
+  setRequest(req);
+  if (type==1) { // Face
+    m_buffer = QByteArray::fromBase64(encoded_img.toAscii().constData());
+  }
+  else { // X-Face
+    QImage qi;
+    QString s;
+    xface_to_xpm(encoded_img.toAscii().constData(), s);
+    
+    if (qi.loadFromData((const uchar*)s.toAscii().constData(), s.length(), "XPM")) {
+      QBuffer b(&m_buffer);
+      qi.save(&b, "PNG");
+    }
+  }
+  setOperation(QNetworkAccessManager::GetOperation);
+  setHeader(QNetworkRequest::ContentTypeHeader, "image/png");
+  open(ReadOnly|Unbuffered);
+  setUrl(req.url());
+  QTimer::singleShot(0, this, SLOT(go()));
+}
+
+qint64
+internal_img_network_reply::readData(char* data, qint64 size)
+{
+  qint64 r=qMin(size, (qint64)(m_buffer.size()-position));
+  memcpy(data, m_buffer.constData()+position, r);
+  position += r;
+  return r;
+}
+
+bool
+internal_img_network_reply::seek(qint64 pos)
+{
+  if (pos<0 || pos>=m_buffer.size())
+    return false;
+  position=pos;
+  return true;
+}
+
+void
+internal_img_network_reply::go()
+{
+  position=0;
+  emit readyRead(); 
+  emit finished();
+}
+
+
 internal_style_network_reply::internal_style_network_reply(const QNetworkRequest& req, const QString& style, QObject* parent) : QNetworkReply(parent)
 {
   setRequest(req);
@@ -368,44 +375,20 @@ internal_style_network_reply::abort()
 void
 internal_style_network_reply::go()
 {
+  
   setAttribute(QNetworkRequest::HttpStatusCodeAttribute, 200); 
   setAttribute(QNetworkRequest::HttpReasonPhraseAttribute, "OK");
   emit metaDataChanged(); 
   emit readyRead();
 }
 
-#if 0
-class no_content_network_reply : public QNetworkReply
-{
-public:
-  no_content_network_reply(const QNetworkRequest& req, QObject* parent) : QNetworkReply(parent) {
-    setRequest(req);
-    setOperation(QNetworkAccessManager::GetOperation);
-    //emit error(QNetworkReply::ContentOperationNotPermittedError);
-    emit error(QNetworkReply::ContentNotFoundError);
-    emit finished();
-  }
-  void abort() {}
-  qint64 readData(char* data, qint64 size) {
-    Q_UNUSED(data);
-    Q_UNUSED(size);
-    return 0;
-  }
-};
-#endif
 
 QNetworkReply*
 network_manager::empty_network_reply(Operation op, const QNetworkRequest& req)
 {
-  //  Q_UNUSED(op);
-#if 0
-  return new no_content_network_reply(req, this);
-#else
-  //    qDebug() << "op rejected for " << req.url().toString();
   QNetworkRequest req2 = req;
   req2.setUrl(QUrl());	// empty URL to avoid accessing external contents
   return QNetworkAccessManager::createRequest(op, req2, NULL);
-#endif
 }
 
 /* outgoingData is always 0 for Get and Head requests */
@@ -417,7 +400,7 @@ network_manager::createRequest(Operation op, const QNetworkRequest& req, QIODevi
     // only GET is currently supported, see if HEAD should be
     return empty_network_reply(op, req);
   }
-
+  const QUrl& url = req.url();
   // the request refers to attached contents
   if (req.url().scheme() == "cid") {
     // refers to a MIME part that should be attached
@@ -433,6 +416,28 @@ network_manager::createRequest(Operation op, const QNetworkRequest& req, QIODevi
 	return reply;
       }
       
+    }
+    return empty_network_reply(op, req);
+  }
+  else if (url.scheme()=="manitou" && (url.authority()=="xface" || url.authority()=="face")) {
+    if (url.hasQueryItem("id") && url.hasQueryItem("o")) {
+      QString headers = m_pmsg->get_headers();
+      bool id_ok, o_ok;
+      uint id = url.queryItemValue("id").toUInt(&id_ok);
+      int offset = url.queryItemValue("o").toInt(&o_ok);
+      if (id_ok && o_ok && id == m_pmsg->get_id()) {
+	int lf_pos = headers.indexOf('\n', offset);
+	QString ascii_line;
+	if (lf_pos>0) {
+	  ascii_line = headers.mid(offset, lf_pos-offset);
+	}
+	else {
+	  ascii_line = headers.mid(offset);
+	}
+	ascii_line.replace(" ", "");
+	int type = url.authority()=="face" ? 1:2;
+	return new internal_img_network_reply(req, ascii_line, type, this);
+      }
     }
     return empty_network_reply(op, req);
   }

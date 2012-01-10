@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2009 Daniel Vérité
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -20,11 +20,10 @@
 #ifndef INC_MESSAGE_VIEW_H
 #define INC_MESSAGE_VIEW_H
 
-/* message_view combines headers_view and body_view stacked vertically
-   with a shared scrollbar */
-
-#include <QScrollArea>
+#include <QWebView>
 #include <QString>
+#include <QMap>
+#include <QUrl>
 #include <list>
 
 #include "body_view.h"
@@ -33,16 +32,11 @@
 // TODO: incorporate the attachements panel into this view and merge it
 // with mime_msg_viewer
 
-class headers_view;
 class mail_msg;
-class QSizeF;
-class QFrame;
-class QResizeEvent;
 class QKeyEvent;
-class QWheelEvent;
 class msg_list_window;
 
-class message_view : public QScrollArea
+class message_view : public QWidget
 {
   Q_OBJECT
 public:
@@ -51,7 +45,6 @@ public:
   void clear();
   void enable_page_nav(bool back, bool forward);
   void setFont(const QFont&);
-  const QFont font() const;
   void print();
   void copy();
   void set_mail_item (mail_msg*);
@@ -59,47 +52,45 @@ public:
   void set_show_on_demand(bool);
   void highlight_terms(const std::list<searched_text>&);
 
-  headers_view* headers() {
-    return m_headersv;
-  }
   QSize sizeHint() const;
   void reset_state();
   void display_body(const display_prefs& prefs, int preferred_format=0);
-  void set_html_contents(const QString& headers, const QString& body, int type);
+  void set_html_contents(const QString& body, int type);
   QString selected_text() const;
   int content_type_shown() const;
   QString selected_html_fragment();
   QString body_as_text() const;
+  void prepend_body_fragment(const QString& fragment);
 protected:
-  void resizeEvent(QResizeEvent* event);
   void keyPressEvent(QKeyEvent*);
 public slots:
-  void wheel_body(QWheelEvent* );
+//  void wheel_body(QWheelEvent* );
+  void link_clicked(const QUrl&);
   void allow_external_contents();
   void ask_for_external_contents();
   void page_down();
   void show_text_part();
   void show_html_part();
-  void headers_own_selection(bool);
-  void headers_selection_changed();
-  void body_selection_changed();
   void change_zoom(int);
+  // enable or disable a command link
+  void enable_command(const QString, bool);
+  void reset_commands();
+  void display_commands();
+  void display_link(const QString&);
 private slots:
   void load_finished(bool);
-  void resize_frame();
   void complete_body_load();
 private:
-  headers_view* m_headersv;
+  QMap<QString,bool> m_enabled_commands;
+  QString command_links();
   msg_list_window* m_parent;
   mail_msg* m_pmsg;
   body_view* m_bodyv;
   bool m_can_move_forward, m_can_move_back;
-  QFrame* m_frame;
   bool m_loaded;
   bool m_ext_contents;
   bool m_has_text_part;
   bool m_has_html_part;
-  bool m_header_has_selection;
   qreal m_zoom_factor;
   std::list<searched_text> m_highlight_words;
   int m_content_type_shown;

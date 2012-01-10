@@ -197,7 +197,7 @@ main(int argc, char **argv)
   QString s = QString(MANITOU_DATADIR);
   QString manitou_tr_path = s + "/translations";
   QString qt_tr_path = QLibraryInfo::location(QLibraryInfo::TranslationsPath);
-  gl_xpm_path = s + "/xpm";
+  gl_xpm_path = s + "/icons";
   gl_help_path = s + "/help";
 #elif defined(Q_OS_WIN)
   // under windows, the data directories are expected to be at the same level
@@ -205,7 +205,7 @@ main(int argc, char **argv)
   QString s = QApplication::applicationDirPath();
   QString qt_tr_path = QLibraryInfo::location(QLibraryInfo::TranslationsPath);
   QString manitou_tr_path = s + "/translations";
-  gl_xpm_path = s + "/xpm";
+  gl_xpm_path = s + "/icons";
   gl_help_path = s + "/help";
 #elif defined(Q_OS_MAC)
   // we use embedded resources on Mac

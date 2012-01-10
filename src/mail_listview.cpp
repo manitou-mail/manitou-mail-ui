@@ -295,7 +295,7 @@ mail_item_model::insert_msg(mail_msg* msg, QStandardItem* parent/*=NULL*/)
 void
 mail_item_model::update_msg(const mail_msg* msg)
 {
-  DBG_PRINTF(7, "update_msg of %d", msg->get_id());
+  DBG_PRINTF(4, "update_msg of %d", msg->get_id());
   QStandardItem* item=item_from_id(msg->get_id());
   if (!item)
     return;

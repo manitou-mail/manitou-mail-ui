@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2009 Daniel Vérité
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -23,6 +23,7 @@
 #include <QString>
 #include <QWebView>
 #include <QBuffer>
+#include <QFont>
 
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
@@ -35,8 +36,7 @@ class QResizeEvent;
 class QContextMenuEvent;
 class mail_msg;
 class QUrl;
-class QFrame;
-class QWheelEvent;
+//class QWheelEvent;
 
 class network_manager : public QNetworkAccessManager
 {
@@ -83,7 +83,7 @@ public:
   void highlight_terms(const std::list<searched_text>& );
   void authorize_external_contents(bool b);
   QSize sizeHint() const;
-  void set_body_style(const QString&);
+  void set_body_style();
   void clear_selection();
   void set_loaded(bool b) {
     m_loaded=b;
@@ -92,36 +92,26 @@ public:
     return m_loaded;
   }
   void prepend_body_fragment(const QString&);
+  void set_font(const QFont&);
 protected:
   void contextMenuEvent(QContextMenuEvent*);
-  void focusInEvent(QFocusEvent*);
-  void focusOutEvent(QFocusEvent*);
-  void keyPressEvent(QKeyEvent*);
-  void paintEvent(QPaintEvent*);
-  void resizeEvent(QResizeEvent*);
-  void wheelEvent(QWheelEvent*);
 private:
   mail_msg* m_pmsg;
   static const char* m_menu_entries[];
   bool m_can_move_forward;
   bool m_can_move_back;
   QString m_html_text;
-  QFrame* m_frame;
   bool m_loaded;
   bool m_ext_download_permitted;
   bool m_ext_download_permission_asked;
   network_manager* m_netman;
   void force_style_sheet();
-public slots:
+  QString m_font_css;
 private slots:
-  void link_clicked(const QUrl& url);
   void ask_perm_for_contents();
 signals:
   void external_contents_requested();
-  void key_space_pressed();
   void popup_body_context_menu();
-  void wheel(QWheelEvent*);
-  //  void menu_activated(int id);
 };
 
 
@@ -137,6 +127,24 @@ private slots:
   void go();
 private:
   QBuffer m_buf;
+};
+
+class internal_img_network_reply : public QNetworkReply
+{
+  Q_OBJECT
+public:
+  internal_img_network_reply(const QNetworkRequest&, const QString&, int, QObject*);
+  qint64 bytesAvailable() const { return m_buffer.size() - position; }
+  qint64 readData(char* data, qint64 size);
+  bool seek(qint64);
+  qint64 pos() const { return position; }
+  qint64 size() const { return m_buffer.size(); }
+  void abort() { }
+private slots:
+  void go();
+private:
+  QByteArray m_buffer;
+  int position;
 };
 
 #endif // INC_BODY_VIEW_H
