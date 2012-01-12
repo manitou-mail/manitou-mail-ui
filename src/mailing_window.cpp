@@ -224,7 +224,7 @@ mailing_window::display_entry(QTreeWidgetItem* item, const mailing_db* m)
     return;
   int col=0;
   item->setText(col++, m->title());
-  item->setText(col++, m->creation_date().output_6());
+  item->setText(col++, m->creation_date().output_8());
   item->setText(col++, m->status_text());
   item->setText(col++, QString("%1 / %2").arg(m->m_nb_sent).arg(m->m_nb_total));
   QProgressBar* bar = m_progress_bars[m->id()];

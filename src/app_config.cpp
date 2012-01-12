@@ -342,6 +342,7 @@ app_config::get_date_format_code()
     return 1;
   else if (d=="YYYY/MM/DD HH:MI")
     return 2;
-  else
-    return 1;
+  else if (d=="local")
+    return 3;
+  return 3;
 }

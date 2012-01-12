@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -20,6 +20,9 @@
 #include "date.h"
 #include <time.h>
 #include <locale.h>
+
+#include <QDateTime>
+#include <QDate>
 
 date::date(const QString date)
 {
@@ -55,8 +58,12 @@ date::OutputHM(int date_format) const
 
   if (date_format==1)		// european
     s.sprintf("%02d/%02d/%04d %02d:%02d", m_day, m_month, m_year, m_hour, m_min);
-  else				// US
+  else if (date_format==2)				// US
     s.sprintf("%04d/%02d/%02d %02d:%02d", m_year, m_month, m_day, m_hour, m_min);
+  else { // local
+    QDateTime dt = QDateTime::fromString(m_sYYYYMMDDHHMMSS, "yyyyMMddHHmmss");
+    s = dt.toString(Qt::DefaultLocaleShortDate);
+  }
   return s;
 }
 
@@ -87,10 +94,10 @@ date::output_24() const
 }
 
 QString
-date::output_6() const
+date::output_8() const
 {
-  // TODO: check locale to decide whether to output european or american format
-  return m_sDate;  
+  QDate d = QDate::fromString(m_sYYYYMMDDHHMMSS.left(8), "yyyyMMdd");
+  return d.toString(Qt::DefaultLocaleShortDate);
 }
 
 // QStandardItem => date_item

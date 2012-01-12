@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -33,7 +33,7 @@ public:
   QString Output() const { return m_sDate; }
   QString OutputHM(int) const;
   QString output_24() const;
-  QString output_6() const;
+  QString output_8() const;
   QString FullOutput() const { return m_sYYYYMMDDHHMMSS; }
   bool is_null() const {
     return m_null;

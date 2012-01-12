@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -580,6 +580,7 @@ prefs_dialog::display_widget()
   {
     QLabel* l=new QLabel(tr("Date format"),w1);
     QComboBox* g=new QComboBox(w1);
+    g->addItem(tr("Localized [%1]").arg(QLocale::system().name()));
     g->addItem("DD/MM/YYYY HH:MI");
     g->addItem("YYYY/MM/DD HH:MI");
     grid->addWidget(l, row, 0);
@@ -836,15 +837,15 @@ prefs_dialog::conf_to_widgets(app_config& conf)
 {
   m_widgets->w_last_n->setText(conf.get_string("last_n"));
   int idx;
-  for (idx=0; idx<m_widgets->w_date_format->count(); idx++) {
-    QString t=m_widgets->w_date_format->itemText(idx);
-    if (t==conf.get_string("date_format"))
-      m_widgets->w_date_format->setCurrentIndex(idx);
+  QString date_format=conf.get_string("date_format");
+  if (date_format=="local")
+    m_widgets->w_date_format->setCurrentIndex(0);
+  else {
+    for (idx=1; idx<m_widgets->w_date_format->count(); idx++) {
+      if (m_widgets->w_date_format->itemText(idx)==date_format)
+	m_widgets->w_date_format->setCurrentIndex(idx);
+    }
   }
-#if 0 // TODO
-  if (idx=m_widgets->w_date_format->count())
-    m_widgets->w_date_format->setCurrentIndex(-1);
-#endif
 
   switch(conf.get_number("show_tags")) {
   case 0:
@@ -958,7 +959,10 @@ prefs_dialog::widgets_to_conf(app_config& conf)
 {
   conf.set_string("default_identity", m_widgets->m_default_email);
   conf.set_string("last_n", m_widgets->w_last_n->text());
-  conf.set_string("date_format", m_widgets->w_date_format->currentText());
+  if (m_widgets->w_date_format->currentIndex()==0)
+    conf.set_string("date_format", "local");
+  else
+    conf.set_string("date_format", m_widgets->w_date_format->currentText());
 
   if (m_widgets->w_show_tags->selected_id()==1)
     conf.set_number("show_tags", 0);
