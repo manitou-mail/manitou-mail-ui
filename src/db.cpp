@@ -42,6 +42,7 @@
 
 #include <QMessageBox>
 #include <QTextCodec>
+#include <QSocketNotifier>
 
 //static PGconn *pgconn;
 pgConnection pgDb;
@@ -158,11 +159,25 @@ int database::open_transactions_count() const
 }
 
 void
-database::add_listener(db_listener* listener)
+pgConnection::add_listener(db_listener* listener)
 {
   m_listeners.append(listener);
+  QString s = "LISTEN " + listener->notification_name();
+  QByteArray ba = s.toUtf8();
+  PQexec(m_pgConn, ba.constData());
 }
 
+void
+pgConnection::remove_listener(db_listener* listener)
+{
+  int i=m_listeners.indexOf(listener);
+  if (i>=0) {
+    QString s = "UNLISTEN " + listener->notification_name();
+    QByteArray ba = s.toUtf8();
+    PQexec(m_pgConn, ba.constData());
+    m_listeners.removeAt(i);
+  }
+}
 
 // static data members
 bool db_cnx::m_initialized;
@@ -191,6 +206,7 @@ db_cnx::dbname()
 {
   return m_dbname;
 }
+
 
 /* idle(): Return false if at least one non-primary connection is in
    use, meaning that we're probably running a query in a sub-thread.
@@ -246,9 +262,9 @@ db_cnx::db_cnx(bool other_thread)
       pgConnection* p;
       if (!(*it)->m_connected) {
 	p = new pgConnection;
+	DBG_PRINTF(3, "Opening a new database connection");
 	(*it)->m_db = p;
 	p->logon(m_connect_string.toLocal8Bit().constData());
-	DBG_PRINTF(3, "Opening a new database connection");
 	(*it)->m_connected=true;
       }
       (*it)->m_available=false;
@@ -301,16 +317,20 @@ pgConnection::logon(const char* conninfo)
     PGresult* res=PQexec(m_pgConn, "SELECT pg_encoding_to_char(encoding) FROM pg_database WHERE datname=current_database()");
     if (res && PQresultStatus(res)==PGRES_TUPLES_OK) {
       const char* enc=(const char*)PQgetvalue(res,0,0);
-      // pgsql versions under 8.1 return 'UNICODE', >=8.1 return 'UTF8'
+      // pgsql versions before 8.1 return 'UNICODE', >=8.1 return 'UTF8'
       // we keep UTF8
       if (!strcmp(enc,"UNICODE"))
 	enc="UTF8";
       set_encoding(enc);
     }
     if (res)
-      PQclear(res);  
+      PQclear(res);
   }
   PQexec(m_pgConn, "SET standard_conforming_strings=on");
+
+  if (this==&pgDb)
+    m_notifier = new pg_notifier(this);
+ 
   return 1;
 }
 
@@ -318,6 +338,9 @@ void
 pgConnection::logoff()
 {
   if (m_pgConn) {
+    if (m_notifier)
+      delete m_notifier;
+    
     PQfinish(m_pgConn);
     m_pgConn=NULL;
   }
@@ -326,6 +349,7 @@ pgConnection::logoff()
 bool
 pgConnection::reconnect()
 {
+  DBG_PRINTF(3, "pgConnection::reconnect()");
   if (m_pgConn) {
     PQreset(m_pgConn);
     if (PQstatus(m_pgConn)!=CONNECTION_OK)
@@ -334,8 +358,9 @@ pgConnection::reconnect()
   for (int i=0; i<m_listeners.size(); i++) {
     /* Reinitialize listeners. It is necessary if the db backend
        process went down, and if the socket changed */
-    m_listeners.at(i)->setup_notification();
-    m_listeners.at(i)->setup_db();
+    db_listener* l = m_listeners.at(i);
+    QString stmt = "LISTEN " + l->notification_name();
+    PQexec(m_pgConn, stmt.toUtf8().constData());
   }
   return true;
 }
@@ -347,8 +372,8 @@ pgConnection::ping()
     return false;
 
   if (open_transactions_count() > 0) {
-    /* We don't test the connection when inside a transaction because if the transaction
-       is in a unusable state, any SQL will fail */
+    /* We don't test the connection when inside a transaction because
+       if the transaction is in a unusable state, any SQL will fail */
     return true;
   }
 
@@ -527,6 +552,51 @@ QString
 db_cnx::escape_string_literal(const QString str)
 {
   return m_cnx->escape_string_literal(str);
+}
+
+pg_notifier::pg_notifier(pgConnection* cnx)
+{
+  m_pgcnx = cnx;
+  PGconn* c = cnx->connection();
+  int socket = PQsocket(c);
+  if (socket != -1) {
+    DBG_PRINTF(3, "Instantiate a new QSocketNotifier on fd=%d", socket);
+    m_socket_notifier = new QSocketNotifier(socket, QSocketNotifier::Read);
+    connect(m_socket_notifier, SIGNAL(activated(int)), this, SLOT(process_notification()));
+  }
+  else {
+    DBG_PRINTF(1, "could not get db socket: PQsocket returned -1");
+  }  
+}
+
+pg_notifier::~pg_notifier()
+{
+  if (m_socket_notifier)
+    delete m_socket_notifier;
+}
+
+void
+pg_notifier::process_notification()
+{
+  PGconn* c = m_pgcnx->connection();
+  DBG_PRINTF(3, "process_notification() on socket %d", PQsocket(c));
+  int r=PQconsumeInput(c);
+  if (r==0) {
+    DBG_PRINTF(3, "PQconsumeInput returns 0");
+  }
+  else {
+    PGnotify* n;
+    while ((n=PQnotifies(c))!=NULL) {
+      DBG_PRINTF(3, "received db notify for %s", n->relname);
+      for (int i=0; i<m_pgcnx->m_listeners.count(); i++) {
+	db_listener* l = m_pgcnx->m_listeners.at(i);
+	if (n->relname == l->notification_name()) {
+	  l->process_notification();
+	}
+      }
+      PQfreemem(n);
+    }
+  }
 }
 
 std::list<QString>

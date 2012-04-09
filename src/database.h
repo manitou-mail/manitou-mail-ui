@@ -31,10 +31,11 @@
 #include <libpq-fe.h>
 #include <libpq/libpq-fs.h>
 
-
 class db_cnx;
 class db_excpt;
 class db_listener;
+
+class QSocketNotifier;
 
 /*
   Top-level database class.
@@ -62,13 +63,13 @@ public:
   const QString& encoding() const {
     return m_encoding;
   }
-  void add_listener(db_listener* listener);
+  virtual void add_listener(db_listener*)=0;
+  virtual void remove_listener(db_listener*)=0;
 protected:
   int set_encoding(const QString encoding) {
     m_encoding=encoding;
     return 0;
   }
-  QList<db_listener*> m_listeners;
 private:
   /* Number of open transactions.
 
@@ -101,10 +102,25 @@ public:
   bool m_connected;
 };
 
+class pgConnection;
+
+class pg_notifier: public QObject
+{
+  Q_OBJECT
+public:
+  pg_notifier(pgConnection* cnx);
+  ~pg_notifier();
+private slots:
+  void process_notification();
+private:
+  QSocketNotifier* m_socket_notifier;
+  pgConnection* m_pgcnx;
+};
+
 class pgConnection : public database
 {
 public:
-  pgConnection(): m_pgConn(NULL) {}
+  pgConnection(): m_pgConn(NULL), m_notifier(NULL) {}
   virtual ~pgConnection() {
     logoff();
   }
@@ -116,10 +132,20 @@ public:
   PGconn* connection() {
     return m_pgConn;
   }
+  QList<db_listener*> m_listeners;
+  void add_listener(db_listener*);
+  void remove_listener(db_listener*);
 private:
   PGconn* m_pgConn;
+  pg_notifier* m_notifier;
 };
 
+
+/*
+  db_cnx is instantiated when there is a need to query the database
+  and destroyed when it's finished. It does not reconnect each time
+  but rather reuse connections previously that are maintained opened.
+*/
 class db_cnx
 {
 public:
@@ -157,7 +183,6 @@ public:
   QString escape_string_literal(const QString);
 private:
   pgConnection* m_cnx;
-//  QList<db_listener*> m_listeners;
   bool m_alerts_enabled;
 
   static std::list<db_cnx_elt*> m_cnx_list;

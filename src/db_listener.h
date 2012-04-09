@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -26,7 +26,6 @@ class db_listener;
 #include <QString>
 #include <QObject>
 
-class QSocketNotifier;
 
 /*
 A listener class for database events sent by NOTIFY.
@@ -42,14 +41,14 @@ class db_listener: public QObject
 public:
   db_listener(db_cnx& db, const QString notif_name);
   virtual ~db_listener();
-  bool setup_notification();
-  bool setup_db();
-private slots:
+  const QString notification_name() const {
+    return m_notif_name;
+  }
+public slots:
   void process_notification();
 signals:
   void notified();
 private:
-  QSocketNotifier* m_socket_notifier;
   QString m_notif_name;
   database* m_db;
 };
