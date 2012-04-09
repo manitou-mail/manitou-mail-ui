@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -329,7 +329,7 @@ msgs_filter::parse_search_string(QString s, QStringList& words,
   uint len=s.length();
   for (uint i=0; i<len; i++) {
     QChar c=s.at(i);
-    DBG_PRINTF(5, "p i=%u, char=%c, state=%d", i, c.toLatin1(), state);
+    DBG_PRINTF(7, "p i=%u, char=%c, state=%d", i, c.toLatin1(), state);
     if (c==QChar('"')) {
       if (state==10) state=40;
       else if (state==40) {
@@ -347,7 +347,7 @@ msgs_filter::parse_search_string(QString s, QStringList& words,
       // next character is quoted
       state=50;
     }
-    else if (!(c.isLetterOrNumber() || c=='_')) {
+    else if (!(c.isLetterOrNumber() || c=='_' || c=='.' || c=='@' || c=='-')) {
       // delimiter
       if (state==10 || state==40 || state==50) {
 	if (!curr_word.isEmpty()) {
@@ -360,7 +360,7 @@ msgs_filter::parse_search_string(QString s, QStringList& words,
       }
     }
     else {
-      // non-delimiter (word constituant)
+      // non-delimiter (potential word constituant)
       curr_word.append(c);	// A4
       if (state==40 || state==50 || state==60)
 	curr_substr.append(c); // A6
@@ -372,6 +372,7 @@ msgs_filter::parse_search_string(QString s, QStringList& words,
   }
   if (!curr_word.isEmpty()) {
     words.append(curr_word);
+    DBG_PRINTF(5, "word parsed=%s", curr_word.toLocal8Bit().constData());
   }
   return 0;
 }
