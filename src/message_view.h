@@ -59,7 +59,7 @@ public:
   QString selected_text() const;
   int content_type_shown() const;
   QString selected_html_fragment();
-  QString body_as_text() const;
+  QString body_as_text();
   void prepend_body_fragment(const QString& fragment);
 protected:
   void keyPressEvent(QKeyEvent*);

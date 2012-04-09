@@ -151,7 +151,7 @@ void
 message_view::load_finished(bool ok)
 {
   if (ok) {
-    DBG_PRINTF(3, "load_finished");
+    DBG_PRINTF(5, "load_finished");
     m_bodyv->set_loaded(true);
     if (!m_highlight_words.empty()) {
       m_bodyv->highlight_terms(m_highlight_words);
@@ -370,6 +370,8 @@ message_view::display_body(const display_prefs& prefs, int preferred_format)
     QString b2 = disp.text_body_to_html(body_text, prefs);
     b2.prepend(h);
     b2.prepend("<html><body>");
+    b2.prepend("<div id=\"manitou-body\">");
+    b2.append("</div>");
     b2.append("</body></html>");
     set_html_contents(b2, 1);
     // partial load?
@@ -385,6 +387,8 @@ message_view::display_body(const display_prefs& prefs, int preferred_format)
     }
   }
   else {
+    body_html.prepend("<div id=\"manitou-body\">");
+    body_html.append("</div>");
     set_html_contents(body_html, 2);
     prepend_body_fragment(h);
     if (m_parent)
@@ -503,10 +507,10 @@ message_view::selected_html_fragment()
 {
   // TODO: check for the selection
 #if QT_VERSION<0x040600
-  QVariant res = m_bodyv->page()->mainFrame()->evaluateJavaScript("document.getElementsByTagName('body')[0].innerHTML");
+  QVariant res = m_bodyv->page()->mainFrame()->evaluateJavaScript("document.getElementsById('manitou-body').innerHTML");
   return res.toString();
 #else
-  QWebElement elt = m_bodyv->page()->mainFrame()->findFirstElement("body");
+  QWebElement elt = m_bodyv->page()->mainFrame()->findFirstElement("div#manitou-body");
   if (!elt.isNull()) {
     return elt.toOuterXml();
   }
@@ -516,7 +520,17 @@ message_view::selected_html_fragment()
 }
 
 QString
-message_view::body_as_text() const
+message_view::body_as_text()
 {
-  return m_bodyv->page()->mainFrame()->toPlainText();
+#if QT_VERSION<0x040600
+  QVariant res = m_bodyv->page()->mainFrame()->evaluateJavaScript("document.getElementsById('manitou-body').innerHTML");
+  return res.toString();
+#else
+  QWebElement elt = m_bodyv->page()->mainFrame()->findFirstElement("div#manitou-body");
+  if (!elt.isNull()) {
+    return elt.toPlainText();
+  }
+  else
+    return "";
+#endif
 }
