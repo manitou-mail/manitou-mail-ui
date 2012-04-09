@@ -54,7 +54,8 @@ MOC_OBJS = main.moc.o msg_list_window.moc.o newmailwidget.moc.o tagsbox.moc.o \
 	db_listener.moc.o msg_status_cache.moc.o mime_msg_viewer.moc.o \
 	mailing_wizard.moc.o mail_template.moc.o composer_widgets.moc.o \
 	mailing_window.moc.o mailing_viewer.moc.o filter_action_editor.moc.o \
-	filter_expr_editor.moc.o filter_results_window.moc.o
+	filter_expr_editor.moc.o filter_results_window.moc.o mbox_file.moc.o \
+	database.moc.o
 
 manitou_DEPENDENCIES = @EXTRAOBJ@ $(MOC_OBJS) $(XFACE)
 
