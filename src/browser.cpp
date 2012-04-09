@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2008 Daniel Vérité
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -19,9 +19,11 @@
 
 #include "browser.h"
 #include "main.h"
+#include "app_config.h"
 #include <QMessageBox>
 #include <QDesktopServices>
 #include <QUrl>
+#include <QProcess>
 
 
 browser::browser()
@@ -42,8 +44,29 @@ browser::open_url(const QString& u)
     url.prepend("http://");
   }
 
-  if (!QDesktopServices::openUrl(QUrl(url))) {
-    QMessageBox::critical(NULL, tr("Error"), tr("Unable to open URL"));
+  QString browser = get_config().get_string("browser");
+  if (browser.isEmpty()) {
+    if (!QDesktopServices::openUrl(QUrl(url))) {
+      QMessageBox::critical(NULL, tr("Error"), tr("Unable to open URL"));
+    }
+  }
+  else {
+    // a specific browser has been set in the preferences
+    int pos = browser.indexOf("$1");
+    QStringList args;
+    QString appname;
+    if (pos>=0) {
+      browser.replace("$1", url);
+      args = browser.split(" ", QString::SkipEmptyParts);
+      appname = args.takeFirst();
+    }
+    else {
+      args << url;
+      appname=browser;
+    }
+    QProcess* p = new QProcess;
+    DBG_PRINTF(4, "launch %s args=%s", appname.toLocal8Bit().constData(), args.join("\n").toLocal8Bit().constData());
+    p->start(appname, args);
   }
 }
 
