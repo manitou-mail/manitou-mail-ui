@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2007 Daniel Vérité
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -64,8 +64,8 @@ sql_query::add_clause(const QString field, const QString value, const char *cmp)
     dest=local_value;
   else
     dest=(char*)malloc(1+value_len*2);
-  QByteArray qba = value.toLatin1();
-  PQescapeString(dest, qba.constData(), value_len); // FIXME ENCODING
+  QByteArray qba = value.toUtf8();
+  PQescapeString(dest, qba.constData(), value_len);
   m_where += field + QString(cmp) + QString("'") + QString(dest) + QString("'");
   if (dest!=local_value)
     free(dest);
