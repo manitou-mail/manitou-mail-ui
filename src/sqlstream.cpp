@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -497,6 +497,17 @@ sql_stream::operator>>(float& f)
   check_eof();
   char* endptr;
   f = strtof(PQgetvalue(m_pgRes, m_rowNumber, m_colNumber), &endptr);
+  m_val_null = PQgetisnull(m_pgRes, m_rowNumber, m_colNumber);
+  next_result();
+  return *this;
+}
+
+sql_stream&
+sql_stream::operator>>(double& f)
+{
+  check_eof();
+  char* endptr;
+  f = strtod(PQgetvalue(m_pgRes, m_rowNumber, m_colNumber), &endptr);
   m_val_null = PQgetisnull(m_pgRes, m_rowNumber, m_colNumber);
   next_result();
   return *this;

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -81,6 +81,7 @@ public:
   sql_stream& operator>>(char*);
   sql_stream& operator>>(char&);
   sql_stream& operator>>(float&);
+  sql_stream& operator>>(double&);
   sql_stream& operator>>(QString&);
 
   void print();
