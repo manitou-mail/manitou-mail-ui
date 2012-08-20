@@ -83,8 +83,8 @@ struct prefs_dialog::preferences_widgets {
 
   // display tab
   button_group* w_show_tags;
+  button_group* w_messages_order;
   button_group* w_display_threaded;
-  button_group* w_show_header;
   button_group* w_display_sender;
   button_group* w_clickable_urls;
   button_group* w_preferred_format;
@@ -492,6 +492,16 @@ prefs_dialog::display_widget()
   QGridLayout* grid = new QGridLayout(w1);
   int row=0;
   {
+    QLabel* l=new QLabel(tr("Messages order"),w1);
+    button_group* g=new button_group(QBoxLayout::LeftToRight, w1);
+    g->addButton(new QRadioButton(tr("Newest first")), 1);
+    g->addButton(new QRadioButton(tr("Oldest first")), 0);
+    grid->addWidget(l, row, 0);
+    grid->addWidget(g, row, 1);
+    m_widgets->w_messages_order=g;
+  }
+  row++;
+  {
     QLabel* l=new QLabel(tr("Show tags panel"),w1);
     button_group* g=new button_group(QBoxLayout::LeftToRight, w1);
     QRadioButton* yes=new QRadioButton(tr("Yes"));
@@ -501,20 +511,6 @@ prefs_dialog::display_widget()
     grid->addWidget(l, row, 0);
     grid->addWidget(g, row, 1);
     m_widgets->w_show_tags=g;
-  }
-  row++;
-  {
-    QLabel* l=new QLabel(tr("Show headers"),w1);
-    button_group* g=new button_group(QBoxLayout::LeftToRight, w1);
-    QRadioButton* hn=new QRadioButton(tr("None"));
-    QRadioButton* hm=new QRadioButton(tr("Most"));
-    QRadioButton* ha=new QRadioButton(tr("All"));
-    g->addButton(hn, 0);
-    g->addButton(hm, 1);
-    g->addButton(ha, 2);
-    grid->addWidget(l, row, 0);
-    grid->addWidget(g, row, 1);
-    m_widgets->w_show_header=g;
   }
   row++;
   {
@@ -856,17 +852,11 @@ prefs_dialog::conf_to_widgets(app_config& conf)
     break;
   }
 
-  switch(conf.get_number("show_headers_level")) {
-  case 0:
-    m_widgets->w_show_header->setButton(0);
-    break;
-  case 1:
-    m_widgets->w_show_header->setButton(1);
-    break;
-  case 2:
-    m_widgets->w_show_header->setButton(2);
-    break;
-  }
+  QString mo = conf.get_string("messages_order");
+  if (mo=="oldest_first")
+    m_widgets->w_messages_order->setButton(0);
+  else // newest first
+    m_widgets->w_messages_order->setButton(1);
 
   QString dspl_as=conf.get_string("sender_displayed_as");
   if (dspl_as=="name")
@@ -964,12 +954,16 @@ prefs_dialog::widgets_to_conf(app_config& conf)
   else
     conf.set_string("date_format", m_widgets->w_date_format->currentText());
 
+
+  if (m_widgets->w_messages_order->selected_id()==1)
+    conf.set_string("messages_order", "newest_first");
+  else if (m_widgets->w_messages_order->selected_id()==0)
+    conf.set_string("messages_order", "oldest_first");
+
   if (m_widgets->w_show_tags->selected_id()==1)
     conf.set_number("show_tags", 0);
   else if (m_widgets->w_show_tags->selected_id()==0)
     conf.set_number("show_tags", 1);
-
-  conf.set_number("show_headers_level", m_widgets->w_show_header->selected_id());
 
   switch (m_widgets->w_display_sender->selected_id()) {
   case 1:

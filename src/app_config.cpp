@@ -346,3 +346,13 @@ app_config::get_date_format_code()
     return 3;
   return 3;
 }
+
+Qt::SortOrder
+app_config::get_msgs_sort_order() const
+{
+  QString d = get_config().get_string("messages_order");
+  if (d=="oldest_first")
+    return Qt::AscendingOrder;
+  else
+    return Qt::DescendingOrder;
+}

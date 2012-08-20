@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -816,6 +816,8 @@ mail_listview::remove_msg(mail_msg* msg, bool select_next)
 
   mail_item_model* model = this->model();
   QStandardItem* item = model->item_from_id(msg->get_id());
+  if (!item)
+    return;
 
   QStandardItem* nearest = NULL;
   QSet<QStandardItem*> expanded_set;

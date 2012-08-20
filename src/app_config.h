@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -89,6 +89,7 @@ struct ltstr
   // for european date format or 2 for US format
   int get_date_format_code();
 
+  Qt::SortOrder get_msgs_sort_order() const;
   static bool get_all_conf_names(QStringList*);
 
 protected:

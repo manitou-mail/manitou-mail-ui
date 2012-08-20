@@ -62,7 +62,7 @@ msgs_filter::msgs_filter()
 void
 msgs_filter::init()
 {
-  m_order=1;
+  m_order=(get_config().get_msgs_sort_order()==Qt::AscendingOrder)?1:-1;
   m_mailId=0;
   m_tag_id=0;
   m_thread_id=0;
