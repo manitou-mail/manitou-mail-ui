@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -83,4 +83,10 @@ void
 message_port::broadcast_list_refresh_request()
 {
   emit list_refresh_request();
+}
+
+void
+message_port::broadcast_mail_deleted(mail_id_t id)
+{
+  emit mail_deleted(id);
 }

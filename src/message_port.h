@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -39,10 +39,12 @@ public slots:
   void tags_updated();
   void broadcast_new_mail(mail_id_t);
   void broadcast_list_refresh_request();
+  void broadcast_mail_deleted(mail_id_t);
 signals:
   void tags_restructured();
   void new_mail_imported(mail_id_t);
   void list_refresh_request();
+  void mail_deleted(mail_id_t);
 };
 
 #endif

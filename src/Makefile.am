@@ -37,7 +37,9 @@ manitou_SOURCES = main.cpp main.h msg_list_window.cpp db.cpp \
  text_merger.cpp text_merger.h mailing_window.cpp mailing_window.h \
  mailing_viewer.h mailing_viewer.cpp filter_action_editor.h filter_action_editor.cpp \
  filter_expr_editor.cpp filter_expr_editor.h filter_eval.cpp filter_eval.h \
- filter_results_window.cpp filter_results_window.h log_window.h log_window.cpp
+ filter_results_window.cpp filter_results_window.h log_window.h log_window.cpp \
+ mbox_file.cpp mbox_file.h mbox_import_wizard.h mbox_import_wizard.cpp \
+ import_window.cpp import_window.h
 
 EXTRA_manitou_SOURCES = getopt.cpp mygetopt.h getopt1.cpp
 
@@ -55,7 +57,7 @@ MOC_OBJS = main.moc.o msg_list_window.moc.o newmailwidget.moc.o tagsbox.moc.o \
 	mailing_wizard.moc.o mail_template.moc.o composer_widgets.moc.o \
 	mailing_window.moc.o mailing_viewer.moc.o filter_action_editor.moc.o \
 	filter_expr_editor.moc.o filter_results_window.moc.o mbox_file.moc.o \
-	database.moc.o
+	database.moc.o mbox_import_wizard.moc.o import_window.moc.o
 
 manitou_DEPENDENCIES = @EXTRAOBJ@ $(MOC_OBJS) $(XFACE)
 

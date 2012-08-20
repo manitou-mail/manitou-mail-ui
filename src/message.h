@@ -203,6 +203,7 @@ public:
   //  void streamout_mbox (std::ofstream&);
 
   typedef const enum {
+    statusNew=0,
     statusRead=1,
     statusReplied=4,
     statusFwded=8,

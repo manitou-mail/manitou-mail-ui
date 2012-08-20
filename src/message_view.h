@@ -53,7 +53,6 @@ public:
   void highlight_terms(const std::list<searched_text>&);
 
   QSize sizeHint() const;
-  void reset_state();
   void display_body(const display_prefs& prefs, int preferred_format=0);
   void set_html_contents(const QString& body, int type);
   QString selected_text() const;
@@ -81,6 +80,7 @@ private slots:
   void load_finished(bool);
   void complete_body_load();
 private:
+  void reset_state();
   QMap<QString,bool> m_enabled_commands;
   QString command_links();
   msg_list_window* m_parent;

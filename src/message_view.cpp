@@ -171,7 +171,7 @@ message_view::reset_state()
   m_ext_contents=false;
   m_zoom_factor=1.0;
   m_bodyv->setTextSizeMultiplier(m_zoom_factor);
-  m_highlight_words.clear();
+  //  m_highlight_words.clear();
 }
 
 // content_type is 1 if contents come from text part, 2 if html part

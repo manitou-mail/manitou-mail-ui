@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -432,6 +432,9 @@ msg_list_window::init_menu()
   m_menu_actions[me_File_Mailing] =
     m_pMenuFile->addAction(ico_mail_merge, tr("Mailings"), this, SLOT(start_mailing()));
 
+  m_menu_actions[me_File_Import_Mailbox] =
+    m_pMenuFile->addAction(UI_ICON(ICON16_IMPORT_MBOX), tr("Import mailbox"), this, SLOT(import_mailbox()));
+
   m_pMenuFile->addSeparator();
 
   m_menu_actions[me_File_Quit] =
@@ -848,7 +851,7 @@ msg_list_window::msg_list_postprocess()
   // sort by message date
   DBG_PRINTF(8, "start sort");
   m_qlist->setSortingEnabled(true);
-  m_qlist->sortByColumn(mail_item_model::column_date, Qt::AscendingOrder);
+  m_qlist->sortByColumn(mail_item_model::column_date, get_config().get_msgs_sort_order());
   DBG_PRINTF(8, "end sort");
   m_qlist->header()->setSortIndicatorShown(true);
   m_qlist->setRootIsDecorated(display_vars.m_threaded);
@@ -1558,6 +1561,13 @@ msg_list_window::open_global_notepad()
     n->activateWindow();
     n->raise();
   }
+}
+
+void
+msg_list_window::import_mailbox()
+{
+  extern void open_import_window();
+  open_import_window();
 }
 
 void
