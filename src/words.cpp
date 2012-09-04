@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -158,14 +158,18 @@ db_word::fetch_vectors()
 QString
 db_word::format_db_string_array(const QStringList& words, db_cnx& db)
 {
-  QString words_pg_array = "ARRAY[";
+  QString txt = "ARRAY[";
   for (QStringList::const_iterator it = words.begin(); it!=words.end(); ++it) {
     if (it!=words.begin())
-      words_pg_array.append(',');
-    words_pg_array.append("'" + db.escape_string_literal(*it) + "'");
+      txt.append(',');
+    txt.append("'" + db.escape_string_literal(*it) + "'");
   }
-  words_pg_array.append(']');
-  return words_pg_array;
+  txt.append(']');
+  /* For an empty array, add a cast to avoid the postgres resolve error:
+     "cannot determine type of empty array" */
+  if (words.isEmpty())
+    txt.append("::text[]");
+  return txt;
 }
 
 

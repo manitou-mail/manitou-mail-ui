@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -21,7 +21,7 @@
 #define INC_WORDS_H
 
 #include <map>
-#include <qstring.h>
+#include <QString>
 #include "bitvector.h"
 #include "dbtypes.h"
 

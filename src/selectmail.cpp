@@ -17,6 +17,16 @@
    Boston, MA 02111-1307, USA.
 */
 
+/*
+Partitioned wordsearch is currently not compatible with words
+exclusion so it's #undefined. It's not clear how much speed
+gain it provides, anyway. It may be reinstated in the future with
+more sophisticated code to support it, if more testing shows that it's
+worth the trouble.
+
+#define PARTITIONED_WORDSEARCH 1
+*/
+
 #include "main.h"
 #include "selectmail.h"
 #include "msg_list_window.h"
@@ -85,6 +95,7 @@ msgs_filter::init()
   m_date_max=QDate();
   //  m_word=QString::null;
   m_words.clear();
+  m_exclude_words.clear();
   m_in_trash=false;
   m_auto_refresh=false;
   m_min_prio = max_possible_prio+1;
@@ -320,7 +331,9 @@ fetch_thread::release()
 }
 
 int
-msgs_filter::parse_search_string(QString s, QStringList& words,
+msgs_filter::parse_search_string(QString s,
+				 QStringList& words,
+				 QStringList& excl_words,
 				 QStringList& substrs)
 {
   int state=10;
@@ -351,7 +364,10 @@ msgs_filter::parse_search_string(QString s, QStringList& words,
       // delimiter
       if (state==10 || state==40 || state==50) {
 	if (!curr_word.isEmpty()) {
-	  words.append(curr_word);
+	  if (curr_word.at(0)=='-')
+	    excl_words.append(curr_word.mid(1));
+	  else
+	    words.append(curr_word);
 	  curr_word.truncate(0);
 	}
       }
@@ -371,8 +387,10 @@ msgs_filter::parse_search_string(QString s, QStringList& words,
     DBG_PRINTF(3, "parse error: state=%d", state);
   }
   if (!curr_word.isEmpty()) {
-    words.append(curr_word);
-    DBG_PRINTF(5, "word parsed=%s", curr_word.toLocal8Bit().constData());
+    if (curr_word.at(0)=='-')
+      excl_words.append(curr_word.mid(1));
+    else
+      words.append(curr_word);
   }
   return 0;
 }
@@ -533,7 +551,8 @@ msgs_filter::build_query(sql_query& q, bool fetch_more/*=false*/)
       q.add_clause(QString("strpos(b.bodytext,'") + m_body_substring + QString("')>0 and m.mail_id=b.mail_id"));
     }
 
-    if (!m_words.empty()) {
+    if (!m_words.empty() || !m_exclude_words.empty()) {
+#ifdef PARTITIONED_WORDSEARCH
       m_psearch.get_index_parts(m_words);
       if (!m_psearch.m_parts.isEmpty()) {
 	QString words_array = db_word::format_db_string_array(m_words, db);
@@ -541,6 +560,11 @@ msgs_filter::build_query(sql_query& q, bool fetch_more/*=false*/)
       }
       else
 	q.add_clause("m.mail_id=0");
+#else
+      QString words_incl = db_word::format_db_string_array(m_words, db);
+      QString words_excl = db_word::format_db_string_array(m_exclude_words, db);
+      q.add_clause(QString("m.mail_id in (select * from wordsearch(%1,%2))").arg(words_incl).arg(words_excl));
+#endif
     }
 
     if (!m_substrs.empty()) {
@@ -615,7 +639,11 @@ msgs_filter::build_query(sql_query& q, bool fetch_more/*=false*/)
     else {
       // wordsearch has a different limit and sort
       // currently: none
+#ifdef PARTITIONED_WORDSEARCH
       QString sFinal="ORDER BY to_char(msg_date,'YYYYMMDDHH24MISS')||m.mail_id::text DESC";
+#else
+      QString sFinal="ORDER BY to_char(msg_date,'YYYYMMDDHH24MISS') DESC, m.mail_id DESC";
+#endif
       q.add_final(sFinal);
     }
 

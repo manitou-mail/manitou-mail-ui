@@ -94,7 +94,7 @@ msg_list_window::search_db()
   msgs_filter f;
   //  f.m_max_results=200;
   f.set_date_order(-1);	// latest results first
-  f.parse_search_string(txt, f.m_words, f.m_substrs);
+  f.parse_search_string(txt, f.m_words, f.m_exclude_words, f.m_substrs);
   //  DBG_PRINTF(3, "words=(%s)\n", f.m_words.join("/").latin1());
   //  DBG_PRINTF(3, "substrs=(%s)\n", f.m_substrs.join("/").latin1());
   //  f.m_words = QStringList::split(" ", txt);

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -104,7 +104,7 @@ public:
   bool has_more_results() const {
     return m_has_more_results;
   }
-  int parse_search_string(QString s, QStringList& words, QStringList& substrs);
+  int parse_search_string(QString s, QStringList& words, QStringList& excl_words, QStringList& substrs);
 
   // to do some pre-processing before the fetch
   void preprocess_fetch(fetch_thread&);
@@ -133,6 +133,7 @@ public:
   QDate m_date_max;
   //  QString m_word;
   QStringList m_words;		// full-text search: words to find
+  QStringList m_exclude_words;  // full-text search: words to exclude
   QStringList m_substrs;	// full-text search: substrings to find
   uint m_thread_id;
 
