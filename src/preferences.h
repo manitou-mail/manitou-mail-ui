@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -23,6 +23,7 @@
 #include "main.h"
 #include <QDialog>
 #include <QList>
+#include <QLabel>
 #include "identities.h"
 #include "app_config.h"
 
@@ -34,6 +35,7 @@ class prefs_dialog : public QDialog
 {
   Q_OBJECT
 public:
+  class sub_label;
   prefs_dialog(QWidget* parent=0);
   ~prefs_dialog();
   void conf_to_widgets(app_config&);
@@ -68,6 +70,7 @@ private:
   QWidget* fetching_widget();
   QWidget* mimetypes_widget();
   QWidget* composer_widget();
+  QWidget* search_widget();
   QString help_topic(QWidget*);
   void ask_directory(QLineEdit*);
   // the pages
@@ -77,6 +80,7 @@ private:
   QWidget* m_mimetypes_page;
   QWidget* m_fetching_page;
   QWidget* m_composer_page;
+  QWidget* m_search_page;
 
   // the identities stuff
   identities m_ids_map;
@@ -93,6 +97,12 @@ private:
   void load_viewers();
   bool update_viewers_db();
   bool m_viewers_updated;
+};
+
+class prefs_dialog::sub_label : public QLabel
+{
+public:
+  sub_label(const QString txt);
 };
 
 class viewer_edit_dialog : public QDialog

@@ -49,7 +49,8 @@ public:
   }
 
   static QString format_db_string_array(const QStringList& words, db_cnx& db);
-
+  static QString unaccent(const QString);
+  static void unaccent(QStringList&);
 private:
   // the word
   QString m_text;
@@ -66,6 +67,7 @@ private:
 //
 // Results of word searches combined by logical operators
 //
+/* Currently, this class is not used due to this logic having moved server-side */
 class wordsearch_resultset
 {
 public:

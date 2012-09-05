@@ -60,7 +60,6 @@ worth the trouble.
 #include <QKeyEvent>
 #include <QHBoxLayout>
 
-
 const int
 msgs_filter::max_possible_prio=32767;
 
@@ -94,8 +93,8 @@ msgs_filter::init()
   m_date_min=QDate();
   m_date_max=QDate();
   //  m_word=QString::null;
-  m_words.clear();
-  m_exclude_words.clear();
+  m_fts.m_words.clear();
+  m_fts.m_exclude_words.clear();
   m_in_trash=false;
   m_auto_refresh=false;
   m_min_prio = max_possible_prio+1;
@@ -331,14 +330,12 @@ fetch_thread::release()
 }
 
 int
-msgs_filter::parse_search_string(QString s,
-				 QStringList& words,
-				 QStringList& excl_words,
-				 QStringList& substrs)
+msgs_filter::parse_search_string(QString s, fts_options& opt)
 {
   int state=10;
   QString curr_word;
   QString curr_substr;
+  QString curr_op, curr_opval;
   uint len=s.length();
   for (uint i=0; i<len; i++) {
     QChar c=s.at(i);
@@ -347,14 +344,27 @@ msgs_filter::parse_search_string(QString s,
       if (state==10) state=40;
       else if (state==40) {
 	if (!curr_substr.isEmpty())
-	  substrs.append(curr_substr);
+	  opt.m_substrs.append(curr_substr);
 	state=10;
       }
-      else if (state==50 || state==60) { // A5
+      else if (state==50) {
 	curr_word.append(c);
 	curr_substr.append(c);	
       }
-      if (state==60) state=40;
+    }
+    else if (state==10 && c==QChar(':')) {
+      state=20; // search option expressed as optname:optvalue
+      curr_op=curr_word;
+      curr_opval.truncate(0);
+      curr_word.truncate(0);
+    }
+    else if (state==20) {
+      if (c==' ') {
+	opt.m_operators.insert(curr_op, curr_opval);
+	state=10;
+      }
+      else
+	curr_opval.append(c); // TODO: better fail if c is not LetterOrNumber
     }
     else if (state==40 && c==QChar('\\')) {
       // next character is quoted
@@ -365,9 +375,9 @@ msgs_filter::parse_search_string(QString s,
       if (state==10 || state==40 || state==50) {
 	if (!curr_word.isEmpty()) {
 	  if (curr_word.at(0)=='-')
-	    excl_words.append(curr_word.mid(1));
+	    opt.m_exclude_words.append(curr_word.mid(1));
 	  else
-	    words.append(curr_word);
+	    opt.m_words.append(curr_word);
 	  curr_word.truncate(0);
 	}
       }
@@ -378,20 +388,23 @@ msgs_filter::parse_search_string(QString s,
     else {
       // non-delimiter (potential word constituant)
       curr_word.append(c);	// A4
-      if (state==40 || state==50 || state==60)
+      if (state==40 || state==50)
 	curr_substr.append(c); // A6
-      if (state==60) state=40;
     }
   }
-  if (state!=10) {
+  if (state!=10 && state!=20) {
     DBG_PRINTF(3, "parse error: state=%d", state);
   }
+  if (state==20)
+    opt.m_operators.insert(curr_op, curr_opval);
+
   if (!curr_word.isEmpty()) {
     if (curr_word.at(0)=='-')
-      excl_words.append(curr_word.mid(1));
+      opt.m_exclude_words.append(curr_word.mid(1));
     else
-      words.append(curr_word);
+      opt.m_words.append(curr_word);
   }
+
   return 0;
 }
 
@@ -551,27 +564,34 @@ msgs_filter::build_query(sql_query& q, bool fetch_more/*=false*/)
       q.add_clause(QString("strpos(b.bodytext,'") + m_body_substring + QString("')>0 and m.mail_id=b.mail_id"));
     }
 
-    if (!m_words.empty() || !m_exclude_words.empty()) {
+    if (!m_fts.m_words.empty() || !m_fts.m_exclude_words.empty()) {
 #ifdef PARTITIONED_WORDSEARCH
-      m_psearch.get_index_parts(m_words);
+      m_psearch.get_index_parts(m_fts.m_words);
       if (!m_psearch.m_parts.isEmpty()) {
-	QString words_array = db_word::format_db_string_array(m_words, db);
-	q.add_clause(QString("m.mail_id in (select * from wordsearch_part(%1,:part_no))").arg(words_array));
+	QString words_incl = db_word::format_db_string_array(m_fts.m_words, db);
+	q.add_clause(QString("m.mail_id in (select * from wordsearch_part(%1,:part_no))").arg(words_incl));
       }
       else
 	q.add_clause("m.mail_id=0");
 #else
-      QString words_incl = db_word::format_db_string_array(m_words, db);
-      QString words_excl = db_word::format_db_string_array(m_exclude_words, db);
+      if (get_config().get_string("search/accents")=="unaccented" ||
+	  m_fts.m_operators["accents"]=="i" ||
+	  m_fts.m_operators["accents"]=="insensitive")
+      {
+	db_word::unaccent(m_fts.m_words);
+	db_word::unaccent(m_fts.m_exclude_words);
+      }
+      QString words_incl = db_word::format_db_string_array(m_fts.m_words, db);
+      QString words_excl = db_word::format_db_string_array(m_fts.m_exclude_words, db);
       q.add_clause(QString("m.mail_id in (select * from wordsearch(%1,%2))").arg(words_incl).arg(words_excl));
 #endif
     }
 
-    if (!m_substrs.empty()) {
-      QStringList::Iterator it = m_substrs.begin();
-      if (it!=m_substrs.end())
+    if (!m_fts.m_substrs.empty()) {
+      QStringList::Iterator it = m_fts.m_substrs.begin();
+      if (it!=m_fts.m_substrs.end())
 	q.add_table("body b");
-      for (; it!=m_substrs.end(); ++it) {
+      for (; it!=m_fts.m_substrs.end(); ++it) {
 	q.add_clause("bodytext ilike '" + quote_like_arg(*it) + "' AND m.mail_id=b.mail_id");
       }
     }
@@ -622,7 +642,7 @@ msgs_filter::build_query(sql_query& q, bool fetch_more/*=false*/)
       }
     }
 
-    if (m_words.isEmpty()) {
+    if (m_fts.m_words.isEmpty()) {
       QString sFinal="ORDER BY msg_date";
       if (m_order<0)
 	sFinal+=" DESC";

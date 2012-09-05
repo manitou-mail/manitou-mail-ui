@@ -116,6 +116,9 @@ struct prefs_dialog::preferences_widgets {
   // composer tab
   button_group* w_composer_format_new_mail;
   button_group* w_composer_format_replies;
+
+  // search tab
+  button_group* w_search_accents;
 };
 
 viewer_edit_dialog::viewer_edit_dialog(QWidget*parent, const QString& mt, const QString& prog)
@@ -484,6 +487,44 @@ prefs_dialog::composer_widget()
   return w1;
 }
 
+prefs_dialog::sub_label::sub_label(const QString text)
+{
+  setTextFormat(Qt::RichText);
+  setText(text);
+  QFont f = font();
+  f.setPointSize((f.pointSize()*8)/10);
+  setFont(f);
+}
+
+QWidget*
+prefs_dialog::search_widget()
+{
+  QWidget* w1 = new QWidget(this);
+  CHECK_PTR(w1);
+  QVBoxLayout* top_layout = new QVBoxLayout(w1);
+  QGridLayout* grid = new QGridLayout();
+  top_layout->addLayout(grid);
+  int row = 0;
+  {
+    QLabel* l=new QLabel(tr("Accents & diacritic marks"),w1);
+    button_group* g = new button_group(QBoxLayout::TopToBottom, w1);
+    QRadioButton* b1 = new QRadioButton(tr("Search with accents"));
+    QRadioButton* b2 = new QRadioButton(tr("Search without accents"));
+    g->addButton(b1, 0, "accented");
+    g->addButton(b2, 1, "unaccented");
+    grid->addWidget(l, row, 0);
+    grid->addWidget(g, row, 1);
+    m_widgets->w_search_accents = g;
+  }
+  row++;
+  {
+    sub_label* l = new sub_label(tr("This can be overriden with the <i>accents:insensitive</i> or <i>accents:sensitive</i> operators in the search box."));    
+    grid->addWidget(l, row, 0, 1, -1);
+  }
+  top_layout->addStretch(1);
+  return w1;
+}
+
 QWidget*
 prefs_dialog::display_widget()
 {
@@ -740,6 +781,9 @@ prefs_dialog::prefs_dialog(QWidget* parent): QDialog(parent)
   m_composer_page = composer_widget();
   m_tabw->addTab(m_composer_page, tr("Composer"));
 
+  m_search_page = search_widget();
+  m_tabw->addTab(m_search_page, tr("Search"));
+
   m_paths_page = paths_widget();
   m_tabw->addTab(m_paths_page, tr("Paths"));
 
@@ -942,6 +986,16 @@ prefs_dialog::conf_to_widgets(app_config& conf)
 	m_widgets->w_composer_format_replies->setButton(id);
     }
   }
+
+  // search
+  {
+    QString a = conf.get_string("search/accents");
+    if (!a.isEmpty()) {
+      int id = m_widgets->w_search_accents->code_to_id(a);
+      if (id >= 0)
+	m_widgets->w_search_accents->setButton(id);
+    }
+  }
 }
 
 void
@@ -1046,6 +1100,12 @@ prefs_dialog::widgets_to_conf(app_config& conf)
   if (m_widgets->w_composer_format_replies->selected()) {
     conf.set_string("composer/format_for_replies",
 		    m_widgets->w_composer_format_replies->selected_code());
+  }
+
+  // search
+  if (m_widgets->w_search_accents->selected()) {
+    conf.set_string("search/accents",
+		    m_widgets->w_search_accents->selected_code());
   }
 }
 

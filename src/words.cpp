@@ -154,6 +154,31 @@ db_word::fetch_vectors()
   return true;
 }
 
+//static
+QString
+db_word::unaccent(const QString s)
+{
+  QString s2 = s.normalized(QString::NormalizationForm_KD);
+  QString out;
+  for (int i=0, j=s2.length(); i<j; i++) {
+    // strip diacritic marks
+    if (s2.at(i).category()!=QChar::Mark_NonSpacing &&
+	s2.at(i).category()!=QChar::Mark_SpacingCombining) {
+      out.append(s2.at(i));
+    }
+  }
+  return out;
+}
+
+//static
+void
+db_word::unaccent(QStringList& s)
+{
+  for (QStringList::iterator it = s.begin(); it!=s.end(); ++it) {
+    *it = unaccent(*it);
+  }
+}
+
 // static
 QString
 db_word::format_db_string_array(const QStringList& words, db_cnx& db)

@@ -26,6 +26,7 @@
 #include <QStringList>
 #include <QDateTime>
 #include <QTime>
+#include <QMap>
 
 #include <vector>
 #include "db.h"
@@ -75,6 +76,17 @@ public:
   bool m_fetch_more;
 };
 
+// Options from the searchbox
+class fts_options
+{
+public:
+  //  QString m_word;
+  QStringList m_words;		// full-text search: words to find
+  QStringList m_exclude_words;  // full-text search: words to exclude
+  QStringList m_substrs;	// full-text search: substrings to find
+  QMap<QString,QString> m_operators;
+};
+
 class msgs_filter
 {
 public:
@@ -104,7 +116,7 @@ public:
   bool has_more_results() const {
     return m_has_more_results;
   }
-  int parse_search_string(QString s, QStringList& words, QStringList& excl_words, QStringList& substrs);
+  int parse_search_string(QString s, fts_options&);
 
   // to do some pre-processing before the fetch
   void preprocess_fetch(fetch_thread&);
@@ -131,10 +143,6 @@ public:
   QString m_tag_name;
   QDate m_date_min;
   QDate m_date_max;
-  //  QString m_word;
-  QStringList m_words;		// full-text search: words to find
-  QStringList m_exclude_words;  // full-text search: words to exclude
-  QStringList m_substrs;	// full-text search: substrings to find
   uint m_thread_id;
 
   int m_status;			// exact value wanted in mail.status
@@ -151,6 +159,8 @@ public:
 
   int m_min_prio;
   uint m_tag_id;
+
+  fts_options m_fts;
 
   bool m_in_trash;
   bool m_include_trash;
