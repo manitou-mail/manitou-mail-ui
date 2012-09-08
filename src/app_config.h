@@ -87,7 +87,7 @@ struct ltstr
 
   // specific function querying the "date_format" key and returning 1
   // for european date format or 2 for US format
-  int get_date_format_code();
+  int get_date_format_code() const;
 
   Qt::SortOrder get_msgs_sort_order() const;
   static bool get_all_conf_names(QStringList*);

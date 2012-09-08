@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -335,7 +335,7 @@ app_config::apply()
 }
 
 int
-app_config::get_date_format_code()
+app_config::get_date_format_code() const
 {
   QString d = get_config().get_string("date_format");
   if (d=="DD/MM/YYYY HH:MI")

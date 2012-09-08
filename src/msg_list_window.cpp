@@ -3258,8 +3258,6 @@ msg_list_window::apply_conf_all_windows()
 void
 msg_list_window::apply_conf(app_config& conf)
 {
-  DBG_PRINTF(3, "conf.show_tags=%d", conf.get_number("show_tags"));
-  DBG_PRINTF(3, "display_vars.show_tags=%d", display_vars.m_show_tags);
   if (display_vars.m_show_tags != conf.get_bool("show_tags")) {
     toggle_show_tags(display_vars.m_show_tags);
     m_menu_actions[me_Display_Tags]->setChecked(display_vars.m_show_tags);
@@ -3303,6 +3301,11 @@ msg_list_window::apply_conf(app_config& conf)
     display_body();
   }
 
+  // redisplay each page if the date format has changed
+  std::list<msgs_page*>::iterator it1;
+  for (it1=m_pages->begin(); it1!=m_pages->end(); ++it1) {
+    (*it1)->m_page_qlist->change_display_config(conf);
+  }
 }
 
 void

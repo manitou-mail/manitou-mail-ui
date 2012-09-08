@@ -109,6 +109,14 @@ date_item::date_item(date d, int format) // TODO: use an enum for format, or bet
   setData(vdate, date_role);
 }
 
+void
+date_item::redisplay(int format)
+{
+  QVariant vd = data(date_role);
+  date d = vd.value<date>();
+  setText(d.OutputHM(format));
+}
+
 bool
 date_item::operator< (const QStandardItem & other) const
 {

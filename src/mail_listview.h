@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -32,6 +32,7 @@
 
 #include "dbtypes.h"
 #include "db.h" // mail_msg
+#include "app_config.h"
 
 #include <list>
 #include <map>
@@ -58,6 +59,7 @@ public:
   // TODO: see if the date format could be kept in the view only
   // currently we need it when instantiating the QStandardItemModels
   void set_date_format(int d) { m_date_format=d; }
+  int get_date_format() const { return m_date_format; }
   static const int ncols;
   static const char* m_column_names[];
   static QString column_name(int);
@@ -74,6 +76,8 @@ public:
   void clear();
   QStandardItem* first_top_level_item() const;
 
+  QString m_display_sender_mode;
+
 private:
   // returns an icon showing the mail status
   QIcon* icon_status(uint status);
@@ -83,9 +87,7 @@ private:
   // in QVariant form)
   QMap<mail_id_t, QStandardItem*> items_map;
 
-  // same than mail_listview::m_date_format
   int m_date_format;
-  bool m_display_sender_names;
 };
 
 class flag_item: public QStandardItem
@@ -123,9 +125,6 @@ public:
   int selection_size() const;
   void init_columns();
   mail_msg* find(mail_id_t mail_id);
-  int date_format() const {
-    return m_date_format;
-  }
   msg_list_window* m_msg_window;
 
   void update_msg(const mail_msg *msg);
@@ -148,6 +147,7 @@ public:
   bool sender_recipient_swapped() const {
     return m_sender_column_swapped;
   }
+  void change_display_config(const app_config& conf);
 
 protected:
   void keyPressEvent(QKeyEvent*);
@@ -158,7 +158,6 @@ private:
   void collect_expansion_states(QStandardItem* item,
 				QSet<QStandardItem*>& expanded_set);
   QStandardItem* insert_sub_tree(std::map<mail_id_t,mail_msg*>& m, mail_msg *msg);
-  int m_date_format;
   bool m_display_threads;
   bool m_sender_column_swapped;
 

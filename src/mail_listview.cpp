@@ -74,8 +74,7 @@ mail_item_model::init()
   setHorizontalHeaderLabels(headers);
   setHorizontalHeaderItem((int)column_attch, new QStandardItem(UI_ICON(FT_ICON16_ATTACH), ""));
   setHorizontalHeaderItem((int)column_note, new QStandardItem(UI_ICON(FT_ICON16_EDIT_NOTE_GREY), ""));
-  m_display_sender_names = get_config().get_string("sender_displayed_as") == "name";
-
+  m_display_sender_mode = get_config().get_string("sender_displayed_as");
 }
 
 void
@@ -173,7 +172,6 @@ QStandardItem*
 mail_item_model::insert_msg(mail_msg* msg, QStandardItem* parent/*=NULL*/)
 {
   bool bold = ((msg->status() & mail_msg::statusRead)==0);
-  //  QStandardItem *parentItem = this->invisibleRootItem();
   QStandardItem* isubject = new QStandardItem(msg->Subject());
   if (bold) {
     QFont f=isubject->font();
@@ -186,7 +184,7 @@ mail_item_model::insert_msg(mail_msg* msg, QStandardItem* parent/*=NULL*/)
   isubject->setData(v, mail_item_model::mail_msg_role);
 
   QStandardItem* ifrom = new QStandardItem();
-  if (!m_display_sender_names || msg->sender_name().isEmpty())
+  if (m_display_sender_mode!="name" || msg->sender_name().isEmpty())
     ifrom->setText(msg->From());
   else
     ifrom->setText(msg->sender_name());
@@ -536,10 +534,9 @@ mail_listview::popup_ctxt_menu(const QPoint& pos)
   QModelIndex index = indexAt(pos);
   if (!index.isValid())
     return;
-  mail_item_model* model = dynamic_cast<mail_item_model*>(this->model());
   // get to the first column
   index=index.sibling(index.row(), 0);
-  QStandardItem* item = model->itemFromIndex(index);
+  QStandardItem* item = model()->itemFromIndex(index);
   QVariant v=item->data(mail_item_model::mail_msg_role);
   mail_msg* msg = v.value<mail_msg*>();
 
@@ -856,25 +853,23 @@ mail_listview::remove_msg(mail_msg* msg, bool select_next)
 void
 mail_listview::reparent_msg(mail_msg* msg, mail_id_t parent_id)
 {
-  mail_item_model* model = dynamic_cast<mail_item_model*>(this->model());
 #if QT_VERSION<0x040303
   QStandardItem* parent=model->reparent_msg(msg, parent_id);
   /* Each row is expanded individually because of a probable bug in
      Qt<4.3.3. The bug makes the treeview appear to be empty on screen
      after the expandAll() call */
   if (parent) {
-    expand(model->indexFromItem(parent));
+    expand(model()->indexFromItem(parent));
   }
 #else
-  model->reparent_msg(msg, parent_id);
+  model()->reparent_msg(msg, parent_id);
 #endif
 }
 
 mail_msg*
 mail_listview::find(mail_id_t mail_id)
 {
-  mail_item_model* model = dynamic_cast<mail_item_model*>(this->model());
-  return model->find(mail_id);
+  return model()->find(mail_id);
 }
 
 void
@@ -886,16 +881,14 @@ mail_listview::get_selected_indexes(QModelIndexList& list)
 void
 mail_listview::clear()
 {
-  mail_item_model* model = dynamic_cast<mail_item_model*>(this->model());
-  model->clear();
+  model()->clear();
   init_columns(); // because clearing the model removes the column headers
 }
 
 bool
 mail_listview::empty() const
 {
-  mail_item_model* model = dynamic_cast<mail_item_model*>(this->model());
-  return (model->first_top_level_item()==NULL);
+  return (model()->first_top_level_item()==NULL);
 }
   
 
@@ -917,13 +910,12 @@ mail_listview::selectionChanged(const QItemSelection& selected,
 void
 mail_listview::get_selected(std::vector<mail_msg*>& vect)
 {
-  mail_item_model* model = dynamic_cast<mail_item_model*>(this->model());
   QModelIndexList li = selectedIndexes();
   for (int i=0; i<li.size(); i++) {
     const QModelIndex idx=li.at(i);
     if (idx.column()!=0)	// we only want one item per row
       continue;
-    QStandardItem* item = model->itemFromIndex(idx);
+    QStandardItem* item = model()->itemFromIndex(idx);
     QVariant v=item->data(mail_item_model::mail_msg_role);
     vect.push_back(v.value<mail_msg*>()); // add the mail_msg* to the vector
   }
@@ -1016,14 +1008,13 @@ mail_listview::init_columns()
 void
 mail_listview::scroll_to_bottom()
 {
-  mail_item_model* model = dynamic_cast<mail_item_model*>(this->model());
-  if (model->rowCount()==0)
+  if (model()->rowCount()==0)
     return;
-  QStandardItem* item = model->invisibleRootItem();
+  QStandardItem* item = model()->invisibleRootItem();
   if (item) {
-    QStandardItem* i = item->child(model->rowCount()-1);
+    QStandardItem* i = item->child(model()->rowCount()-1);
     if (i) {
-      QModelIndex index=model->indexFromItem(i);
+      QModelIndex index=model()->indexFromItem(i);
       scrollTo(index);
     }
   }
@@ -1112,5 +1103,49 @@ mail_listview::swap_sender_recipient(bool show_recipient)
       header()->setSectionHidden(mail_item_model::column_sender, false);
       header()->setSectionHidden(mail_item_model::column_recipient, true);
     }
+  }
+}
+
+/* Redisplay certain fields following configuration changes */
+void
+mail_listview::change_display_config(const app_config& conf)
+{
+  bool update_dates = (conf.get_date_format_code() != model()->get_date_format());
+  bool update_senders = (conf.get_string("sender_displayed_as") != model()->m_display_sender_mode);
+  if (!update_dates && !update_senders)
+    return; // no change
+
+  model()->set_date_format(conf.get_date_format_code());
+  model()->m_display_sender_mode = conf.get_string("sender_displayed_as");
+  bool display_name = (model()->m_display_sender_mode == "name");
+  int date_format = conf.get_date_format_code();
+  QStandardItem* item = model()->first_top_level_item();
+  QModelIndex index, index_below;
+
+  while (item) {
+    index=item->index();
+    if (update_dates) {
+      date_item* idate = dynamic_cast<date_item*>(model()->itemFromIndex(index.sibling(index.row(), mail_item_model::column_date)));
+      if (idate) {
+	idate->redisplay(date_format);
+      }
+    }
+
+    if (update_senders) {
+      QVariant v=item->data(mail_item_model::mail_msg_role);
+      mail_msg* msg = v.value<mail_msg*>();
+      QStandardItem* ifrom = model()->itemFromIndex(index.sibling(index.row(), mail_item_model::column_sender));
+      if (msg && ifrom) {
+	ifrom->setText(!display_name || msg->sender_name().isEmpty() ?
+		       msg->From() : msg->sender_name());
+      }
+    }
+    
+    index_below  = indexBelow(index);
+    if (index_below.isValid()) {
+      item = model()->itemFromIndex(index_below);
+    }
+    else
+      item=NULL;
   }
 }

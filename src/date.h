@@ -53,6 +53,7 @@ class date_item : public QStandardItem
 {
 public:
   date_item(date d, int format);
+  void redisplay(int format);
   static const int date_role = Qt::UserRole+3;
   bool operator< (const QStandardItem& other) const;
 };
