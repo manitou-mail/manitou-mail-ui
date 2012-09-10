@@ -101,7 +101,7 @@ msg_status_cache::init_db()
 void
 msg_status_cache::db_new_mail_notif()
 {
-  DBG_PRINTF(2, "We have NEW MAIL!");
+  DBG_PRINTF(5, "We have NEW MAIL!");
   db_cnx db;
   try {
     sql_stream s("SELECT mail_id,status FROM mail_status WHERE mail_id>:p1", db);
@@ -112,7 +112,7 @@ msg_status_cache::db_new_mail_notif()
     while (!s.eos()) {
       s >> mail_id >> status;
       count++;
-      DBG_PRINTF(3, "Seen mail_id %d with status %d", mail_id, status);
+      DBG_PRINTF(5, "Seen mail_id %d with status %d", mail_id, status);
       update(mail_id, status);
       //      emit new_mail_notified(mail_id); // for the message port
       message_port::instance()->broadcast_new_mail(mail_id);
