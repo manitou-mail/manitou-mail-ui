@@ -262,7 +262,7 @@ db_cnx::db_cnx(bool other_thread)
       pgConnection* p;
       if (!(*it)->m_connected) {
 	p = new pgConnection;
-	DBG_PRINTF(3, "Opening a new database connection");
+	DBG_PRINTF(4, "Opening a new database connection");
 	(*it)->m_db = p;
 	p->logon(m_connect_string.toLocal8Bit().constData());
 	(*it)->m_connected=true;
@@ -560,7 +560,7 @@ pg_notifier::pg_notifier(pgConnection* cnx)
   PGconn* c = cnx->connection();
   int socket = PQsocket(c);
   if (socket != -1) {
-    DBG_PRINTF(3, "Instantiate a new QSocketNotifier on fd=%d", socket);
+    DBG_PRINTF(6, "Instantiate a new QSocketNotifier on fd=%d", socket);
     m_socket_notifier = new QSocketNotifier(socket, QSocketNotifier::Read);
     connect(m_socket_notifier, SIGNAL(activated(int)), this, SLOT(process_notification()));
   }
@@ -579,15 +579,15 @@ void
 pg_notifier::process_notification()
 {
   PGconn* c = m_pgcnx->connection();
-  DBG_PRINTF(3, "process_notification() on socket %d", PQsocket(c));
+  DBG_PRINTF(6, "process_notification() on socket %d", PQsocket(c));
   int r=PQconsumeInput(c);
   if (r==0) {
-    DBG_PRINTF(3, "PQconsumeInput returns 0");
+    DBG_PRINTF(6, "PQconsumeInput returns 0");
   }
   else {
     PGnotify* n;
     while ((n=PQnotifies(c))!=NULL) {
-      DBG_PRINTF(3, "received db notify for %s", n->relname);
+      DBG_PRINTF(6, "received db notify for %s", n->relname);
       for (int i=0; i<m_pgcnx->m_listeners.count(); i++) {
 	db_listener* l = m_pgcnx->m_listeners.at(i);
 	if (n->relname == l->notification_name()) {
