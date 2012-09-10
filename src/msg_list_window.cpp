@@ -1859,7 +1859,7 @@ msg_list_window::attch_selected(QTreeWidgetItem* p, int column _UNUSED_)
       }
 //      DBG_PRINTF(5, "fname=%s", fname.latin1());
       fname = QFileDialog::getSaveFileName(this, tr("Save File"), fname);
-      if (!fname.isEmpty() && confirm_write(fname)) {
+      if (!fname.isEmpty()) {
 	install_progressbar(m_qAttch);
 	statusBar()->showMessage(tr("Downloading attached file: %1").arg(fname));
 	bool m_abort=false;
@@ -2499,7 +2499,7 @@ msg_list_window::save_attachment()
     }
     //DBG_PRINTF(5, "fname=%s", fname.latin1());
     fname = QFileDialog::getSaveFileName(this, tr("File"), fname);
-    if (!fname.isEmpty() && confirm_write(fname)) {
+    if (!fname.isEmpty()) {
       install_progressbar(m_qAttch);
       statusBar()->showMessage(tr("Downloading attached file: %1").arg(fname));
       dir=(*it)->save_to_disk(fname, &m_abort);

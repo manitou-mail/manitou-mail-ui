@@ -1,3 +1,102 @@
+2012-09-10  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/app_config.cpp, src/newmailwidget.cpp, src/newmailwidget.h,
+  src/preferences.cpp: Add optional basic email syntax check for outgoing
+  messages.
+
+  * src/message.cpp: Bugfix: update status of forwarded messages on forward.
+
+  * src/composer_widgets.cpp, src/composer_widgets.h: Implement "Add..." to the
+  outgoing headers combobox to be consistent with "Remove..."
+
+  * NEWS, README, configure.in, src/about.cpp: Bump to version 1.3.0 Remove
+  assistant dependency
+
+  * src/db.cpp, src/msg_status_cache.cpp: Reduce debug verbosity
+
+  * src/helper.cpp, src/helper.h: Use a simple QWebView for the help viewer
+  instead of the external Qt4 assistant application.
+
+  * src/sqlstream.cpp: Comment obsolete print() method that does not compile
+  with gcc 4.2 on darwin
+
+2012-09-08  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/app_config.cpp, src/app_config.h, src/date.cpp, src/date.h,
+  src/mail_listview.cpp, src/mail_listview.h, src/msg_list_window.cpp: Reflect
+  the changes immediately when date formats or "display sender as" option get
+  modified in the preferences.
+
+2012-09-05  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/msg_list_window.cpp, src/preferences.cpp, src/preferences.h,
+  src/selectmail.cpp, src/selectmail.h, src/words.cpp, src/words.h: Add support
+  for case-insensitive search.  * New "Search" tab in preferences to set the
+  default behavior wrt. accented or unaccented search.  * Add preliminary
+  generic support for operators in the search box with optname:optval syntax.
+  Currently implemented: 'accents:insensitive' and 'accents:sensitive'.  *
+  Implement passing unaccented strings to wordsearch() based on search options.
+
+2012-09-04  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/msg_list_window.cpp, src/selectmail.cpp, src/selectmail.h,
+  src/words.cpp, src/words.h: Implement word exclusion in full text search. 
+  When a minus sign precedes a word, it means that this word must not be in the
+  results.
+
+2012-08-20  Daniel Verite <daniel@manitou-mail.org>
+
+  * icons/icon-import-mbox.png, src/Makefile.am, src/icons.h,
+  src/import_window.cpp, src/import_window.h, src/mbox_file.cpp,
+  src/mbox_file.h, src/mbox_import_wizard.cpp, src/mbox_import_wizard.h,
+  src/message.h, src/message_port.cpp, src/message_port.h,
+  src/message_view.cpp, src/message_view.h, src/msg_list_window.cpp,
+  src/msg_list_window.h: Add mbox upload and import control in the UI
+
+  * src/app_config.cpp, src/app_config.h, src/mail_listview.cpp,
+  src/preferences.cpp, src/selectmail.cpp: Add preferences option
+  "messages_order" for the default order of messages (ascending or descending
+  by msg_date)
+
+  * src/sqlstream.cpp, src/sqlstream.h: Added sql_stream& operator>>(double&)
+
+2012-06-02  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/sqlquery.cpp, src/sqlquery.h: Replace obsolete latin1 encoding by utf8
+
+2012-04-10  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/selectmail.cpp: Don't cut "words" on @.- to be able to full-text search
+  most email addresses
+
+2012-04-09  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/Makefile.am: Add database.h to moc'able files
+
+  * src/database.h, src/db.cpp, src/db_listener.cpp, src/db_listener.h: Fix db
+  listener for concurrent notifications
+
+  * src/message_view.cpp, src/message_view.h: Fix spurious quoting of visible
+  headers on reply (bug appeared after the merge of headers into the same
+  webview as the body)
+
+  * src/browser.cpp, src/browser.h: Fix launch of non-default external web
+  browser
+
+  * ChangeLog: split Changelog between and after 1.2.0
+
+  * src/about.cpp: copyright
+
+2012-01-24  Daniel Verite <daniel@manitou-mail.org>
+
+  * icons/Makefile.am, icons/html/Makefile.am: Use wildcards instead of
+  enumerating icons files
+
+2012-01-17  Daniel Verite <daniel@manitou-mail.org>
+
+  * ChangeLog.up-to-1.2.0: Move pre-git ChangeLog (up to 1.2.0) to a specific
+  file
+
 2012-01-13  Daniel Verite <daniel@manitou-mail.org>
 
   * src/app_config.cpp, src/date.cpp, src/date.h, src/mailing_window.cpp,

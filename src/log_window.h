@@ -26,6 +26,7 @@ class QPlainTextEdit;
 
 class log_window: public QWidget
 {
+  Q_OBJECT
 public:
   log_window();
   static log_window* m_window;

@@ -158,7 +158,9 @@ attch_listview::popup_ctxt_menu(const QPoint& pos)
     const char* contents = pa->get_contents();
     if (contents) {
       QPlainTextEdit* v = new QPlainTextEdit(NULL);
+      v->resize(640,480);
       v->setPlainText(contents);
+      v->setWindowTitle(tr("Attachment as text"));
       v->show();
     }
   }
@@ -203,6 +205,9 @@ attch_listview::progress_report(int count)
 bool
 attch_listview::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action)
 {
+  Q_UNUSED(parent);
+  Q_UNUSED(index);
+  Q_UNUSED(action);
   foreach (QUrl url, data->urls())  {
     emit attach_file_request(url);
   }

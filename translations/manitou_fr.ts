@@ -69,10 +69,6 @@
         <translation>--------------------------- fin de message transmis ---------------------------</translation>
     </message>
     <message>
-        <source>[Hidden quoted text (%1 lines)]</source>
-        <translation>[Texte de citation caché (%1 lignes)]</translation>
-    </message>
-    <message>
         <source>(filter deleted)</source>
         <translation>(filtre effacé)</translation>
     </message>
@@ -373,24 +369,56 @@
         <source>Unexpected character &apos;\&apos;</source>
         <translation>Caractère inattendu &apos;\&apos;</translation>
     </message>
+    <message>
+        <source>Not started</source>
+        <translation>Non démarré</translation>
+    </message>
+    <message>
+        <source>Running</source>
+        <translation>En cours</translation>
+    </message>
+    <message>
+        <source>Stopped</source>
+        <translation>Stoppé</translation>
+    </message>
+    <message>
+        <source>Finished</source>
+        <translation>Terminé</translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>Inconnu</translation>
+    </message>
+    <message>
+        <source>[Collapsed quoted text (%1 lines)]</source>
+        <translation>[Texte de citation réduit (%1 lignes)]</translation>
+    </message>
+    <message>
+        <source>Open error</source>
+        <translation>Erreur d&apos;ouverture</translation>
+    </message>
+    <message>
+        <source>Can&apos;t open file &apos;%2&apos;: %1</source>
+        <translation>Impossible d&apos;ouvrir le fichier &apos;%2&apos;: %1</translation>
+    </message>
+    <message>
+        <source>Unrecognized format</source>
+        <translation>Format non reconnu</translation>
+    </message>
+    <message>
+        <source>Unable to prepare query: %1 %2</source>
+        <translation>Impossible de préparer la requête: %1 %2</translation>
+    </message>
+    <message>
+        <source>Unable to execute prepared statement: %1</source>
+        <translation>Impossible d&apos;exécuter la requête préparée: %1</translation>
+    </message>
 </context>
 <context>
     <name>about_box</name>
     <message>
         <source>Build date: </source>
         <translation>Date de compilation: </translation>
-    </message>
-    <message>
-        <source>Report a bug or submit a feature request: </source>
-        <translation>Signaler un bug ou suggérer une fonctionnalité: </translation>
-    </message>
-    <message>
-        <source>Get help or discuss about this program: </source>
-        <translation>Obtenir de l&apos;aide ou discuter du programme: </translation>
-    </message>
-    <message>
-        <source>Mailing-list: </source>
-        <translation>Mailing-list: </translation>
     </message>
     <message>
         <source>About Manitou-Mail</source>
@@ -405,10 +433,6 @@
         <translation>Licence</translation>
     </message>
     <message>
-        <source>Support</source>
-        <translation>Support</translation>
-    </message>
-    <message>
         <source>This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License version 2 as published by the Free Software Foundation.&lt;br&gt;This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.</source>
         <translation>Ce programme est un logiciel libre; vous pouvez le redistribuer et/ou le modifier selon les termes de la licence &quot;GNU General Public License&quot; version 2 telle que publiée par la Free Software Foundation.&lt;br&gt;Ce programme est distribué dans l&apos;espoir qu&apos;il soit utile, mais SANS AUCUNE GARANTIE; sans même la garantie implicite de COMMERCIABILITE ou DE CONFORMITE A UNE UTILISATION PARTICULIERE. Voir la Licence Publique Générale GNU pour plus de détails.</translation>
     </message>
@@ -421,10 +445,6 @@
         <translation>Site web: </translation>
     </message>
     <message>
-        <source>The author can also be reached by email:&lt;br&gt; daniel@manitou-mail.org</source>
-        <translation>L&apos;auteur peut aussi être contacté par email: &lt;br&gt; daniel@manitou-mail.org</translation>
-    </message>
-    <message>
         <source>OK</source>
         <translation>OK</translation>
     </message>
@@ -433,8 +453,16 @@
         <translation>Compilé avec Qt %1, executé avec Qt %2</translation>
     </message>
     <message>
-        <source>This is &lt;b&gt;Manitou-Mail&lt;/b&gt; version %1, (c) 2004-2011 Daniel V&amp;#233;rit&amp;#233; (&lt;i&gt;daniel@manitou-mail.org&lt;/i&gt;).</source>
+        <source>This is &lt;b&gt;Manitou-Mail&lt;/b&gt; version %1, (c) 2004-2012 Daniel V&amp;#233;rit&amp;#233; (&lt;i&gt;daniel@manitou-mail.org&lt;/i&gt;).</source>
         <translation>&lt;b&gt;Manitou-Mail&lt;/b&gt; version %1, (c) 2004-2011 Daniel V&amp;#233;rit&amp;#233; (&lt;i&gt;daniel@manitou-mail.org&lt;/i&gt;).</translation>
+    </message>
+    <message>
+        <source>Public git repository and issue tracker: </source>
+        <translation>Dépôt source public git et suivi de bogues:</translation>
+    </message>
+    <message>
+        <source>Email:&lt;br&gt;support%2manitou-mail.org&lt;/a&gt;</source>
+        <translation>Email:&lt;br&gt;support%2manitou-mail.org&lt;/a&gt;</translation>
     </message>
 </context>
 <context>
@@ -499,7 +527,7 @@
     </message>
     <message>
         <source>Assign a tag to the message.</source>
-        <translation>Assigne une étiquette au message.</translation>
+        <translation>Assigner une étiquette au message</translation>
     </message>
     <message>
         <source>Set status</source>
@@ -507,7 +535,7 @@
     </message>
     <message>
         <source>Force the status of the message as already read, archived or trashed.</source>
-        <translation>Force le statut du message à lu, archivé ou transmis.</translation>
+        <translation>Force le statut du message à déjà lu, archivé ou en corbeille.</translation>
     </message>
     <message>
         <source>Set priority</source>
@@ -515,7 +543,7 @@
     </message>
     <message>
         <source>Set the priority of the message, either with a fixed value or a relative increment.</source>
-        <translation>Change la priorité d&apos;un message, avec une valeur fixe ou un incrément relatif.</translation>
+        <translation>Affecter la priorité au message, soit une valeur fixe soit un incrément relatif.</translation>
     </message>
     <message>
         <source>Redirect</source>
@@ -523,7 +551,7 @@
     </message>
     <message>
         <source>Resend the message to a different email address.</source>
-        <translation>Renvoie le message à une adresse différente.</translation>
+        <translation>Renvoyer le message vers une adresse email différente.</translation>
     </message>
     <message>
         <source>Stop filters</source>
@@ -531,19 +559,19 @@
     </message>
     <message>
         <source>Stop the filtering process for the current message.</source>
-        <translation>Arrête l&apos;application des filtres pour le message en cours.</translation>
+        <translation>Stopper le processus de filtrage pour le message en cours.</translation>
     </message>
     <message>
         <source>Set header</source>
-        <translation>Modifier un champ d&apos;entête</translation>
+        <translation>Positionner l&apos;entête</translation>
     </message>
     <message>
         <source>Set a message header field. If the field is already present, it will be updated with the new value, otherwise the field will be added.</source>
-        <translation>Met une valeur dans un champ d&apos;entête. Si le champ est déjà présent, il est mis à jour avec la nouvelle valeur, sinon le champ est ajouté.</translation>
+        <translation>Positionne un champ d&apos;entête. Si le champ est déjà présent, son contenu sera mis à jour avec la nouvelle valeur. Autrement le champ sera ajouté</translation>
     </message>
     <message>
         <source>Remove header</source>
-        <translation>Supprimer le champ d&apos;entête</translation>
+        <translation>Supprime le champ d&apos;entête</translation>
     </message>
     <message>
         <source>Remove a message header field. If it appears multiple times, all occurrences will be removed.</source>
@@ -559,7 +587,7 @@
     </message>
     <message>
         <source>Discard</source>
-        <translation>Supprimer</translation>
+        <translation>Supprime</translation>
     </message>
     <message>
         <source>Discard the current message.</source>
@@ -873,6 +901,10 @@
     <message>
         <source>Display as text</source>
         <translation>Affiche en tant que texte</translation>
+    </message>
+    <message>
+        <source>Attachment as text</source>
+        <translation>Pièce jointe au format texte</translation>
     </message>
 </context>
 <context>
@@ -1362,35 +1394,16 @@ Save now?</source>
         <source>Remove...</source>
         <translation>Supprimer...</translation>
     </message>
+    <message>
+        <source>Add...</source>
+        <translation>Ajouter...</translation>
+    </message>
 </context>
 <context>
     <name>headers_groupview</name>
     <message>
         <source>Close</source>
         <translation>Fermer</translation>
-    </message>
-</context>
-<context>
-    <name>headers_view</name>
-    <message>
-        <source>Fetch external contents</source>
-        <translation>Charger les contenus distants</translation>
-    </message>
-    <message>
-        <source>Show text part</source>
-        <translation>Voir la partie texte</translation>
-    </message>
-    <message>
-        <source>Show HTML part</source>
-        <translation>Voir la partie HTML</translation>
-    </message>
-    <message>
-        <source>Fetch on demand mode: click this link to display the message</source>
-        <translation>Mode chargement à la demande: cliquer ce lien pour afficher le message</translation>
-    </message>
-    <message>
-        <source>Complete load</source>
-        <translation>Finir le chargement</translation>
     </message>
 </context>
 <context>
@@ -1592,6 +1605,55 @@ Save now?</source>
     <message>
         <source>Cancel</source>
         <translation>Annuler</translation>
+    </message>
+</context>
+<context>
+    <name>import_window</name>
+    <message>
+        <source>Mail import</source>
+        <translation>Import de mail</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>Fichier</translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation>Statut</translation>
+    </message>
+    <message>
+        <source>Completion</source>
+        <translation>Achèvement</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation>Stopper</translation>
+    </message>
+    <message>
+        <source>Purge</source>
+        <translation>Purger</translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation>Actualiser</translation>
+    </message>
+    <message>
+        <source>New...</source>
+        <translation>Nouveau...</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation>Démarrer</translation>
+    </message>
+    <message>
+        <source>Confirm purge</source>
+        <translation>Confirmer purge</translation>
+    </message>
+    <message>
+        <source>Please confirm the purge of the import data from the database.
+Messages not yet imported will be lost.</source>
+        <translation>Veuillez confirmer la purge de l&apos;import de données dans la base
+Les messages non encore importés seront perdus.</translation>
     </message>
 </context>
 <context>
@@ -2270,14 +2332,230 @@ Save now?</source>
     </message>
 </context>
 <context>
-    <name>message_view</name>
+    <name>mbox_file</name>
     <message>
-        <source>Print Document</source>
-        <translation>Imprimer</translation>
+        <source>No From line found at the start of the file. This file cannot be imported as an mbox.</source>
+        <translation>Pas de ligne From trouvée au début du fichier. Ce fichier ne peut être importé en tant que mbox.</translation>
     </message>
+    <message>
+        <source>File error</source>
+        <translation>Erreur de fichier</translation>
+    </message>
+</context>
+<context>
+    <name>mbox_import_window</name>
+    <message>
+        <source>Import mbox file</source>
+        <translation>Import un fichier mbox</translation>
+    </message>
+    <message>
+        <source>Mbox file:</source>
+        <translation>Fichier mbox:</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>Parcourir</translation>
+    </message>
+    <message>
+        <source>New (unread)</source>
+        <translation>Nouveau (non lu)</translation>
+    </message>
+    <message>
+        <source>Read</source>
+        <translation>Lu</translation>
+    </message>
+    <message>
+        <source>Archived</source>
+        <translation>Archivé</translation>
+    </message>
+    <message>
+        <source>Set status:</source>
+        <translation>Positionner statut:</translation>
+    </message>
+    <message>
+        <source>Apply filters:</source>
+        <translation>Appliquer filtres:</translation>
+    </message>
+    <message>
+        <source>Assign tag:</source>
+        <translation>Assigner étiquette:</translation>
+    </message>
+    <message>
+        <source>Progress:</source>
+        <translation>Progrès:</translation>
+    </message>
+    <message>
+        <source>Abort</source>
+        <translation>Arrêter</translation>
+    </message>
+    <message>
+        <source>Start import</source>
+        <translation>Démarrer l&apos;import</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>Import</translation>
+    </message>
+    <message>
+        <source>The import will continue until completion at the server</source>
+        <translation>L&apos;import continuera et se terminera au niveau du serveur</translation>
+    </message>
+    <message>
+        <source>Location of mbox file</source>
+        <translation>Emplacement du fichier mbox</translation>
+    </message>
+    <message>
+        <source>Upload %p%</source>
+        <translation>Envoi données %p%</translation>
+    </message>
+    <message>
+        <source>Server-side import %p%</source>
+        <translation>Import côté serveur %p%</translation>
+    </message>
+</context>
+<context>
+    <name>mbox_import_wizard</name>
+    <message>
+        <source>Import a mailbox</source>
+        <translation>Importer une mailbox</translation>
+    </message>
+</context>
+<context>
+    <name>mbox_import_wizard_page_mbox_file</name>
+    <message>
+        <source>Mailbox file</source>
+        <translation>Fichier mailbox</translation>
+    </message>
+    <message>
+        <source>Locate the mbox file</source>
+        <translation>Localiser le fichier mbox</translation>
+    </message>
+    <message>
+        <source>Filename:</source>
+        <translation>Nom de fichier:</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>Parcourir</translation>
+    </message>
+    <message>
+        <source>The file format must be &lt;b&gt;mbox&lt;/b&gt;, in either the mboxo or mboxrd variant.&lt;br&gt;The mboxcl and mboxcl2 variants are not supported.</source>
+        <translation>Le format de fichier doit être &lt;b&gt;mbox&lt;/b&gt;, en variante mboxo ou mboxrd.&lt;br&gt;Les variantes mboxcl et mboxcl2 ne sont pas supportées.</translation>
+    </message>
+</context>
+<context>
+    <name>mbox_import_wizard_page_options</name>
+    <message>
+        <source>Import options</source>
+        <translation>Options d&apos;import</translation>
+    </message>
+    <message>
+        <source>New (unread)</source>
+        <translation>Nouveau (non lu)</translation>
+    </message>
+    <message>
+        <source>Read</source>
+        <translation>Lu</translation>
+    </message>
+    <message>
+        <source>Archived</source>
+        <translation>Archivé</translation>
+    </message>
+    <message>
+        <source>Set status:</source>
+        <translation>Positionner le statut:</translation>
+    </message>
+    <message>
+        <source>Apply filters:</source>
+        <translation>Appliquer les filtres:</translation>
+    </message>
+    <message>
+        <source>Assign tag:</source>
+        <translation>Assigner l&apos;étiquette:</translation>
+    </message>
+    <message>
+        <source>Purge import data on completion</source>
+        <translation>Purger les données d&apos;import après fin</translation>
+    </message>
+    <message>
+        <source>Automatic purge:</source>
+        <translation>Purge automatique:</translation>
+    </message>
+</context>
+<context>
+    <name>mbox_import_wizard_page_upload</name>
+    <message>
+        <source>Contents upload</source>
+        <translation>Envoi des contenus</translation>
+    </message>
+    <message>
+        <source>Please wait while the contents are uploaded...</source>
+        <translation>Veuillez patienter pendant que les contenus sont envoyés...</translation>
+    </message>
+    <message>
+        <source>Progress:</source>
+        <translation>Progrès:</translation>
+    </message>
+    <message>
+        <source>Abort</source>
+        <translation>Arrêter</translation>
+    </message>
+    <message>
+        <source>Upload %p%</source>
+        <translation>Envoi données %p%</translation>
+    </message>
+    <message>
+        <source>The mailbox has been uploaded to the server.
+%1 message(s) were extracted.</source>
+        <translation>Le fichier de boite mail a été envoyé au serveur
+%1 message(s) ont été extraits.</translation>
+    </message>
+    <message>
+        <source>Waiting for the import to start...</source>
+        <translation>En attente du démarrage de l&apos;import...</translation>
+    </message>
+    <message>
+        <source>Click on Finish to signal the server to start importing these messages.</source>
+        <translation>Cliquer sur Finir pour indiquer au serveur de démarrer l&apos;import de ces messages.</translation>
+    </message>
+    <message>
+        <source>The upload was not successful.</source>
+        <translation>L&apos;envoi des données a échoué.</translation>
+    </message>
+    <message>
+        <source>Import started.</source>
+        <translation>Import démarré.</translation>
+    </message>
+    <message>
+        <source>Waiting for the import to start since %1 s.</source>
+        <translation>En attente du démarrage de l&apos;import depuis %1 s.</translation>
+    </message>
+</context>
+<context>
+    <name>message_view</name>
     <message>
         <source>Partial load (%1%)</source>
         <translation>Chargement partiel (%1%)</translation>
+    </message>
+    <message>
+        <source>Print message</source>
+        <translation>Imprimer le message</translation>
+    </message>
+    <message>
+        <source>Fetch external contents</source>
+        <translation>Charger les contenus distants</translation>
+    </message>
+    <message>
+        <source>Show text part</source>
+        <translation>Voir la partie texte</translation>
+    </message>
+    <message>
+        <source>Show HTML part</source>
+        <translation>Voir la partie HTML</translation>
+    </message>
+    <message>
+        <source>Complete load</source>
+        <translation>Finir le chargement</translation>
     </message>
 </context>
 <context>
@@ -2797,6 +3075,10 @@ Save now?</source>
         <source>Mailings</source>
         <translation>Publipostages</translation>
     </message>
+    <message>
+        <source>Import mailbox</source>
+        <translation>Importer boite mail</translation>
+    </message>
 </context>
 <context>
     <name>msg_select_dialog</name>
@@ -3159,6 +3441,30 @@ Expédier malgré tout?</translation>
         <source>Title of the template:</source>
         <translation>Titre du modèle:</translation>
     </message>
+    <message>
+        <source>Syntax error</source>
+        <translation>Erreur de syntaxe</translation>
+    </message>
+    <message>
+        <source>Invalid syntax in email addresses:</source>
+        <translation>Syntaxe invalide dans les adresses mail:</translation>
+    </message>
+    <message>
+        <source>The following email addresses are invalid:</source>
+        <translation>Les adresses mail suivantes sont invalides:</translation>
+    </message>
+    <message>
+        <source>Invalid email address:</source>
+        <translation>Adresse mail invalide:</translation>
+    </message>
+    <message>
+        <source>Address error</source>
+        <translation>Erreur d&apos;adresse</translation>
+    </message>
+    <message>
+        <source>Warning</source>
+        <translation>Avertissement</translation>
+    </message>
 </context>
 <context>
     <name>newmail_button</name>
@@ -3276,22 +3582,6 @@ Expédier malgré tout?</translation>
     <message>
         <source>No</source>
         <translation>Non</translation>
-    </message>
-    <message>
-        <source>Show headers</source>
-        <translation>Montrer Entêtes</translation>
-    </message>
-    <message>
-        <source>None</source>
-        <translation>Aucun</translation>
-    </message>
-    <message>
-        <source>Most</source>
-        <translation>La plupart</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>Tout</translation>
     </message>
     <message>
         <source>Display sender as</source>
@@ -3448,6 +3738,46 @@ Expédier malgré tout?</translation>
     <message>
         <source>Dynamic recipient column</source>
         <translation>Colonne destinataire dynamique</translation>
+    </message>
+    <message>
+        <source>Basic syntax check on addresses</source>
+        <translation>Test syntaxique basique sur adresses</translation>
+    </message>
+    <message>
+        <source>Accents &amp; diacritic marks</source>
+        <translation>Accents et marques diacritiques</translation>
+    </message>
+    <message>
+        <source>Search with accents</source>
+        <translation>Chercher avec accents</translation>
+    </message>
+    <message>
+        <source>Search without accents</source>
+        <translation>Chercher sans accents</translation>
+    </message>
+    <message>
+        <source>This can be overriden with the &lt;i&gt;accents:insensitive&lt;/i&gt; or &lt;i&gt;accents:sensitive&lt;/i&gt; operators in the search box.</source>
+        <translation>Peut être modifié avec les opérateurs du champ de recherche &lt;i&gt;accents:insensitive&lt;/i&gt; ou &lt;i&gt;accents:sensitive&lt;/i&gt; </translation>
+    </message>
+    <message>
+        <source>Messages order</source>
+        <translation>Ordre des messages</translation>
+    </message>
+    <message>
+        <source>Newest first</source>
+        <translation>Récents en premier</translation>
+    </message>
+    <message>
+        <source>Oldest first</source>
+        <translation>Anciens en premier</translation>
+    </message>
+    <message>
+        <source>Localized [%1]</source>
+        <translation>Local [%1]</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>Chercher</translation>
     </message>
 </context>
 <context>
@@ -3704,7 +4034,7 @@ Etes-vous certain de vouloir l&apos;écraser?</translation>
     </message>
     <message>
         <source>Composed</source>
-        <translation>Composé</translation>
+        <translation>Ecrit</translation>
     </message>
 </context>
 <context>
