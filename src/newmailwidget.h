@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -119,7 +119,9 @@ signals:
 private:
   void set_wrap_mode();
   void join_address_lines (QString&);
-  QString expand_aliases (const QString addresses);
+  QString check_addresses(const QString addresses,
+			  QStringList& bad_addresses,
+			  bool *unparsable=NULL);
 
   mail_msg m_msg;
   body_edit_widget* m_bodyw;

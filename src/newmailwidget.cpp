@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -212,7 +212,7 @@ new_mail_widget::new_mail_widget(mail_msg* msg, QWidget* parent)
   ed->grid_insert(gridLayout, nRow, 0);
   ed->set_value(m_msg.header().m_to);
   connect(ed, SIGNAL(remove()), this, SLOT(remove_field_editor()));
-  //  connect(ed, SIGNAL(add()), this, SLOT(add_field_editor()));
+  connect(ed, SIGNAL(add()), this, SLOT(add_field_editor()));
   m_header_editors.append(ed);
   nRow++;
 
@@ -223,7 +223,7 @@ new_mail_widget::new_mail_widget(mail_msg* msg, QWidget* parent)
     ed1->grid_insert(gridLayout, nRow++, 0);
     ed1->set_value(initial_cc);
     connect(ed1, SIGNAL(remove()), this, SLOT(remove_field_editor()));
-    //    connect(ed1, SIGNAL(add()), this, SLOT(add_field_editor()));
+    connect(ed1, SIGNAL(add()), this, SLOT(add_field_editor()));
     m_header_editors.append(ed1);
   }
 
@@ -290,7 +290,7 @@ new_mail_widget::new_mail_widget(mail_msg* msg, QWidget* parent)
   load_identities(m_ident_menu);
   if (m_ids.empty()) {
     m_errmsg=tr("No sender identity is defined.\nUse the File/Preferences menu and fill in an e-mail identity to be able to send messages.");
-    QMessageBox::warning(NULL, tr("Error"), m_errmsg, QMessageBox::Ok, Qt::NoButton);
+    QMessageBox::warning(this, tr("Error"), m_errmsg, QMessageBox::Ok, Qt::NoButton);
   }
 
   m_pMenuFormat = new QMenu(tr("&Format"), this);
@@ -431,7 +431,7 @@ new_mail_widget::add_field_editor()
   ed->grid_insert(gridLayout, gridLayout->rowCount(), 0);
   ed->set_value(m_msg.header().m_to);
   connect(ed, SIGNAL(remove()), this, SLOT(remove_field_editor()));
-  //  connect(ed, SIGNAL(add()), this, SLOT(add_field_editor()));
+  connect(ed, SIGNAL(add()), this, SLOT(add_field_editor()));
   m_header_editors.append(ed);
 
   int r=gridLayout->rowCount();
@@ -698,10 +698,17 @@ new_mail_widget::send()
   // collect the addresses from the header field editors
   QMap<QString,QString> addresses;  
   QListIterator<header_field_editor*> iter(m_header_editors);
+  QStringList bad_addresses;
+
   while (iter.hasNext()) {
     header_field_editor* ed = iter.next();
     QString field_name = ed->get_field_name();
-    QString value = expand_aliases(ed->get_value());
+    bool errparse;
+    QString value = check_addresses(ed->get_value(), bad_addresses, &errparse);
+    if (errparse) {
+      QMessageBox::critical(NULL, tr("Syntax error"), tr("Invalid syntax in email addresses:")+"<br><i>"+ed->get_value()+"</i>", QMessageBox::Ok, Qt::NoButton);
+      return;
+    }
     if (!field_name.isEmpty() && !value.isEmpty()) {
       if (addresses.contains(field_name)) {
 	// append the value
@@ -713,18 +720,29 @@ new_mail_widget::send()
     }
   }
 
+  if (!bad_addresses.isEmpty()) {
+    QString msg;
+    if (bad_addresses.count()>1)
+      msg = tr("The following email addresses are invalid:")+"<br><i>"+bad_addresses.join("<br>")+"</i>";
+    else
+      msg = tr("Invalid email address:")+"<br><i>"+bad_addresses.at(0)+"</i>";
+    QMessageBox::critical(this, tr("Address error"), msg,
+			  QMessageBox::Ok, Qt::NoButton);
+    return;
+  }
+
   if (!addresses.contains("To") && !addresses.contains("Bcc")) {
-    QMessageBox::critical(NULL, tr("Error"), tr("The To: and Bcc: field cannot be both empty"), QMessageBox::Ok, Qt::NoButton);
+    QMessageBox::critical(this, tr("Error"), tr("The To: and Bcc: field cannot be both empty"), QMessageBox::Ok, Qt::NoButton);
     return;
   }
 
   if (m_ids.empty()) {
-    QMessageBox::critical(NULL, tr("Error"), tr("The message has no sender (create an e-mail identity in the Preferences)"), QMessageBox::Ok, Qt::NoButton);
+    QMessageBox::critical(this, tr("Error"), tr("The message has no sender (create an e-mail identity in the Preferences)"), QMessageBox::Ok, Qt::NoButton);
     return;
   }
 
   if (m_wSubject->text().isEmpty()) {
-    int res=QMessageBox::warning(this, APP_NAME, tr("The message has no subject.\nSend nonetheless?"), QMessageBox::Ok, QMessageBox::Cancel|QMessageBox::Default, Qt::NoButton);
+    int res=QMessageBox::warning(this, tr("Warning"), tr("The message has no subject.\nSend nonetheless?"), QMessageBox::Ok, QMessageBox::Cancel|QMessageBox::Default, Qt::NoButton);
 
     if (res!=QMessageBox::Ok)
       return;
@@ -777,7 +795,7 @@ new_mail_widget::send()
     make_message(addresses);
   }
   catch(QString error_msg) {
-    QMessageBox::critical(NULL, tr("Error"), error_msg);
+    QMessageBox::critical(this, tr("Error"), error_msg);
     return;
   }
 
@@ -799,7 +817,7 @@ new_mail_widget::send()
     close();
   }
   else {
-    QMessageBox::critical(NULL, tr("Error"), "Error while saving the message");
+    QMessageBox::critical(this, tr("Error"), "Error while saving the message");
   }
 }
 
@@ -949,16 +967,26 @@ new_mail_widget::make_message(const QMap<QString,QString>& user_headers)
 }
 
 QString
-new_mail_widget::expand_aliases(const QString addresses)
+new_mail_widget::check_addresses(const QString addresses,
+				 QStringList& bad_addresses,
+				 bool* unparsable /*=NULL*/)
 {
   if (addresses.isEmpty())
     return QString("");
 
+  if (unparsable)
+    *unparsable=false;
   std::list<QString> emails_list;
   std::list<QString> names_list;
-  QByteArray ba = addresses.toLatin1(); // TODO: replace this when ExtractAddresses takes a QString instead of char*
-  mail_address::ExtractAddresses(ba.constData(), emails_list, names_list);
+  int err = mail_address::ExtractAddresses(addresses, emails_list, names_list);
   QString result;
+
+  if (err && unparsable) {
+    *unparsable=true;
+    return result;
+  }
+
+  bool do_basic_check=(get_config().get_string("composer/address_check")=="basic");
 
   std::list<QString>::const_iterator iter1,iter2;
   for (iter1 = emails_list.begin(), iter2 = names_list.begin();
@@ -966,13 +994,13 @@ new_mail_widget::expand_aliases(const QString addresses)
        ++iter1, ++iter2)
     {
       mail_address addr;
-      bool found;
-      if (!(iter1->indexOf('@')==-1 &&
-	    addr.fetch_by_nickname(*iter1, &found) && found)) {
-	addr.set_email(*iter1);
-	addr.set_name(*iter2);
+      if (do_basic_check) {
+	if (!mail_address::basic_syntax_check(*iter1)) {
+	  bad_addresses.append(*iter1);
+	}
       }
-      // else fetch_by_nickname has set up addr contents
+      addr.set_email(*iter1);
+      addr.set_name(*iter2);
       result.append(addr.email_and_name());
       result.append(",");
     }
@@ -1106,7 +1134,7 @@ new_mail_widget::store_settings()
       user_msg = QString(tr("The display settings have been saved in the default configuration."));
     else
       user_msg = QString(tr("The display settings have been saved in the '%1' configuration.")).arg(conf.name());
-    QMessageBox::information(NULL, tr("Confirmation"), user_msg); 
+    QMessageBox::information(this, tr("Confirmation"), user_msg); 
   }
 }
 
@@ -1160,7 +1188,7 @@ new_mail_widget::save_template()
       make_message(addresses);
     }
     catch(QString error_msg) {
-      QMessageBox::critical(NULL, tr("Error"), error_msg);
+      QMessageBox::critical(this, tr("Error"), error_msg);
       return;
     }
 

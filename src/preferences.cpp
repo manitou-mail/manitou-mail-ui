@@ -116,6 +116,7 @@ struct prefs_dialog::preferences_widgets {
   // composer tab
   button_group* w_composer_format_new_mail;
   button_group* w_composer_format_replies;
+  button_group* w_composer_address_check;
 
   // search tab
   button_group* w_search_accents;
@@ -481,6 +482,19 @@ prefs_dialog::composer_widget()
     grid->addWidget(l, row, 0);
     grid->addWidget(g, row, 1);
     m_widgets->w_composer_format_replies = g;
+  }
+  row++;
+  {
+    QLabel* l=new QLabel(tr("Basic syntax check on addresses"),w1);
+    button_group* g = new button_group(QBoxLayout::LeftToRight, w1);
+    QRadioButton* b1 = new QRadioButton(tr("Yes"));
+    QRadioButton* b2 = new QRadioButton(tr("No"));
+
+    g->addButton(b1, 0, "basic");
+    g->addButton(b2, 1, "none");
+    grid->addWidget(l, row, 0);
+    grid->addWidget(g, row, 1);
+    m_widgets->w_composer_address_check = g;
   }
   row++;
   top_layout->addStretch(1);
@@ -985,6 +999,14 @@ prefs_dialog::conf_to_widgets(app_config& conf)
       if (id >= 0)
 	m_widgets->w_composer_format_replies->setButton(id);
     }
+
+    QString ac = conf.get_string("composer/address_check");
+    if (!ac.isEmpty()) {
+      if (ac=="none")
+	m_widgets->w_composer_address_check->setButton(1);
+      else
+	m_widgets->w_composer_address_check->setButton(0);
+    }
   }
 
   // search
@@ -1100,6 +1122,11 @@ prefs_dialog::widgets_to_conf(app_config& conf)
   if (m_widgets->w_composer_format_replies->selected()) {
     conf.set_string("composer/format_for_replies",
 		    m_widgets->w_composer_format_replies->selected_code());
+  }
+
+  if (m_widgets->w_composer_address_check->selected()) {
+    conf.set_string("composer/address_check",
+		    m_widgets->w_composer_address_check->selected_code());
   }
 
   // search

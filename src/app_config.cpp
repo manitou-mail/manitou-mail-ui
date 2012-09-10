@@ -37,6 +37,7 @@ const char* app_config::m_default_values[] = {
   "preferred_display_format", "html",
   "composer/format_for_replies", "same_as_sender",
   "composer/format_for_new_mail", "text/plain",
+  "composer/address_check", "basic",
   NULL
 };
 
