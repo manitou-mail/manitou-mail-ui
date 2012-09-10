@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -23,7 +23,7 @@
 #include <QObject>
 #include <QString>
 
-#include <QProcess>
+class QWebView;
 
 class qassistant : public QObject
 {
@@ -31,16 +31,18 @@ class qassistant : public QObject
 public:
   qassistant(const QString);
   ~qassistant();
-  void showPage(const QString path);
+  void show_page(const QString path);
   bool started();
 private:
-  QProcess* m_process;
   void init();
   QString m_help_path;
-private slots:
-  void process_finished(int exit_code, QProcess::ExitStatus exit_status);
+  QWebView* m_view;
 };
 
+/* This class abstracts the implementation of the actual helper widget
+   or external program. The helper was initially based on Qt3's
+   assistant, then the more complex (and too complex) Qt4's assistant,
+   and is currently based on QWebView. */
 class helper
 {
 public:
