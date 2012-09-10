@@ -1,3 +1,22 @@
+ v1.3.0, Sep 2012
+--------------------------
+user interface
+- add accent-insensitive, word exclusion, find by email in search.
+- new interface to submit and control server-side import of mailboxes.
+- combine headers and body in the same view for better usability.
+- add email syntax checks in composer
+- help system: use an integrated browser instead of the external Qt assistant program.
+- bugfixes: set forwarded status on forwarded messages, immediate effect of changes in display preferences
+
+manitou-mdx
+- improved accuracy and relevance of text extraction for the full-text
+indexer.
+- add unaccent modes.
+- integrate the indexing of html parts.
+- text extractors on attachments replace indexer plugins.
+- add partial and full reindexing capabilities to manitou-mgr.
+- asynchronous mailbox import initiated by the user interface.
+
  v1.2.0, Dec 27 2011
 --------------------------
 user interface

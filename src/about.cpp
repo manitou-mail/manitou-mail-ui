@@ -340,7 +340,7 @@ about_box::about_box (QWidget* parent): QDialog(parent)
   init_license_tab();
   m_tabw->addTab(m_version_tab, tr("Version"));
   m_tabw->addTab(m_license_tab, tr("License"));
-  m_tabw->addTab(m_support_tab, tr("Support"));
+  m_tabw->addTab(m_support_tab, tr("Support resources"));
 
   resize(600, 400);
 
@@ -391,21 +391,16 @@ about_box::init_support_tab()
   about_panel* txt_w = new about_panel(m_support_tab);
   l->addWidget(txt_w);
 
-  QString bug_url="http://sourceforge.net/tracker/?group_id=107272&atid=647245";
-  QString bug_encoded_url="http://sourceforge.net/tracker/?group_id=107272&amp;atid=647245";
-  QString forum_url="http://sourceforge.net/forum/?group_id=107272";
-  QString ml_url="http://lists.sourceforge.net/lists/listinfo/manitou-mail-users";
+  QString git_url="https://github.com/manitou-mail/manitou-mail-ui";
 
   QString htxt="<html><body style=\"background-image:url(/pattern-about.png)\">";
-  htxt.append("<b>" + tr("Support resources") + "</b><br>");
+  htxt.append("<p>");
   htxt.append(tr("Home Page: ") + "<br><a href=\"http://www.manitou-mail.org\">http://www.manitou-mail.org</a><br>");
-  htxt.append(tr("Get help or discuss about this program: ") + 
-		"<br><a href=\""+ forum_url+"\">" + forum_url + "</a><br>");
-  htxt.append(tr("Mailing-list: ") + 
-		"<br><a href=\""+ ml_url+"\">" + ml_url + "</a><br>");
-  htxt.append(tr("Report a bug or submit a feature request: ") + 
-		"<br><a href=\""+ bug_encoded_url+ "\">" + bug_url + "</a><br>");
-  htxt.append(tr("The author can also be reached by email:<br> daniel@manitou-mail.org"));
+  htxt.append("<p>");
+  htxt.append(tr("Public git repository and issue tracker: ") + 
+		"<br><a href=\""+ git_url+"\">" + git_url + "</a><br>");
+  htxt.append("<p>");
+  htxt.append(tr("Email:<br>support%1manitou-mail.org</a>").arg("@"));
   htxt.append("</body></html>");
   txt_w->setHtml(htxt);
 
