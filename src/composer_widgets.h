@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -127,6 +127,7 @@ public:
     index_header_cc,
     index_header_bcc,
     index_header_replyto,
+    index_header_add,
     index_header_remove,
   };
   void grid_insert(QGridLayout* layout, int row, int column);
@@ -146,11 +147,13 @@ private:
   edit_address_widget* m_lineedit;
   QComboBox* m_cb;
   QPushButton* m_more_button;
+  int m_old_index;
 public slots:
   void addresses_offered(QString addresses);
   void more_addresses();
   void cb_changed(int);
 signals:
+  void add();
   void remove();
 };
 

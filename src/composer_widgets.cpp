@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -50,6 +50,7 @@ header_field_editor::header_field_editor(QWidget* parent)
     QT_TR_NOOP("Cc"),
     QT_TR_NOOP("Bcc"),
     QT_TR_NOOP("ReplyTo"),
+    QT_TR_NOOP("Add..."),
     QT_TR_NOOP("Remove...")
   };
 
@@ -57,6 +58,7 @@ header_field_editor::header_field_editor(QWidget* parent)
   for (uint i=0; i<sizeof(defaults)/sizeof(defaults[0]); i++) {
     m_cb->addItem(tr(defaults[i]));
   }
+  m_old_index=0;
   connect(m_cb, SIGNAL(currentIndexChanged(int)), this, SLOT(cb_changed(int)));
   m_lineedit = new edit_address_widget(parent);
   m_more_button = new QPushButton(FT_MAKE_ICON(FT_ICON16_ADDRESSBOOK), "", parent);
@@ -73,13 +75,24 @@ header_field_editor::~header_field_editor()
 }
 
 /*
-  Slot. Called on combobox changes */
+  Slot. Called on combobox index change
+ */
 void
 header_field_editor::cb_changed(int index)
 {
   if (index == index_header_remove) {
     emit remove();    
   }
+  else if (index == index_header_add) {
+    // When "Add..." gets selected, execute the action but put back
+    // the previous index
+    m_cb->blockSignals(true);
+    m_cb->setCurrentIndex(m_old_index);
+    m_cb->blockSignals(false);    
+    emit add();
+  }
+  else
+    m_old_index=index;
 }
 
 void
