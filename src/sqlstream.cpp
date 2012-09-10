@@ -348,6 +348,7 @@ sql_stream::check_binds()
 void
 sql_stream::print()
 {
+#if 0
   std::cout << "buf=" << m_queryBuf << std::endl;
   std::cout << "len=" << m_queryLen << ", bufsize=" << m_queryBufSize << std::endl;
   std::cout << "params\n";
@@ -355,6 +356,7 @@ sql_stream::print()
     const sql_bind_param& v=m_vars[i];
     std::cout << v.name() << " => " << v.pos() << std::endl;
   }
+#endif
 }
 
 void
