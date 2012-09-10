@@ -864,6 +864,14 @@ mail_msg::store()
       sql_stream sr ("UPDATE mail SET status=(status | :p1) WHERE mail_id=:p2", db);
       sr << statusReplied+statusArchived << m_nInReplyTo;
     }
+    else if (!forwardOf().empty()) {
+      const std::vector<mail_id_t>& v = forwardOf();
+      sql_stream sr ("UPDATE mail SET status=(status | :p1) WHERE mail_id=:p2", db);
+      for (uint ifwd=0; ifwd < v.size(); ifwd++) {
+	// Update statuses of forwarded messages
+	sr << statusFwded+statusArchived << v[ifwd];
+      }
+    }
     fields.add("status", statusRead + statusOutgoing);
     if (m_identity_id != 0)
       fields.add("identity_id", m_identity_id);
