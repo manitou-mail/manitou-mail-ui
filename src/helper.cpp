@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -17,81 +17,65 @@
    Boston, MA 02111-1307, USA.
 */
 
+
 #include "main.h"
 #include "app_config.h"
 #include "helper.h"
+
 #include <QMessageBox>
 #include <QStringList>
 #include <QFile>
-#include "prog_chooser.h"
 #include <QLocale>
-#include <QProcess>
-#include <QLibraryInfo>
+#include <QWebView>
+#include <QDebug>
 
 qassistant::qassistant(const QString path)
 {
+  m_view=NULL;
   m_help_path=path;
   init();
 }
 
 qassistant::~qassistant()
 {
-  if (m_process) {
-    m_process->terminate();
+  if (m_view) {
+    delete m_view;
   }
 }
 
 void
 qassistant::init()
 {
-  m_process = new QProcess(this);
-  QString app = QLibraryInfo::location(QLibraryInfo::BinariesPath)
-    + QLatin1String("/assistant");
-
-  DBG_PRINTF(4, "assistant: %s", app.toLocal8Bit().constData());
-  //#ifndef Q_OS_WIN
-  //  QString fullpath=prog_chooser::find_in_path("assistant");
-  //#endif
-  QStringList args;
-  args << "-enableRemoteControl" << "-collectionFile" << m_help_path+"/manitou.qhc";
-  DBG_PRINTF(4, "assistant args=%s", args.join("\n").toLocal8Bit().constData());
-  m_process->start(app, args);
-  if (!m_process->waitForStarted()) {
-    QMessageBox::critical(NULL, tr("Remote Control"),
-			  tr("Could not start Qt Assistant from %1.").arg(app));
-    return;
-
-  }
-  connect(m_process, SIGNAL(finished(int,QProcess::ExitStatus)),
-	  this, SLOT(process_finished(int,QProcess::ExitStatus)));
-}
-
-void
-qassistant::process_finished(int exit_code, QProcess::ExitStatus exit_status)
-{
-  Q_UNUSED(exit_code);
-  Q_UNUSED(exit_status);
-  if (m_process) {
-    delete m_process;
-    m_process=NULL;
+  if (!m_view) {
+    m_view = new QWebView();
+    m_view->setWindowTitle(tr("User interface documentation"));
   }
 }
 
 bool
 qassistant::started()
 {
-  return m_process!=NULL;
+  return m_view!=NULL;
 }
 
 void
-qassistant::showPage(const QString path)
+qassistant::show_page(const QString path)
 {
   if (!started())
     init();
-  QTextStream str(m_process);
-  QString p = QString("setSource ") + "qthelp://org.manitou-mail/doc/" + path;
-  DBG_PRINTF(4, "setSource %s", p.toLatin1().constData());
-  str << QLatin1String(p.toLatin1().constData()) << QLatin1Char('\0') << endl;
+  DBG_PRINTF(4, "show_page(%s)", path.toLocal8Bit().constData());
+  QUrl u;
+  int sharp=path.lastIndexOf(QChar('#'));
+  if (sharp>0 && sharp<path.length()-1) {
+    u = QUrl::fromLocalFile(m_help_path+"/"+path.left(sharp));
+    u.setFragment(path.mid(sharp+1));
+    qDebug() << path.left(sharp);
+  }
+  else
+    u = QUrl::fromLocalFile(m_help_path+"/"+path);
+  qDebug() << u;
+  m_view->setUrl(u);
+  m_view->show();
 }
 
 // translate help topics into HTML help files
@@ -146,12 +130,12 @@ helper::show_help(const QString topic)
 #endif
     // try help_path + language_country
     path_tried[1] = path+"/"+lname;
-    if (!QFile::exists(path_tried[1]+"/manitou.qhc")) {
+    if (!QFile::exists(path_tried[1]+"/index.html")) {
       // try help_path + language
       int sep_pos = lname.indexOf('_');
       if (sep_pos>=0) {
 	path_tried[2]=path+"/"+lname.left(sep_pos);
-	if (!QFile::exists(path_tried[2]+"/manitou.qhc")) {
+	if (!QFile::exists(path_tried[2]+"/index.html")) {
 	  path.truncate(0);
 	}
 	else {
@@ -168,7 +152,7 @@ helper::show_help(const QString topic)
   // else use path as is
 
   if (path.isEmpty()) {
-    QString msg=QObject::tr("The file 'manitou.qhc' could not be found in any of the following directories:\n");
+    QString msg=QObject::tr("The file 'index.html' could not be found in any of the following directories:\n");
     for (int ii=0; ii<3 && !path_tried[ii].isEmpty(); ii++) {
      msg.append(path_tried[ii]);
       msg.append("\n");
@@ -196,7 +180,7 @@ helper::show_help(const QString topic)
   QString p=path + "/" + page;
   DBG_PRINTF(4, "showPage('%s')", p.toLocal8Bit().constData());
 */
-  m_qassistant->showPage(page);
+  m_qassistant->show_page(page);
 }
 
 bool
