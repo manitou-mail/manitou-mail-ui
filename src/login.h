@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2008 Daniel Vérité
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -42,6 +42,7 @@ public:
   QString dbnames() const;
   QString host() const;
   QString params() const;
+  void init_settings();
 private:
   QComboBox* m_dbname;
   QLineEdit* m_login;
@@ -49,6 +50,7 @@ private:
   QLineEdit* m_host;
   QLineEdit* m_params;
 private slots:
+  void db_connect();
   void ok();
   void help();
 };

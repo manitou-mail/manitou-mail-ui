@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -301,36 +301,16 @@ main(int argc, char **argv)
     conf_name = hostname + "-" + uname;
   }
 
-  int connected=0;
+  app.connect(&app, SIGNAL(lastWindowClosed()), SLOT(quit()));
+
   if (cnx_string==NULL) {
-    // get the connection parameters from a dialog box
-    QString qcs;
-    login_dialog dlg;
-    QSettings settings("Manitou-Mail", "manitou-ui");
-    dlg.set_login(settings.value("login").toString());
-    dlg.set_dbname(settings.value("dbname").toString());
-    dlg.set_host(settings.value("host").toString());
-    dlg.set_params(settings.value("params").toString());
-    dlg.set_focus();
-    do {
-      if (dlg.exec()==1) {
-	qcs = dlg.connect_string();
-      }
-      else {
-	helper::close();
-	exit(0); // exit if connection dialog closed with 'Cancel'
-      }    
-      QString errstr;
-      if (!(connected=ConnectDb(qcs.toLocal8Bit(), &errstr))) {
-	QMessageBox::critical(NULL, QObject::tr("Fatal database error"), QObject::tr("Error while connecting to the database:\n")+errstr);
-      }
-      else {
-	settings.setValue("login", dlg.login());
-	settings.setValue("dbname", dlg.dbnames()); // stringlist
-	settings.setValue("host", dlg.host());
-	settings.setValue("params", dlg.params());
-      }
-    } while (!connected);
+    login_dialog* dlg = new login_dialog();
+    dlg->show();
+    dlg->set_focus();
+    app.exec();
+    if (dlg->result()==QDialog::Rejected)
+      exit(0);
+    delete dlg;
   }
   else {
     QString errstr;
@@ -341,9 +321,7 @@ main(int argc, char **argv)
   }
 
   if (!explicit_config) {
-    QByteArray qb = conf_name.toLatin1();
-    printf("Configuration used: %s\n", qb.constData());
-    fflush(stdout);
+    printf("Configuration used: %s\n", conf_name.toLocal8Bit().constData());
   }
 
   global_conf.set_name(conf_name);
@@ -369,10 +347,8 @@ main(int argc, char **argv)
   msg_list_window* w = new msg_list_window(&filter,0);
   w->show();
 
-  app.connect(&app, SIGNAL(lastWindowClosed()), SLOT(quit()));
   app.connect(&app, SIGNAL(aboutToQuit()), SLOT(cleanup()));
   app.exec();
   DisconnectDb();
-  DBG_PRINTF(1, "end");
   return 0;
 }

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -18,15 +18,19 @@
 */
 
 #include "login.h"
+#include "main.h"
+#include "db.h"
 #include <QLayout>
 #include <QLineEdit>
 #include <QComboBox>
 #include <QPushButton>
 #include <QLabel>
+#include <QMessageBox>
 #include <QVBoxLayout>
 #include <QGridLayout>
 #include <QStringList>
 #include <QSet>
+#include <QSettings>
 
 #include "helper.h"
 #include "icons.h"
@@ -82,6 +86,8 @@ login_dialog::login_dialog() : QDialog(0)
 
   setWindowTitle(tr("Connect to a manitou database"));
   setWindowIcon(UI_ICON(ICON16_DISCONNECT));
+
+  init_settings();
 }
 
 login_dialog::~login_dialog()
@@ -89,9 +95,19 @@ login_dialog::~login_dialog()
 }
 
 void
+login_dialog::init_settings()
+{
+  QSettings settings("Manitou-Mail", "manitou-ui");
+  set_login(settings.value("login").toString());
+  set_dbname(settings.value("dbname").toString());
+  set_host(settings.value("host").toString());
+  set_params(settings.value("params").toString());
+}
+
+void
 login_dialog::ok()
 {
-  accept();
+  db_connect();
 }
 
 void
@@ -195,4 +211,25 @@ QString
 login_dialog::params() const
 {
   return m_params->text();
+}
+
+void
+login_dialog::db_connect()
+{
+  QString errstr;
+  QString qcs=connect_string();
+  if (!ConnectDb(qcs.toLocal8Bit(), &errstr)) {
+    QMessageBox::critical(NULL, QObject::tr("Fatal database error"), QObject::tr("Error while connecting to the database:\n")+errstr);
+  }
+  else {
+    QSettings settings("Manitou-Mail", "manitou-ui");
+    settings.setValue("login", login());
+    settings.setValue("dbname", dbnames()); // stringlist
+    settings.setValue("host", host());
+    settings.setValue("params", params());
+    accept();
+    // quit explicitly to make sure back that we go back to main()
+    // this is necessary if other windows are opened, like the help window.
+    gl_pApplication->quit();
+  }
 }

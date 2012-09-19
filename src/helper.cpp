@@ -27,7 +27,6 @@
 #include <QFile>
 #include <QLocale>
 #include <QWebView>
-#include <QDebug>
 
 qassistant::qassistant(const QString path)
 {
@@ -69,11 +68,9 @@ qassistant::show_page(const QString path)
   if (sharp>0 && sharp<path.length()-1) {
     u = QUrl::fromLocalFile(m_help_path+"/"+path.left(sharp));
     u.setFragment(path.mid(sharp+1));
-    qDebug() << path.left(sharp);
   }
   else
     u = QUrl::fromLocalFile(m_help_path+"/"+path);
-  qDebug() << u;
   m_view->setUrl(u);
   m_view->show();
 }
