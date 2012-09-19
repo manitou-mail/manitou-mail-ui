@@ -63,6 +63,7 @@ public:
 protected:
   void keyPressEvent(QKeyEvent*);
 public slots:
+  void select_all_text();
 //  void wheel_body(QWheelEvent* );
   void link_clicked(const QUrl&);
   void allow_external_contents();

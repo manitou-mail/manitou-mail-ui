@@ -37,6 +37,8 @@
 #include <QPrintDialog>
 #include <QTextDocument>
 #include <QVariant>
+#include <QShortcut>
+#include <QKeySequence>
 
 #if QT_VERSION>=0x040600
 #include <QWebElement>
@@ -73,7 +75,18 @@ message_view::message_view(QWidget* parent, msg_list_window* sub_parent) : QWidg
   }
   connect(m_bodyv, SIGNAL(linkClicked(const QUrl&)), this, SLOT(link_clicked(const QUrl&)));
 
+  QShortcut* t = new QShortcut(QKeySequence(tr("Ctrl+A", "Select all")), this);
+  t->setContext(Qt::WidgetWithChildrenShortcut);
+  connect(t, SIGNAL(activated()), this, SLOT(select_all_text()));
 }
+
+
+void
+message_view::select_all_text()
+{
+  m_bodyv->page()->triggerAction(QWebPage::SelectAll);
+}
+
 
 void
 message_view::display_link(const QString& link)

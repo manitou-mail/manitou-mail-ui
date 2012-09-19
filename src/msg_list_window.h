@@ -234,6 +234,7 @@ public slots:
 
   void view_attachment();
   void save_attachment();
+  void select_all_text();
 
   void search_db();
   void search_text_changed(const QString&);
@@ -444,6 +445,7 @@ private:
   QAction* m_action_new_selection;
   QAction* m_action_refresh_results;
   QAction* m_action_goto_last_msg;
+  QAction* m_action_msgview_select_all;
 
   void enable_forward_backward();
 

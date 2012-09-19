@@ -57,6 +57,12 @@ msg_list_window::change_page(msgs_page* p)
 }
 
 void
+msg_list_window::select_all_text()
+{
+  m_msgview->select_all_text();
+}
+
+void
 msg_list_window::move_forward()
 {
   msgs_page* next = m_pages->next_page();

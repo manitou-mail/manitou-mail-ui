@@ -250,6 +250,9 @@ msg_list_window::create_actions()
   m_action_goto_last_msg = new QAction(FT_MAKE_ICON(FT_ICON16_GOTO_BOTTOM),
 				       tr("Select bottom message"), this);
   connect(m_action_goto_last_msg, SIGNAL(triggered()), this, SLOT(sel_bottom()));
+
+  m_action_msgview_select_all = new QAction(tr("Select all"), this);
+  connect(m_action_msgview_select_all, SIGNAL(triggered()), this, SLOT(select_all_text()));
 }
 
 void
@@ -2794,6 +2797,11 @@ msg_list_window::body_menu()
   for (unsigned int i=0; i<sizeof(actions)/sizeof(actions[0]); i++) {
     qmenu.addAction(actions[i]);
   }
+  qmenu.addSeparator();
+
+  qmenu.addAction(m_action_msgview_select_all);
+  qmenu.addAction(m_menu_actions[me_Edit_Copy]);
+
   qmenu.exec(QCursor::pos());
 }
 

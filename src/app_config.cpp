@@ -30,6 +30,7 @@ const char* app_config::m_default_values[] = {
   "show_tags", "1",
   "autocheck_newmail", "3",
   "display_threads", "1",
+  "messages_order", "oldest_first",
   "msg_window_pages", "5",
   "max_db_connections", "3",
   "max_msgs_per_selection", "500",
