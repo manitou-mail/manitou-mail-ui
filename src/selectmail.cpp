@@ -293,8 +293,11 @@ fetch_thread::run()
   else {
     // search not involving the word indexes
     try {
+      db_transaction trans(*m_cnx);
+      sql_stream st("SET TRANSACTION READ ONLY", *m_cnx);
       sql_stream sq(m_query, *m_cnx);
       sq.execute();
+      trans.commit();
       store_results(sq, m_max_results>0?m_max_results:-1);
       m_tuples_count = sq.row_count();
     }
@@ -748,25 +751,46 @@ msgs_filter::fetch(mail_listview* qlv, bool fetch_more/*=false*/)
       m_start_time = QTime::currentTime();
 #ifdef WITH_PGSQL
       PGconn* c=GETDB();
-      PGresult* res = PQexec(c, query);
-      if (res && PQresultStatus(res)==PGRES_TUPLES_OK) {
-	m_exec_time = m_start_time.elapsed();
-	m_fetch_results = new std::list<mail_result>;
-	if (m_fetch_results) {
-	  load_result_list(res, m_fetch_results, m_max_results-1);
-	  make_list(qlv);
-	  delete m_fetch_results;
-	  m_fetch_results=NULL;
-	}
+      PGresult* res=NULL;
+      PGresult* res1=NULL;
+      PGresult* res2=NULL;
+
+      res1 = PQexec(c, "BEGIN; SET TRANSACTION READ ONLY");
+      if (!res1 || PQresultStatus(res1)!=PGRES_COMMAND_OK) {
+	QMessageBox::warning(NULL, APP_NAME, QObject::tr("Unable to execute query.") + QString("\n")+ PQerrorMessage(c));
       }
       else {
-	DBG_PRINTF(2, "PQexec error");
-	m_exec_time=-1;
-	m_errmsg = PQerrorMessage(c);
-	QMessageBox::warning(NULL, APP_NAME, QObject::tr("Unable to execute query.") + QString("\n")+ m_errmsg);
+	res = PQexec(c, query);
+	if (res && PQresultStatus(res)==PGRES_TUPLES_OK) {
+	  m_exec_time = m_start_time.elapsed();
+	  m_fetch_results = new std::list<mail_result>;
+	  if (m_fetch_results) {
+	    load_result_list(res, m_fetch_results, m_max_results-1);
+	    make_list(qlv);
+	    delete m_fetch_results;
+	    m_fetch_results=NULL;
+	  }
+	  PGresult* res4=PQexec(c, "END");
+	  if (res4)
+	    PQclear(res4);
+	}
+	else {
+	  DBG_PRINTF(2, "PQexec error");
+	  m_exec_time=-1;
+	  m_errmsg = PQerrorMessage(c);
+	  PGresult* res3 = PQexec(c, "ROLLBACK");
+	  QMessageBox::warning(NULL, APP_NAME, QObject::tr("Unable to execute query.") + QString("\n")+ m_errmsg);
+	  if (!res3 || PQresultStatus(res3)!=PGRES_COMMAND_OK) {
+	    QMessageBox::warning(NULL, QObject::tr("Database error"), QObject::tr("In addition, could not execute ROLLBACK.") + QString("\n")+ PQerrorMessage(c));
+	  }
+	}
       }
       if (res)
 	PQclear(res);
+      if (res1)
+	PQclear(res1);
+      if (res2)
+	PQclear(res2);
 #endif
     }
     else if (r==0) {
