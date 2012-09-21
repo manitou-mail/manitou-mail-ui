@@ -190,10 +190,11 @@ db_word::format_db_string_array(const QStringList& words, db_cnx& db)
     txt.append("'" + db.escape_string_literal(*it) + "'");
   }
   txt.append(']');
-  /* For an empty array, add a cast to avoid the postgres resolve error:
-     "cannot determine type of empty array" */
-  if (words.isEmpty())
-    txt.append("::text[]");
+  /* For an empty array, add a cast to avoid the postgres resolve
+     error: "cannot determine type of empty array". Plus we use '{}'
+     instead of array[] it's accepted only by PG>=8.4 */
+  if (words.isEmpty())    
+    txt = "'{}'::text[]";  //txt.append("::text[]");
   return txt;
 }
 
