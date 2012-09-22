@@ -211,7 +211,9 @@ main(int argc, char **argv)
   // we use embedded resources on Mac
   QString qt_tr_path = QLibraryInfo::location(QLibraryInfo::TranslationsPath);
   gl_xpm_path = ":/images";
-  QString manitou_tr_path = ":/translations";
+  QString s = QApplication::applicationDirPath();
+  gl_help_path = s + "/help";
+  QString manitou_tr_path = s + "/translations";
 #endif
 
   const char* cnx_string=NULL;
@@ -274,7 +276,7 @@ main(int argc, char **argv)
   // search for a translation file, except for the C locale
   if (locale.name() != QLocale::c().name()) {
     if (translator_qt.load(QString("qt_")+locale.name(), qt_tr_path))
-      app.installTranslator(&translator_qt);      
+      app.installTranslator(&translator_qt);
     if (translator.load(QString("manitou_")+locale.name(), manitou_tr_path)) {
       app.installTranslator(&translator);
     }
