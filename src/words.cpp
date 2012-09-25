@@ -116,8 +116,9 @@ db_word::fetch_vectors()
 
   QString query= QString("SELECT part_no,mailvec,nz_offset FROM inverted_word_index WHERE word_id=%1").arg(m_word_id);
 
+  QByteArray qb_query = query.toUtf8();
   PGresult* res = PQexecParams(pgconn,
-			       query.toLatin1().constData(),
+			       qb_query.constData(),
 			       0, // number of params
 			       NULL, // param types,
 			       NULL, // param values,

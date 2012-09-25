@@ -745,8 +745,8 @@ msgs_filter::fetch(mail_listview* qlv, bool fetch_more/*=false*/)
     if (r==1) {
       db_cnx db;
       QString s=q.get();
-      const char* query = s.toUtf8().constData();
-      DBG_PRINTF(5,"%s", query);
+      QByteArray qb_query = s.toUtf8();
+      const char* query = qb_query.constData();
       m_exec_time=0;
       m_start_time = QTime::currentTime();
 #ifdef WITH_PGSQL
@@ -760,6 +760,7 @@ msgs_filter::fetch(mail_listview* qlv, bool fetch_more/*=false*/)
 	QMessageBox::warning(NULL, APP_NAME, QObject::tr("Unable to execute query.") + QString("\n")+ PQerrorMessage(c));
       }
       else {
+	DBG_PRINTF(5,"query=%s", query);
 	res = PQexec(c, query);
 	if (res && PQresultStatus(res)==PGRES_TUPLES_OK) {
 	  m_exec_time = m_start_time.elapsed();
@@ -775,7 +776,7 @@ msgs_filter::fetch(mail_listview* qlv, bool fetch_more/*=false*/)
 	    PQclear(res4);
 	}
 	else {
-	  DBG_PRINTF(2, "PQexec error");
+	  DBG_PRINTF(2, "PQexec error: %s", PQerrorMessage(c));
 	  m_exec_time=-1;
 	  m_errmsg = PQerrorMessage(c);
 	  PGresult* res3 = PQexec(c, "ROLLBACK");
