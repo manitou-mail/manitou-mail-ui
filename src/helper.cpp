@@ -78,7 +78,7 @@ qassistant::show_page(const QString path)
 // translate help topics into HTML help files
 //static
 struct helper::topic helper::m_topics[] = {
-  {"help", "user-interface.html"},
+  {"help", "index.html"},
   {"connecting", "ui.invocation.html"},
   {"preferences/display", "ui.preferences.html"},
   {"preferences/identities", "ui.preferences.html#ui.preferences.identities"},

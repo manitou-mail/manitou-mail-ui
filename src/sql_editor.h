@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2009 Daniel Verite
+/* Copyright (C) 2005-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -34,7 +34,7 @@ public:
 private slots:
   void save_close();
   void cancel();
-  void help();
+  /*  void help();*/
 private:
   QPlainTextEdit* m_edit;
 };

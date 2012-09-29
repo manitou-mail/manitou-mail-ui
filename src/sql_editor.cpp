@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2009 Daniel Verite
+/* Copyright (C) 2005-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -44,15 +44,17 @@ sql_editor::sql_editor(QWidget* parent): QDialog(parent)
   topLayout->addLayout(buttons);
   QPushButton* w = new QPushButton(tr("OK"), this);
   connect(w, SIGNAL(clicked()), this, SLOT(save_close()));
-
+#if 0
+  // TODO when a help section will be available for SQL queries
   QPushButton* w2 = new QPushButton(tr("Help"), this);
   connect(w2, SIGNAL(clicked()), this, SLOT(help()));
+#endif
 
   QPushButton* w1 = new QPushButton(tr("Cancel"), this);
   connect(w1, SIGNAL(clicked()), this, SLOT(cancel()));
 
-  QPushButton* btns[]={w,w2,w1};
-  for (int i=0; i<3; i++) {
+  QPushButton* btns[]={w,/*w2,*/w1};
+  for (uint i=0; i<sizeof(btns)/sizeof(btns[0]); i++) {
     buttons->addStretch(10);
     buttons->addWidget(btns[i]);
   }
@@ -62,11 +64,13 @@ sql_editor::sql_editor(QWidget* parent): QDialog(parent)
   resize(500, 200);
 }
 
+#if 0
 void
 sql_editor::help()
 {
   helper::show_help("sql editor");
 }
+#endif
 
 void sql_editor::save_close()
 {
