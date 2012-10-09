@@ -224,7 +224,10 @@ mail_msg::set_quoted_body(const QString& squote, const QString& sprepend,
   QString prefix="> ";
   if (get_config().exists("reply_quote_prefix"))
     prefix = get_config().get_string("reply_quote_prefix");
-
+  // if the prefix is insanely long, truncate it
+  if (prefix.length()>76) {
+    prefix.truncate(76);
+  }
   // Reformat the text to have lines shorter than 78 characters when possible
   const int width = 78-prefix.length();
 
@@ -234,7 +237,7 @@ mail_msg::set_quoted_body(const QString& squote, const QString& sprepend,
       nposlf = nend;
     QString para = squote.mid(npos, nposlf-npos);
     // Reformat only non-quoted text and paragraphs longer than :width
-    if (para.at(0) != '>' && para.length() > width) {
+    if (para.length() > width && para.at(0) != '>') {
       QChar sep = ' ';
       QStringList list = para.split(sep);
       QString line;
