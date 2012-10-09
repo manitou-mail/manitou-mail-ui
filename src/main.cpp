@@ -28,6 +28,7 @@
 #include <QTranslator>
 #include <QHostInfo>
 #include <QSettings>
+#include <QUuid>
 
 #include "selectmail.h"
 #include "login.h"
@@ -302,6 +303,14 @@ main(int argc, char **argv)
 #endif
     conf_name = hostname + "-" + uname;
   }
+
+  /* Call createUuid() before creating any window as a workaround
+     against QTBUG-11080 or QTBUG-11213 in Qt-4.6.2 on Linux.
+     Otherwise, createUuid() may return a UUID that is always the same
+     when creating a new Message-Id later on. The fix for this Qt bug
+     has not been backported in Ubuntu-10.04 LTS at this time
+     (2012-10-08). */
+  (void)QUuid::createUuid();
 
   app.connect(&app, SIGNAL(lastWindowClosed()), SLOT(quit()));
 
