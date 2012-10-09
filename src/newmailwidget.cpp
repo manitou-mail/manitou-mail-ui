@@ -72,27 +72,27 @@ new_mail_widget::create_actions()
 {
   m_action_send_msg = new QAction(FT_MAKE_ICON(FT_ICON16_SEND),
 				  tr("Send mail"), this);
-  connect(m_action_send_msg, SIGNAL(activated()), this, SLOT(send()));
+  connect(m_action_send_msg, SIGNAL(triggered()), this, SLOT(send()));
 
   m_action_attach_file = new QAction(FT_MAKE_ICON(FT_ICON16_ATTACH),
 				     tr("Attach file"), this);
-  connect(m_action_attach_file, SIGNAL(activated()), this, SLOT(attach_files()));
+  connect(m_action_attach_file, SIGNAL(triggered()), this, SLOT(attach_files()));
 
   m_action_insert_file = new QAction(FT_MAKE_ICON(FT_ICON16_OPENFILE),
 				     tr("Insert text file"), this);
-  connect(m_action_insert_file, SIGNAL(activated()), this, SLOT(insert_file()));
+  connect(m_action_insert_file, SIGNAL(triggered()), this, SLOT(insert_file()));
 
   m_action_edit_note = new QAction(FT_MAKE_ICON(FT_ICON16_EDIT_NOTE),
 				   tr("Edit note"), this);
-  connect(m_action_edit_note, SIGNAL(activated()), this, SLOT(edit_note()));
+  connect(m_action_edit_note, SIGNAL(triggered()), this, SLOT(edit_note()));
 
   m_action_add_header = new QAction(FT_MAKE_ICON(ICON16_HEADER),
 				   tr("Add header field"), this);
-  connect(m_action_add_header, SIGNAL(activated()), this, SLOT(add_field_editor()));
+  connect(m_action_add_header, SIGNAL(triggered()), this, SLOT(add_field_editor()));
 
   m_action_open_notepad = new QAction(FT_MAKE_ICON(ICON16_NOTEPAD),
 				   tr("Open global notepad"), this);
-  connect(m_action_open_notepad, SIGNAL(activated()), this, SLOT(open_global_notepad()));
+  connect(m_action_open_notepad, SIGNAL(triggered()), this, SLOT(open_global_notepad()));
 
 }
 
