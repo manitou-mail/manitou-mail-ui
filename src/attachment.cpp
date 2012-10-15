@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -836,7 +836,7 @@ qint64
 attachment_network_reply::bytesAvailable() const
 {
   qint64 ret=(!m_a->eof()?32768:0) + QNetworkReply::bytesAvailable();
-  DBG_PRINTF(3, "bytesAvailable returning %ld", ret);
+  DBG_PRINTF(3, "bytesAvailable returning %lld", ret);
   return ret;
 }
 

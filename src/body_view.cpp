@@ -289,6 +289,7 @@ internal_img_network_reply::internal_img_network_reply(const QNetworkRequest& re
   /* internal_img_network_reply is modeled after:
      http://qt.gitorious.org/qt-labs/graphics-dojo/blobs/master/url-rendering/main.cpp
   */
+  position=0;
   setRequest(req);
   if (type==1) { // Face
     m_buffer = QByteArray::fromBase64(encoded_img.toAscii().constData());
@@ -297,7 +298,6 @@ internal_img_network_reply::internal_img_network_reply(const QNetworkRequest& re
     QImage qi;
     QString s;
     xface_to_xpm(encoded_img.toAscii().constData(), s);
-    
     if (qi.loadFromData((const uchar*)s.toAscii().constData(), s.length(), "XPM")) {
       QBuffer b(&m_buffer);
       qi.save(&b, "PNG");
@@ -305,7 +305,8 @@ internal_img_network_reply::internal_img_network_reply(const QNetworkRequest& re
   }
   setOperation(QNetworkAccessManager::GetOperation);
   setHeader(QNetworkRequest::ContentTypeHeader, "image/png");
-  open(ReadOnly|Unbuffered);
+  setHeader(QNetworkRequest::ContentLengthHeader, m_buffer.size());
+  open(ReadOnly);
   setUrl(req.url());
   QTimer::singleShot(0, this, SLOT(go()));
 }
@@ -317,6 +318,12 @@ internal_img_network_reply::readData(char* data, qint64 size)
   memcpy(data, m_buffer.constData()+position, r);
   position += r;
   return r;
+}
+
+qint64
+internal_img_network_reply::bytesAvailable() const
+{
+  return m_buffer.size() - position + QNetworkReply::bytesAvailable();
 }
 
 bool
@@ -332,7 +339,7 @@ void
 internal_img_network_reply::go()
 {
   position=0;
-  emit readyRead(); 
+  emit readyRead();
   emit finished();
 }
 

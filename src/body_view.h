@@ -134,7 +134,7 @@ class internal_img_network_reply : public QNetworkReply
   Q_OBJECT
 public:
   internal_img_network_reply(const QNetworkRequest&, const QString&, int, QObject*);
-  qint64 bytesAvailable() const { return m_buffer.size() - position; }
+  qint64 bytesAvailable() const;
   qint64 readData(char* data, qint64 size);
   bool seek(qint64);
   qint64 pos() const { return position; }
