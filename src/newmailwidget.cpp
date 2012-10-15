@@ -1031,7 +1031,7 @@ new_mail_widget::insert_signature()
   const mail_identity* id = get_current_identity();
   if (id) {
     QString sig = expand_signature(id->m_signature, *id);
-    if (sig.at(0)!='\n')
+    if (sig.length()>0 && sig.at(0)!='\n')
       sig.prepend("\n");
     if (m_edit_mode == plain_mode) {
       // insert the signature and leave the cursor just above
