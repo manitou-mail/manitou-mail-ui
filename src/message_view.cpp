@@ -331,6 +331,7 @@ message_view::display_body(const display_prefs& prefs, int preferred_format)
   }
 
   reset_state();
+  reset_commands();
 
   /* First we try to fetch html contents from body.bodyhtml
      If it's empty, we look for an HTML part (even if we won't load it later) */
