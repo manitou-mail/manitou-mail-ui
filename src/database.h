@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -49,8 +49,6 @@ class database
 public:
   database();
   virtual ~database();
-  // fetch the current date and time in DD/MM/YYYY HH:MI:SS format
-  static bool fetchServerDate(QString&);
   virtual void begin_transaction();
   virtual void commit_transaction();
   virtual void rollback_transaction();

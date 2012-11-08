@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -21,28 +21,17 @@
 
 #include "db.h"
 #include <stdio.h>
-
-#ifdef _WINDOWS
-#include <windows.h>
-#endif
-
-#include <sys/stat.h>
-#include <locale.h>
 #include <iostream>
 
-#include <QRegExp>
-#include <QStringList>
 #include <QByteArray>
+#include <QMessageBox>
+#include <QSocketNotifier>
 
 #include "database.h"
 #include "sqlstream.h"
 #include "sqlquery.h"
 #include "addresses.h"
 #include "db_listener.h"
-
-#include <QMessageBox>
-#include <QTextCodec>
-#include <QSocketNotifier>
 
 //static PGconn *pgconn;
 pgConnection pgDb;
@@ -453,26 +442,6 @@ database::end_transaction()
     fprintf(stderr, "Fatal error: m_open_trans_count<0\n");
     exit(1);
   }
-}
-
-// fetch the current date and time in DD/MM/YYYY HH:MI:SS format
-bool
-database::fetchServerDate(QString& date)
-{
-  bool result=true;
-  db_cnx db;
-  PGconn* c=db.connection();
-  PGresult* res=PQexec(c, "SELECT to_char(now(),'DD/MM/YYYY HH24:MI:SS')");
-  if (res && PQresultStatus(res)==PGRES_TUPLES_OK) {
-    date=(const char*)PQgetvalue(res,0,0);
-  }
-  else {
-    DBEXCPT(c);
-    result=false;
-  }
-  if (res)
-    PQclear(res);
-  return result;
 }
 
 bool

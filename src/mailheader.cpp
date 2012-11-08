@@ -17,7 +17,6 @@
    Boston, MA 02111-1307, USA.
 */
 
-#include <locale.h>
 #include <stdlib.h>
 
 #include "main.h"
@@ -26,9 +25,8 @@
 #include "mailheader.h"
 #include "sqlstream.h"
 
-#include <time.h>
-#include <qtextcodec.h>
-#include <qregexp.h>
+#include <QTextCodec>
+#include <QRegExp>
 
 #ifndef __GNUG__
 // for _alloca()
@@ -55,51 +53,25 @@ mail_header::make()
     m_lines.append(QString("In-Reply-To: %1\n").arg(m_inReplyTo));
 
   QString date;
-  if (!database::fetchServerDate(date))
-    return;
-  char parsedate[200];
-  strncpy(parsedate, date.toLatin1().constData(),199);
-  char ldate[256];
+  int tz_offset=0;
 
-  // Initialize with the localtime to get the timezone and dst
-  struct tm t;
-  time_t tt;
-  time (&tt);
-  struct tm* ltm = localtime (&tt);
-  memcpy (&t, ltm, sizeof(struct tm));
-
-  // "DD/MM/YYYY HH:NN:SS";
-  parsedate[2]='\0'; t.tm_mday=atoi(parsedate);
-  parsedate[5]='\0'; t.tm_mon=atoi(parsedate+3)-1;
-  parsedate[10]='\0'; t.tm_year=atoi(parsedate+6)-1900;
-  parsedate[13]='\0'; t.tm_hour=atoi(parsedate+11);
-  parsedate[16]='\0'; t.tm_min=atoi(parsedate+14);
-  t.tm_sec=atoi(parsedate+17);
-  // use a portable locale for the Date: field
-  char* loc=setlocale(LC_TIME, "C");
-#ifdef Q_WS_WIN
-  /* MS C library insists on replacing %z with non-standard, locale-tainted text
-     so we use our own code based on the global _timezone variable */
-  strftime(ldate, sizeof(ldate), "%a, %d %b %Y %H:%M:%S", &t);
-  QString datetz;
-  _tzset();
-  int delta_s=(_timezone>=0)?_timezone:-_timezone;
-  if (t.tm_isdst) {
-    // apparently MSC can tell us if DST is in effect, but not the DST offset;
-    // we assume it's one hour.
-    delta_s += 3600;
+  db_cnx db;
+  try {
+    sql_stream s("select to_char(now(),:fmt), extract(timezone from now())", db);
+    s << "Dy, DD Mon YYYY HH24:MI:SS";
+    if (!s.eos()) {
+      s >> date >> tz_offset;
+    }
   }
-  datetz.sprintf(" %c%02d%02d", _timezone<0?'+':'-', delta_s/3600,
-    delta_s%60);
-  strcat(ldate, datetz.toLatin1().constData());
-#else
-  const char* fmt="%a, %d %b %Y %H:%M:%S %z";
-  strftime(ldate, sizeof(ldate), fmt, &t);
-#endif // !Q_WS_WIN
-  // restore the previous locale
-  if (loc)
-    setlocale(LC_TIME, loc);
-  m_lines.append(QString("Date: %1\n").arg(ldate));
+  catch(db_excpt& p) {
+    DBEXCPT(p);
+  }
+  if (!date.isEmpty()) {
+    QString datetz;
+    datetz.sprintf(" %c%02d%02d", tz_offset>0?'+':'-', abs(tz_offset)/3600,
+		   abs(tz_offset%3600)/60);
+    m_lines.append(QString("Date: %1\n").arg(date+datetz));
+  }
 
   if (!m_messageId.isEmpty()) {
     m_lines.append(QString("Message-Id: <%1>\n").arg(m_messageId));
