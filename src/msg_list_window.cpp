@@ -310,8 +310,8 @@ msg_list_window::tag_toggled(int tag_id, bool checked)
   uint nsteps = (size+batch_size-1)/batch_size;
   if (nsteps>1) {
     uint processed=0;
-    install_progressbar(this);
-    emit progress(-nsteps);
+    install_progressbar();
+    show_progress(-nsteps);
 
     std::set<mail_msg*> mset;
     for (uint step=0; step < nsteps && !progress_aborted(); step++) {
@@ -325,9 +325,9 @@ msg_list_window::tag_toggled(int tag_id, bool checked)
       if (!mset.empty()) {
 	processed += mail_msg::toggle_tags_set(mset, tag_id, checked);
       }
-      emit progress(1+step);
+      show_progress(1+step);
     }
-    uninstall_progressbar(this);
+    uninstall_progressbar();
     statusBar()->showMessage(tr("%1 message(s) processed.").arg(processed), 3000);
   }
   else for (idx=0; idx < v.size(); idx++) {
@@ -1075,8 +1075,8 @@ msg_list_window::remove_selected_msgs(int action)
   m_ignore_selection_change = true;
   if (nsteps > 1 && action==0) {
     // massive trash, do it in batches
-    install_progressbar(this);
-    emit progress(-nsteps);
+    install_progressbar();
+    show_progress(-nsteps);
 
     std::set<mail_msg*> mset;
     for (uint step=0; step < nsteps && !progress_aborted(); step++) {
@@ -1098,11 +1098,10 @@ msg_list_window::remove_selected_msgs(int action)
 	// auto-select next one only for the last message
 	remove_msg(*it, (cnt==imset.size()));
       }
-      // report progress
-      emit progress(1+step);
+      show_progress(1+step);
     }
     if (nsteps > 1)
-      uninstall_progressbar(this);
+      uninstall_progressbar();
   }
   else for (uint i=0; i<nb_msg; i++) {
     // small update
@@ -1174,8 +1173,8 @@ msg_list_window::change_multi_mail_status(int statusMask,
   statusBar()->showMessage(tr("Updating messages..."));
   uint nsteps = (size+batch_size-1)/batch_size;
   if (nsteps > 1) {
-    install_progressbar(this);
-    emit progress(-nsteps);
+    install_progressbar();
+    show_progress(-nsteps);
   }
 
   DBG_PRINTF(5, "nsteps=%d, size=%d", nsteps, size);
@@ -1200,11 +1199,11 @@ msg_list_window::change_multi_mail_status(int statusMask,
       }
     }
     // report progress
-    emit progress(1+step);
+    show_progress(1+step);
   }
 
   if (nsteps > 1)
-    uninstall_progressbar(this);
+    uninstall_progressbar();
   m_qlist->update();
   QApplication::restoreOverrideCursor();
   statusBar()->showMessage(tr("Done."), 3000);
@@ -1823,6 +1822,36 @@ msg_list_window::enable_interaction(bool b)
 }
 
 void
+msg_list_window::attch_run(attch_lvitem* item)
+{
+  attachment* pa = item->get_attachment();
+  if (!pa) return;
+
+  QString tmpname = pa->get_temp_location();
+  install_progressbar(tr("Downloading attached file: %1").arg(tmpname));
+  item->download(tmpname, &m_abort);
+  if (!m_abort)
+    pa->launch_os_viewer(tmpname);
+  uninstall_progressbar();
+}
+
+/* Returns: 0: cancel, 1: save_file, 2: run default application */
+int
+msg_list_window::attachment_dest(attachment* pa)
+{
+  QString default_app = pa->default_os_application();
+  if (default_app.isEmpty())
+    return 1;
+  attch_dialog_save dlg;
+  dlg.set_app_name(default_app);
+  dlg.set_file_name(pa->filename());
+  int r=dlg.exec();
+  if (r==QDialog::Rejected)
+    return 0;
+  return dlg.choice();
+}
+
+void
 msg_list_window::attch_selected(QTreeWidgetItem* p, int column _UNUSED_)
 {
   attch_lvitem* pItem=dynamic_cast<attch_lvitem*>(p);
@@ -1841,35 +1870,37 @@ msg_list_window::attch_selected(QTreeWidgetItem* p, int column _UNUSED_)
   else {
     if (!pa->application().isEmpty()) {
       // launch helper application (MIME viewer)
-      install_progressbar(m_qAttch);
       QString tmpname = pa->get_temp_location();
-      statusBar()->showMessage(tr("Downloading attached file: %1").arg(tmpname));
+      install_progressbar(tr("Downloading attached file: %1").arg(tmpname));
       pItem->download(tmpname, &m_abort);
       if (!m_abort) {
 	DBG_PRINTF(5,"launch_external_viewer");
 	pa->launch_external_viewer(tmpname);
       }
-      uninstall_progressbar(m_qAttch);
+      uninstall_progressbar();
     }
     else {
-      // save attachment file
-      QString fname = pa->filename();
-      if (m_last_attch_dir.isEmpty()) {
-	m_last_attch_dir = get_config().get_string("attachments_directory");
+      int d=attachment_dest(pa);
+      if (d==2) { // run default app
+	attch_run(pItem);
       }
-      if (!m_last_attch_dir.isEmpty()) {
-	fname = m_last_attch_dir + "/" + fname;
-      }
-//      DBG_PRINTF(5, "fname=%s", fname.latin1());
-      fname = QFileDialog::getSaveFileName(this, tr("Save File"), fname);
-      if (!fname.isEmpty()) {
-	install_progressbar(m_qAttch);
-	statusBar()->showMessage(tr("Downloading attached file: %1").arg(fname));
-	bool m_abort=false;
-	QString dir=pItem->save_to_disk(fname, &m_abort);
-	if (!dir.isEmpty())
-	  m_last_attch_dir = dir;
-	uninstall_progressbar(m_qAttch);
+      if (d==1) { // save to disk
+	QString fname = pa->filename();
+	if (attch_listview::m_last_attch_dir.isEmpty()) {
+	  attch_listview::m_last_attch_dir = get_config().get_string("attachments_directory");
+	}
+	if (!attch_listview::m_last_attch_dir.isEmpty()) {
+	  fname = attch_listview::m_last_attch_dir + "/" + fname;
+	}
+  //      DBG_PRINTF(5, "fname=%s", fname.latin1());
+	fname = QFileDialog::getSaveFileName(this, tr("Save File"), fname);
+	if (!fname.isEmpty()) {
+	  install_progressbar(tr("Downloading attached file: %1").arg(fname));
+	  QString dir=pItem->save_to_disk(fname, &m_abort);
+	  if (!dir.isEmpty())
+	    attch_listview::m_last_attch_dir = dir;
+	  uninstall_progressbar();
+	}
       }
     }
   }
@@ -1882,12 +1913,14 @@ msg_list_window::progress_aborted()
 }
 
 void
-msg_list_window::install_progressbar(QWidget* widget)
+msg_list_window::install_progressbar(QString msg)
 {
   m_new_mail_btn->hide();
   m_progress_bar = new QProgressBar(this);
   statusBar()->addPermanentWidget(m_progress_bar);
-  connect(widget, SIGNAL(progress(int)), this, SLOT(show_progress(int)));
+  if (!msg.isEmpty())
+    statusBar()->showMessage(msg);
+  //  connect(widget, SIGNAL(progress(int)), this, SLOT(show_progress(int)));
   enable_interaction(false);
   show_abort_button();
 }
@@ -1913,11 +1946,10 @@ msg_list_window::hide_abort_button()
 }
 
 void
-msg_list_window::uninstall_progressbar(QWidget* widget)
+msg_list_window::uninstall_progressbar()
 {
   hide_abort_button();
   enable_interaction(true);
-  disconnect(widget, SIGNAL(progress(int)), this, SLOT(show_progress(int)));
   if (m_progress_bar) {
     delete m_progress_bar;
     m_progress_bar=NULL;
@@ -1940,6 +1972,7 @@ msg_list_window::abort_operation()
     unsetCursor();
     statusBar()->showMessage(tr("Query cancelled."));
   }
+  emit abort_progress();
 }
 
 void
@@ -2431,99 +2464,11 @@ msg_list_window::view_attachment()
   qe->show();
 }
 
-bool
-msg_list_window::confirm_write(const QString fname)
-{
-  if (QFile::exists(fname)) {
-    int res = QMessageBox::question(this, QObject::tr("Please confirm"), QObject::tr("A file '%1' already exists. Overwrite?").arg(fname), QObject::tr("&Yes"), QObject::tr("&No"), QString::null, 0, 1);
-    if (res==1)
-      return false;
-  }
-  return true;
-}
 
 void
 msg_list_window::save_attachment()
 {
-  // list of attachments with a filename
-  std::list<attch_lvitem*> list_name;
-  // list of attachments without a filename
-  std::list<attch_lvitem*> list_noname;
-
-  QList<QTreeWidgetItem*> list = m_qAttch->selectedItems();
-  QList<QTreeWidgetItem*>::const_iterator itw = list.begin();
-  for (; itw!=list.end(); ++itw) {
-    attch_lvitem* item = static_cast<attch_lvitem*>(*itw);
-    if (item->is_note())
-      continue;
-    if (!item->get_attachment()->filename().isEmpty())
-      list_name.push_back(item);
-    else
-      list_noname.push_back(item);
-  }
-  if (list_name.empty() && list_noname.empty()) {
-    QMessageBox::warning(this, APP_NAME, tr("Please select one or several attachments"));
-    return;
-  }
-
-  QString fname;
-  QString dir=m_last_attch_dir;
-  if (dir.isEmpty()) {
-    dir = get_config().get_string("attachments_directory");
-  }
-  std::list<attch_lvitem*>::iterator it;
-  if (list_name.size()>1) {
-    // several named attachments: ask only for the directory
-    dir = QFileDialog::getExistingDirectory(this, tr("Save to directory..."), dir);
-    if (!dir.isEmpty()) { // if accepted
-      for (it=list_name.begin(); it!=list_name.end(); ++it) {
-	attachment* pa = (*it)->get_attachment();
-	fname = dir + "/" + pa->filename();
-	if (!confirm_write(fname))
-	  continue;
-	install_progressbar(m_qAttch);
-	//DBG_PRINTF(6, "downloading %s", fname.latin1());
-	statusBar()->showMessage(tr("Downloading attachment into: %1").arg(fname));
-	dir=(*it)->save_to_disk(fname, &m_abort);
-	uninstall_progressbar(m_qAttch);
-	if (m_abort)
-	  break;
-      }
-    }
-    else
-      return;			// cancel
-  }
-  if (list_name.size()==1) {
-    it=list_name.begin();
-    attachment* pa = (*it)->get_attachment();
-    fname = pa->filename();
-    if (!dir.isEmpty()) {
-      fname = dir + "/" + fname;
-    }
-    //DBG_PRINTF(5, "fname=%s", fname.latin1());
-    fname = QFileDialog::getSaveFileName(this, tr("File"), fname);
-    if (!fname.isEmpty()) {
-      install_progressbar(m_qAttch);
-      statusBar()->showMessage(tr("Downloading attached file: %1").arg(fname));
-      dir=(*it)->save_to_disk(fname, &m_abort);
-      uninstall_progressbar(m_qAttch);
-    }
-  }
-  if (!list_noname.empty()) {
-    for (it=list_noname.begin(); it!=list_noname.end(); ++it) {
-      fname = QFileDialog::getSaveFileName(this, tr("File"), dir);
-      if (!fname.isEmpty()) {
-	install_progressbar(m_qAttch);
-	statusBar()->showMessage(tr("Downloading attachment into: %1").arg(fname));
-	dir=(*it)->save_to_disk(fname, &m_abort);
-	uninstall_progressbar(m_qAttch);
-      }
-      else
-	break;
-    }
-  }
-  if (!dir.isEmpty())
-    m_last_attch_dir=dir;
+  m_qAttch->save_attachments();
 }
 
 // slot

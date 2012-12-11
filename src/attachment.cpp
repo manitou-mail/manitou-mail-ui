@@ -35,6 +35,8 @@
 
 #ifdef Q_OS_WIN
 #include <windows.h>
+#include <shlwapi.h>
+#include <tchar.h>
 #endif
 
 attachment::attachment() :
@@ -70,6 +72,26 @@ attachment::is_binary()
       return true;
   }
   return false;
+}
+
+QString
+attachment::default_os_application()
+{
+#ifdef Q_OS_WIN
+  QString ext = extension(filename());
+  if (!ext.isEmpty()) {
+    ext.prepend(".");
+    DWORD dwSize = 255;
+    TCHAR sBuffer[MAX_PATH] = {0};
+    wchar_t* exta = new wchar_t[ext.length()+1];
+    ext.toWCharArray(exta);
+    exta[ext.length()]='\0';
+    HRESULT hr = AssocQueryString((ASSOCF)0, ASSOCSTR_FRIENDLYAPPNAME, exta, L"Open", sBuffer, &dwSize);
+    delete exta;
+    return QString::fromWCharArray(sBuffer);
+  }
+#endif
+  return QString::null;
 }
 
 QString
@@ -184,8 +206,30 @@ attachment::get_temp_location()
     fname = QString("attch-%1-%2").arg(m_Id).arg(m_filename);
   }
   QString dirname=get_config().get_string("attachments_directory");
-  QDir dir = dirname.isEmpty() ? QDir::temp() : QDir(dirname);
+  QDir dir;
+  if (!dirname.isEmpty()) {
+    dir = QDir(dirname);
+    if (!dir.exists())
+      dir = QDir::temp();
+  }
+  else
+    dir = QDir::temp();
   return dir.absoluteFilePath(fname);
+}
+
+void
+attachment::launch_os_viewer(const QString document_path)
+{
+#ifdef Q_OS_WIN
+  SHELLEXECUTEINFO shellInfo;
+  memset(&shellInfo, 0, sizeof(SHELLEXECUTEINFO));
+  shellInfo.cbSize = sizeof(SHELLEXECUTEINFO);
+  shellInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+  shellInfo.lpFile = (LPCTSTR)document_path.utf16();
+  shellInfo.lpParameters = NULL;
+  shellInfo.nShow = SW_SHOW;
+  ::ShellExecuteEx(&shellInfo);
+#endif
 }
 
 void
@@ -201,14 +245,7 @@ attachment::launch_external_viewer(const QString document_path)
 	 attachment's name itself is passed to ShellExecute. It assumes
 	 that it triggers the association at the OS level between the file
 	 extension and a program */
-      SHELLEXECUTEINFO shellInfo;
-      memset(&shellInfo, 0, sizeof(SHELLEXECUTEINFO));
-      shellInfo.cbSize = sizeof(SHELLEXECUTEINFO);
-      shellInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
-      shellInfo.lpFile = (LPCTSTR)document_path.utf16();
-      shellInfo.lpParameters = NULL;
-      shellInfo.nShow = SW_SHOW;
-      ::ShellExecuteEx(&shellInfo);
+      launch_os_viewer(document_path);
       return;
     }
 #endif
@@ -509,14 +546,24 @@ attachment::guess_mime_type(const QString filename)
     fetch_filename_suffixes(extension_map);
   }
 
-  int dotpos = filename.lastIndexOf('.');
-  if (dotpos >=0 && dotpos+1 < filename.length()) {
-    QString ext = filename.mid(dotpos+1);
+  QString ext = extension(filename);
+  if (!ext.isEmpty()) {
     mt::const_iterator it = extension_map.constFind(ext);
     if (it != extension_map.constEnd())
       return it.value();
   }
   return QString("application/octet-stream");	// nothing found
+}
+
+// static
+QString
+attachment::extension(const QString filename)
+{
+  int dotpos = filename.lastIndexOf('.');
+  if (dotpos >=0 && dotpos+1 < filename.length())
+    return filename.mid(dotpos+1);
+  else
+    return QString::null;
 }
 
 void

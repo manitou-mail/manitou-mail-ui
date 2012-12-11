@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -27,6 +27,14 @@
 #include <QMenu>
 #include <QPlainTextEdit>
 #include <QUrl>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QBoxLayout>
+#include <QLabel>
+#include <QRadioButton>
+#include <QPushButton>
+#include <QFileDialog>
+#include <QMessageBox>
 
 // *************** //
 //  attch_lvitem
@@ -137,6 +145,8 @@ attch_listview::~attch_listview()
 {
 }
 
+QString attch_listview::m_last_attch_dir;
+
 void
 attch_listview::popup_ctxt_menu(const QPoint& pos)
 {
@@ -147,7 +157,12 @@ attch_listview::popup_ctxt_menu(const QPoint& pos)
   if (!pa)
     return; // it may be a note
 
+  QString app_name = pa->default_os_application();
   QMenu menu(this);
+  QAction* action_open_app = NULL;
+  if (!app_name.isEmpty())
+    action_open_app = menu.addAction(tr("Open with: %1").arg(app_name));
+  QAction* action_save = menu.addAction(tr("Save to disk"));
   QAction* action_view_text = menu.addAction(tr("Display as text"));
 
   QAction* action = menu.exec(mapToGlobal(pos));
@@ -164,6 +179,24 @@ attch_listview::popup_ctxt_menu(const QPoint& pos)
       v->show();
     }
   }
+  else if (action==action_open_app) {
+    QString tmpname = pa->get_temp_location();
+    emit init_progress(tr("Downloading attached file: %1").arg(tmpname));
+    m_abort=false;
+    item->download(tmpname, &m_abort);
+    emit finish_progress();
+    if (!m_abort)
+      pa->launch_os_viewer(tmpname);
+  }
+  else if (action==action_save) {
+    save_attachments();
+  }
+}
+
+void
+attch_listview::download_aborted()
+{
+  m_abort=true;
 }
 
 void
@@ -226,3 +259,133 @@ attch_listview::mimeTypes() const
   return QStringList("text/uri-list");
 }
 
+bool
+attch_listview::confirm_write(const QString fname)
+{
+  if (QFile::exists(fname)) {
+    int res = QMessageBox::question(this, QObject::tr("Please confirm"), QObject::tr("A file '%1' already exists. Overwrite?").arg(fname), QObject::tr("&Yes"), QObject::tr("&No"), QString::null, 0, 1);
+    if (res==1)
+      return false;
+  }
+  return true;
+}
+
+
+void
+attch_listview::save_attachments()
+{
+  // list of attachments with a filename
+  std::list<attch_lvitem*> list_name;
+  // list of attachments without a filename
+  std::list<attch_lvitem*> list_noname;
+
+  QList<QTreeWidgetItem*> list = this->selectedItems();
+  QList<QTreeWidgetItem*>::const_iterator itw = list.begin();
+  for (; itw!=list.end(); ++itw) {
+    attch_lvitem* item = static_cast<attch_lvitem*>(*itw);
+    if (item->is_note())
+      continue;
+    if (!item->get_attachment()->filename().isEmpty())
+      list_name.push_back(item);
+    else
+      list_noname.push_back(item);
+  }
+  if (list_name.empty() && list_noname.empty()) {
+    QMessageBox::warning(this, APP_NAME, tr("Please select one or several attachments"));
+    return;
+  }
+
+  QString fname;
+  QString dir=attch_listview::m_last_attch_dir;
+  if (dir.isEmpty()) {
+    dir = get_config().get_string("attachments_directory");
+  }
+  std::list<attch_lvitem*>::iterator it;
+  if (list_name.size()>1) {
+    // several named attachments: ask only for the directory
+    dir = QFileDialog::getExistingDirectory(this, tr("Save to directory..."), dir);
+    if (!dir.isEmpty()) { // if accepted
+      for (it=list_name.begin(); it!=list_name.end(); ++it) {
+	attachment* pa = (*it)->get_attachment();
+	fname = dir + "/" + pa->filename();
+	if (!confirm_write(fname))
+	  continue;
+	emit init_progress(tr("Downloading attachment into: %1").arg(fname));
+	dir=(*it)->save_to_disk(fname, &m_abort);
+	emit finish_progress();
+	if (m_abort)
+	  break;
+      }
+    }
+    else
+      return;			// cancel
+  }
+  if (list_name.size()==1) {
+    it=list_name.begin();
+    attachment* pa = (*it)->get_attachment();
+    fname = pa->filename();
+    if (!dir.isEmpty()) {
+      fname = dir + "/" + fname;
+    }
+    DBG_PRINTF(5, "fname=%s", fname.toLocal8Bit().constData());
+    fname = QFileDialog::getSaveFileName(this, tr("File"), fname);
+    if (!fname.isEmpty()) {
+      emit init_progress(tr("Downloading attached file: %1").arg(fname));
+      dir=(*it)->save_to_disk(fname, &m_abort);
+      emit finish_progress();
+    }
+  }
+  if (!list_noname.empty()) {
+    for (it=list_noname.begin(); it!=list_noname.end(); ++it) {
+      fname = QFileDialog::getSaveFileName(this, tr("File"), dir);
+      if (!fname.isEmpty()) {
+	emit init_progress(tr("Downloading attachment into: %1").arg(fname));
+	dir=(*it)->save_to_disk(fname, &m_abort);
+	emit finish_progress();
+      }
+      else
+	break;
+    }
+  }
+  if (!dir.isEmpty())
+    attch_listview::m_last_attch_dir=dir;
+}
+
+attch_dialog_save::attch_dialog_save()
+{
+  QVBoxLayout* layout = new QVBoxLayout(this);
+  layout->setMargin(5);
+  setWindowTitle(tr("Open or save"));
+  m_label_file = new QLabel;
+  m_label_file->setTextFormat(Qt::PlainText);
+  layout->addWidget(m_label_file);
+  m_rb_launch = new QRadioButton(tr("Open with: %1").arg(""));
+  QRadioButton* b2 = new QRadioButton(tr("Save to disk"));
+  b2->setChecked(true);
+  layout->addWidget(m_rb_launch);
+  layout->addWidget(b2);
+  QDialogButtonBox* box = new QDialogButtonBox;
+  layout->addWidget(box);
+  box->addButton(tr("OK"), QDialogButtonBox::AcceptRole);
+  box->addButton(tr("Cancel"), QDialogButtonBox::RejectRole);
+  connect(box, SIGNAL(accepted()), this, SLOT(accept()));
+  connect(box, SIGNAL(rejected()), this, SLOT(reject()));
+}
+
+void
+attch_dialog_save::set_app_name(const QString name)
+{
+  m_rb_launch->setText(tr("Open with: %1").arg(name));
+}
+
+void
+attch_dialog_save::set_file_name(const QString name)
+{
+  m_label_file->setText(tr("File: %1").arg(name));
+}
+
+int
+attch_dialog_save::choice()
+{
+  return (m_rb_launch->isChecked()) ? 2 : 1;
+}

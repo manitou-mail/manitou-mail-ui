@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -55,6 +55,8 @@ class query_listview;
 class mail_listview;
 class attch_listview;
 class message_view;
+class attch_lvitem;
+class attachment;
 
 class newmail_button: public QPushButton
 {
@@ -143,6 +145,8 @@ public slots:
   void timer_func();
   void timer_idle();
   void abort_operation();
+  void install_progressbar(QString=QString::null);
+  void uninstall_progressbar();
 
   void msg_zoom_in();
   void msg_zoom_out();
@@ -212,6 +216,8 @@ public slots:
   void action_click_msg_list(const QModelIndex& index);
   void bounce();
   void attch_selected(QTreeWidgetItem*,int);
+  void attch_run(attch_lvitem*);
+  int attachment_dest(attachment*);
   void find_text();
   void tag_toggled(int id, bool checked);
 
@@ -265,17 +271,11 @@ private:
   // reflect state of abort button during a progress-controlled operation
   bool progress_aborted();
 
-  // check if fname exists and if it does ask whether it should
-  // be overwritten or not
-  bool confirm_write(const QString fname);
-
   /* enable/disable menus and widgets. use to avoid recurse
      into the gui when an action is performed during
      which Qt event loop may be called */
   void enable_interaction(bool b);
 
-  void install_progressbar(QWidget*);
-  void uninstall_progressbar(QWidget*);
   void show_abort_button();
   void hide_abort_button();
 
@@ -421,8 +421,6 @@ private:
   bool m_highlightedCaseSensitive;
   search_box* m_wSearch;
 
-  QString m_last_attch_dir;
-
   bool m_fetch_on_demand;
   bool m_ignore_selection_change;
 
@@ -468,6 +466,7 @@ signals:
   void mail_chg_status(int, mail_msg*);
   void mail_multi_chg_status(int, std::vector<mail_msg*>*);
   void progress(int);
+  void abort_progress();
 };
 
 #endif // INC_MSG_LIST_WINDOW_H

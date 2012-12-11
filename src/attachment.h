@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -68,10 +68,13 @@ public:
   static QString guess_mime_type(const QString);
   uint size() { fetch(); return m_size; }
   const QString filename() { fetch(); return m_filename; }
+  static QString extension(const QString);
   QString mime_type() { fetch(); return m_mime_type; }
   QString charset() { fetch(); return m_charset; }
   QString application() const;
+  QString default_os_application();
   void launch_external_viewer(const QString document_path);
+  void launch_os_viewer(const QString document_path);
 
   attachment_network_reply* network_reply(const QNetworkRequest& req, QObject* parent);
 

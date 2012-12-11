@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -22,9 +22,12 @@
 
 #include <QPalette>
 #include <QTreeWidget>
+#include <QDialog>
 #include "attachment.h"
 
 class QMimeData;
+class QRadioButton;
+class QLabel;
 
 class attch_listview: public QTreeWidget
 {
@@ -37,6 +40,7 @@ public:
   }
   void progress_report(int);
   void allow_delete(bool b);
+  void save_attachments();
 protected:
   bool dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action);
   Qt::DropActions supportedDropActions() const;
@@ -45,12 +49,24 @@ protected:
 private:
   // ptr to the list of attachments of the message object
   attachments_list* m_pAttchList;
+  bool m_abort; //  attachment download aborted
 signals:
   void progress(int);
-  void attach_file_request(const QUrl);  
+  void attach_file_request(const QUrl);
+  void init_progress(const QString);
+  void finish_progress();
+public slots:
+  void download_aborted();
 private slots:
   void remove_current_attachment();
   void popup_ctxt_menu(const QPoint&);
+
+  // check if fname exists and if it does ask whether it should
+  // be overwritten or not
+  bool confirm_write(const QString fname);
+
+public:
+  static QString m_last_attch_dir;
 };
 
 class attch_lvitem : public QTreeWidgetItem
@@ -96,4 +112,18 @@ private:
   QPalette m_palette_for_notes;
   attch_listview* m_listview;
 };
+
+class attch_dialog_save: public QDialog
+{
+  Q_OBJECT
+public:
+  attch_dialog_save();
+  void set_app_name(const QString);
+  void set_file_name(const QString);
+  int choice();
+private:
+  QRadioButton* m_rb_launch;
+  QLabel* m_label_file;
+};
+
 #endif

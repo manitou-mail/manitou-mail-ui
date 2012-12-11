@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2012 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -210,6 +210,11 @@ msg_list_window::add_msgs_page(const msgs_filter* f, bool if_results _UNUSED_)
   m_qAttch = new attch_listview(l);
   connect(m_qAttch, SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)),
 	  this, SLOT(attch_selected(QTreeWidgetItem*,int)));
+  connect(m_qAttch, SIGNAL(init_progress(const QString)),
+	  this, SLOT(install_progressbar(const QString)));
+  connect(m_qAttch, SIGNAL(progress(int)), this, SLOT(show_progress(int)));
+  connect(m_qAttch, SIGNAL(finish_progress()), this, SLOT(uninstall_progressbar()));
+  connect(this, SIGNAL(abort_progress()), m_qAttch, SLOT(download_aborted()));
 
   // splitter for 3 panes: list of messages / body / attachments list
   static const int splitter_default_sizes[3] = {100,400,25};
