@@ -362,7 +362,7 @@
     <message>
         <source>The file &apos;manitou.qhc&apos; could not be found in any of the following directories:
 </source>
-        <translation>Le fichier &apos;manitou.qhc&apos; n&apos;a pu être trouvé dans aucun des répertoires suivants:
+        <translation type="obsolete">Le fichier &apos;manitou.qhc&apos; n&apos;a pu être trouvé dans aucun des répertoires suivants:
 </translation>
     </message>
     <message>
@@ -413,6 +413,15 @@
         <source>Unable to execute prepared statement: %1</source>
         <translation>Impossible d&apos;exécuter la requête préparée: %1</translation>
     </message>
+    <message>
+        <source>The file &apos;index.html&apos; could not be found in any of the following directories:
+</source>
+        <translation>Le fichier &apos;index.html&apos; n&apos;a pu être trouvé dans aucun des répertoires suivants:</translation>
+    </message>
+    <message>
+        <source>In addition, could not execute ROLLBACK.</source>
+        <translation>De plus, un ROLLBACK n&apos;a pu être exécuté</translation>
+    </message>
 </context>
 <context>
     <name>about_box</name>
@@ -454,7 +463,7 @@
     </message>
     <message>
         <source>This is &lt;b&gt;Manitou-Mail&lt;/b&gt; version %1, (c) 2004-2012 Daniel V&amp;#233;rit&amp;#233; (&lt;i&gt;daniel@manitou-mail.org&lt;/i&gt;).</source>
-        <translation>&lt;b&gt;Manitou-Mail&lt;/b&gt; version %1, (c) 2004-2011 Daniel V&amp;#233;rit&amp;#233; (&lt;i&gt;daniel@manitou-mail.org&lt;/i&gt;).</translation>
+        <translation>&lt;b&gt;Manitou-Mail&lt;/b&gt; version %1, (c) 2004-2012 Daniel V&amp;#233;rit&amp;#233; (&lt;i&gt;daniel@manitou-mail.org&lt;/i&gt;).</translation>
     </message>
     <message>
         <source>Public git repository and issue tracker: </source>
@@ -462,6 +471,10 @@
     </message>
     <message>
         <source>Email:&lt;br&gt;support%2manitou-mail.org&lt;/a&gt;</source>
+        <translation type="obsolete">Email:&lt;br&gt;support%2manitou-mail.org&lt;/a&gt;</translation>
+    </message>
+    <message>
+        <source>Email:&lt;br&gt;support%1manitou-mail.org&lt;/a&gt;</source>
         <translation>Email:&lt;br&gt;support%2manitou-mail.org&lt;/a&gt;</translation>
     </message>
 </context>
@@ -885,6 +898,33 @@
     </message>
 </context>
 <context>
+    <name>attch_dialog_save</name>
+    <message>
+        <source>Open or save</source>
+        <translation>Ouvrir ou enregistrer</translation>
+    </message>
+    <message>
+        <source>Open with: %1</source>
+        <translation>Ouvrir avec: %1</translation>
+    </message>
+    <message>
+        <source>Save to disk</source>
+        <translation>Enregistrer sur disque</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Annuler</translation>
+    </message>
+    <message>
+        <source>File: %1</source>
+        <translation>Fichier: %1</translation>
+    </message>
+</context>
+<context>
     <name>attch_listview</name>
     <message>
         <source>Type</source>
@@ -905,6 +945,14 @@
     <message>
         <source>Attachment as text</source>
         <translation>Pièce jointe au format texte</translation>
+    </message>
+    <message>
+        <source>Open with: %1</source>
+        <translation>Ouvrir avec: %1</translation>
+    </message>
+    <message>
+        <source>Downloading attached file: %1</source>
+        <translation>Charge le fichier attaché: %1</translation>
     </message>
 </context>
 <context>
@@ -2516,7 +2564,7 @@ Les messages non encore importés seront perdus.</translation>
     </message>
     <message>
         <source>Click on Finish to signal the server to start importing these messages.</source>
-        <translation>Cliquer sur Finir pour indiquer au serveur de démarrer l&apos;import de ces messages.</translation>
+        <translation>Cliquer sur Terminer pour indiquer au serveur de démarrer l&apos;import de ces messages.</translation>
     </message>
     <message>
         <source>The upload was not successful.</source>
@@ -2556,6 +2604,11 @@ Les messages non encore importés seront perdus.</translation>
     <message>
         <source>Complete load</source>
         <translation>Finir le chargement</translation>
+    </message>
+    <message>
+        <source>Ctrl+A</source>
+        <comment>Select all</comment>
+        <translation>Ctrl+A</translation>
     </message>
 </context>
 <context>
@@ -3078,6 +3131,10 @@ Les messages non encore importés seront perdus.</translation>
     <message>
         <source>Import mailbox</source>
         <translation>Importer boite mail</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>Sélectionner tout</translation>
     </message>
 </context>
 <context>
@@ -3813,11 +3870,15 @@ Voulez-vous le mettre à jour malgré cela?</translation>
     <name>qassistant</name>
     <message>
         <source>Remote Control</source>
-        <translation>Contrôle distant</translation>
+        <translation type="obsolete">Contrôle distant</translation>
     </message>
     <message>
         <source>Could not start Qt Assistant from %1.</source>
-        <translation>Impossible de démarrer l&apos;assistant Qt de %1.</translation>
+        <translation type="obsolete">Impossible de démarrer l&apos;assistant Qt de %1.</translation>
+    </message>
+    <message>
+        <source>User interface documentation</source>
+        <translation>Documentation de l&apos;interface utilisateur</translation>
     </message>
 </context>
 <context>
