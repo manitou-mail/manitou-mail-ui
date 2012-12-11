@@ -100,6 +100,7 @@ struct prefs_dialog::preferences_widgets {
   QLineEdit* w_browser_path;
 
   // fetching tab
+  QLineEdit* w_initial_fetch;
   QLineEdit* w_fetch_ahead;
   QLineEdit* w_max_connections;
   QSpinBox* w_auto_check;
@@ -287,6 +288,19 @@ prefs_dialog::fetching_widget()
   QGridLayout* grid = new QGridLayout();
   top_layout->addLayout(grid);
   int row=0;
+  {
+    QLabel* l=new QLabel(tr("Initial fetch"), w);
+    grid->addWidget(l, row, 0);
+    QLineEdit* le = new QLineEdit(w);
+    m_widgets->w_initial_fetch = le;
+    le->setMaxLength(5);
+    le->setMaximumWidth(50);
+    grid->addWidget(le, row, 1);
+    QIntValidator *v1 = new QIntValidator(this);
+    v1->setBottom(0);
+    le->setValidator(v1);
+  }
+  row++;
   {
     QLabel* l=new QLabel(tr("Max fetch ahead"), w);
     grid->addWidget(l, row, 0);
@@ -979,6 +993,7 @@ prefs_dialog::conf_to_widgets(app_config& conf)
   // fetching
   m_widgets->w_max_connections->setText(conf.get_string("max_db_connections"));
   m_widgets->w_fetch_ahead->setText(conf.get_string("fetch_ahead_max_msgs"));
+  m_widgets->w_initial_fetch->setText(conf.get_string("max_msgs_per_selection"));
   int auto_refresh = conf.get_number("fetch/auto_refresh_messages_list");
   m_widgets->w_auto_refresh->setValue(auto_refresh);
   bool auto_incorp = conf.get_bool("fetch/auto_incorporate_new_results", false);
@@ -1110,6 +1125,7 @@ prefs_dialog::widgets_to_conf(app_config& conf)
 
   // fetching
   conf.set_number("fetch_ahead_max_msgs", m_widgets->w_fetch_ahead->text().toInt());
+  conf.set_number("max_msgs_per_selection", m_widgets->w_initial_fetch->text().toInt());
   conf.set_number("max_db_connections", m_widgets->w_max_connections->text().toInt());
   conf.set_bool("fetch/auto_incorporate_new_results", m_widgets->w_auto_incorporate->isChecked());
   conf.set_number("fetch/auto_refresh_messages_list", m_widgets->w_auto_refresh->text().toInt());
