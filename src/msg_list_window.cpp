@@ -1172,7 +1172,7 @@ msg_list_window::change_multi_mail_status(int statusMask,
 
   statusBar()->showMessage(tr("Updating messages..."));
   uint nsteps = (size+batch_size-1)/batch_size;
-  if (nsteps > 1) {
+  if (nsteps>1) {
     install_progressbar();
     show_progress(-nsteps);
   }
@@ -1199,10 +1199,11 @@ msg_list_window::change_multi_mail_status(int statusMask,
       }
     }
     // report progress
-    show_progress(1+step);
+    if (nsteps>1)
+      show_progress(1+step);
   }
 
-  if (nsteps > 1)
+  if (nsteps>1)
     uninstall_progressbar();
   m_qlist->update();
   QApplication::restoreOverrideCursor();
@@ -2476,6 +2477,10 @@ void
 msg_list_window::show_progress(int progress)
 {
   DBG_PRINTF(5, "show_progress(%d)", progress);
+  if (!m_progress_bar) {
+    DBG_PRINTF(2, "show_progress: no progress bar!");
+    return;
+  }
   // when negative, progress is the total number of steps expected
   if (progress<0) {
     m_progress_bar->setMaximum(-progress);
