@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2013 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -100,6 +100,7 @@ mbox_import_wizard_page_options::mbox_import_wizard_page_options()
   m_cbox_status->addItem(tr("New (unread)"), QVariant(mail_msg::statusNew));
   m_cbox_status->addItem(tr("Read"), QVariant(mail_msg::statusRead));
   m_cbox_status->addItem(tr("Archived"), QVariant(mail_msg::statusArchived+mail_msg::statusRead));
+  m_cbox_status->addItem(tr("Sent"), QVariant(mail_msg::statusArchived+mail_msg::statusSent+mail_msg::statusRead));
   m_cbox_status->setCurrentIndex(2); // archived by default
 
   fl->addRow(tr("Set status:"), m_cbox_status);
