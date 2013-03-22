@@ -80,6 +80,7 @@ bool
 attch_lvitem::download(const QString destfilename, bool *abort)
 {
   attachment* pa = m_pAttachment;
+  DBG_PRINTF(5, "saving attachment into %s", destfilename.toLocal8Bit().constData());
   struct attachment::lo_ctxt lo;
   if (pa->open_lo(&lo)) {
     QByteArray qba = destfilename.toLocal8Bit();
@@ -311,6 +312,7 @@ attch_listview::save_attachments()
 	if (!confirm_write(fname))
 	  continue;
 	emit init_progress(tr("Downloading attachment into: %1").arg(fname));
+	m_abort=false;
 	dir=(*it)->save_to_disk(fname, &m_abort);
 	emit finish_progress();
 	if (m_abort)
@@ -327,10 +329,11 @@ attch_listview::save_attachments()
     if (!dir.isEmpty()) {
       fname = dir + "/" + fname;
     }
-    DBG_PRINTF(5, "fname=%s", fname.toLocal8Bit().constData());
     fname = QFileDialog::getSaveFileName(this, tr("File"), fname);
+    DBG_PRINTF(5, "fname=%s", fname.toLocal8Bit().constData());
     if (!fname.isEmpty()) {
       emit init_progress(tr("Downloading attached file: %1").arg(fname));
+      m_abort=false;
       dir=(*it)->save_to_disk(fname, &m_abort);
       emit finish_progress();
     }
@@ -340,6 +343,7 @@ attch_listview::save_attachments()
       fname = QFileDialog::getSaveFileName(this, tr("File"), dir);
       if (!fname.isEmpty()) {
 	emit init_progress(tr("Downloading attachment into: %1").arg(fname));
+	m_abort=false;
 	dir=(*it)->save_to_disk(fname, &m_abort);
 	emit finish_progress();
       }
