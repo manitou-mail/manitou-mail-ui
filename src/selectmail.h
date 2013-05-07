@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2013 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -286,7 +286,6 @@ private slots:
   void more_status();
   void zoom_on_sql();
   void timer_done();
-  void addr_type_changed(int);
 private:
   QString str_status_mask();
   edit_address_widget* m_wcontact;

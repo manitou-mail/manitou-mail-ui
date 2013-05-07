@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2013 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -484,23 +484,6 @@ msgs_filter::build_query(sql_query& q, bool fetch_more/*=false*/)
 
     // bounds. m_mail_id_bound and m_date_bound should be either both set or both unset
 #if 0
-    if (fetch_more && m_mail_id_bound>0) {
-      if (m_order>0) {
-	q.add_clause(QString("m.mail_id>%1").arg(m_mail_id_bound));
-      }
-      else
-	q.add_clause(QString("m.mail_id<%1").arg(m_mail_id_bound));
-    }
-    if (fetch_more && !m_date_bound.isEmpty()) {
-      if (m_order>0) {
-	// msgs fetched from oldest to newest
-	q.add_clause(QString("msg_date>=to_date('%1','YYYYMMDDHH24MISS')").arg(m_date_bound));
-      }
-      else {
-	q.add_clause(QString("msg_date<=to_date('%1','YYYYMMDDHH24MISS')").arg(m_date_bound));  
-      }
-    }
-#else
     if (!m_boundary.isEmpty() && !m_date_bound.isEmpty() && m_order<0) {
       q.add_clause(QString("msg_date<=to_date('%1','YYYYMMDDHH24MISS') AND to_char(msg_date,'YYYYMMDDHH24MISS')||m.mail_id::text<'%2'").arg(m_date_bound).arg(m_boundary));
     }
@@ -905,7 +888,6 @@ msg_select_dialog::msg_select_dialog(bool open_new/*=true*/) : QDialog(0)
   m_wAddrType->addItem("To");
   m_wAddrType->addItem("Cc");
   m_wAddrType->addItem("Any");
-  connect(m_wAddrType, SIGNAL(activated(int)), SLOT(addr_type_changed(int)));
   gridLayout->addWidget(m_wAddrType,nRow,0);
   m_wcontact = new edit_address_widget(this);
   gridLayout->addWidget(m_wcontact, nRow, 1);
@@ -1374,30 +1356,6 @@ msg_select_dialog::help()
   helper::show_help("query selection");
 }
 
-void
-msg_select_dialog::addr_type_changed(int index)
-{
-  DBG_PRINTF(5,"addr_type_changed index=%d, curitem=%d",
-	     index, m_wAddrType->currentIndex());
-  int type;
-  switch (index) {
-  case 0:
-    type=mail_address::addrFrom;
-    break;
-  case 1:
-    type=mail_address::addrTo;
-    break;
-  case 2:
-    type=mail_address::addrCc;
-    break;
-  default:
-    type=0;
-    break;
-  }
-#if 0
-  m_wAddress->set_address_type(type);
-#endif
-}
 
 //static
 select_status_box::st_status select_status_box::m_status_tab[] = {

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2013 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -852,13 +852,12 @@ void
 msg_list_window::msg_list_postprocess()
 {
   // sort by message date
-  DBG_PRINTF(8, "start sort");
+  DBG_PRINTF(8, "start sort (sortingEnabled=%d)", m_qlist->isSortingEnabled());
   m_qlist->setSortingEnabled(true);
   m_qlist->sortByColumn(mail_item_model::column_date, get_config().get_msgs_sort_order());
   DBG_PRINTF(8, "end sort");
   m_qlist->header()->setSortIndicatorShown(true);
   m_qlist->setRootIsDecorated(display_vars.m_threaded);
-  // m_qlist->scroll_to_bottom(); // too slow
   m_qlist->expandAll();
   set_title();
 }
@@ -1525,7 +1524,6 @@ msg_list_window::save_display_settings()
 void
 msg_list_window::cycle_headers()
 {
-  DBG_PRINTF(3, "cycle_headers()");
   // if not "most", then display "most" headers, else display "all" headers
   if (display_vars.m_show_headers_level!=1) {
     show_headers(m_menu_actions[me_Display_Headers_Most]);
@@ -3175,25 +3173,6 @@ newmail_button::enable(bool enable)
   }
 }
 
-#if QT_VERSION<0x040000
-void
-newmail_button::drawButtonLabel(QPainter *p)
-{
-#if 0
-  // doesn't work yet, FIXME someday
-  if (isEnabled()) {
-    QPen pen(QColor(255,0,0));
-    p->setPen(pen);
-    p->setBackgroundColor(QColor(255,100,100));
-    QPushButton::drawButtonLabel(p);
-  }
-  else
-    QPushButton::drawButtonLabel(p);
-#else
-  QPushButton::drawButtonLabel(p);
-#endif
-}
-#endif
 
 //static
 void

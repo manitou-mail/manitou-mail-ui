@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2013 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -51,6 +51,9 @@ public:
   QStandardItem* item_from_id(mail_id_t) const;
   void init();
   QStandardItem* insert_msg(mail_msg* msg, QStandardItem* parent=NULL);
+  QStandardItem* insert_msg_sorted(mail_msg* msg, QStandardItem* parent,
+				   int column,
+				   Qt::SortOrder order);
   void remove_msg(mail_msg* msg);
   QStandardItem* reparent_msg(mail_msg* msg, mail_id_t parent_id);
   void update_msg(const mail_msg *msg);
@@ -81,6 +84,15 @@ public:
 private:
   // returns an icon showing the mail status
   QIcon* icon_status(uint status);
+
+  // instantiate the items for one row
+  void create_row(mail_msg* msg, QList<QStandardItem*>& items);
+
+  // binary search for insertion point in sorted model
+  int insertion_point(QList<QStandardItem*>& new_row,
+		      QStandardItem* parent,
+		      int column,
+		      Qt::SortOrder order);
 
   // Association between the mail_id and the first QStandardItem of
   // the corresponding row (the item at column 0, also containing the mail_msg*
@@ -158,6 +170,9 @@ private:
   void collect_expansion_states(QStandardItem* item,
 				QSet<QStandardItem*>& expanded_set);
   QStandardItem* insert_sub_tree(std::map<mail_id_t,mail_msg*>& m, mail_msg *msg);
+
+
+
   bool m_display_threads;
   bool m_sender_column_swapped;
 

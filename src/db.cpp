@@ -437,7 +437,7 @@ void
 database::end_transaction()
 {
   m_open_trans_count--;
-  DBG_PRINTF(4, "new m_open_trans_count=%d", m_open_trans_count);
+  DBG_PRINTF(7, "m_open_trans_count=%d", m_open_trans_count);
   if (m_open_trans_count<0) {
     fprintf(stderr, "Fatal error: m_open_trans_count<0\n");
     exit(1);
@@ -479,7 +479,7 @@ db_cnx::begin_transaction()
 {
   m_cnx->begin_transaction();
   // don't use nested transactions
-  DBG_PRINTF(5,"open_transactions_count()=%d", datab()->open_transactions_count());
+  DBG_PRINTF(7,"open_transactions_count()=%d", datab()->open_transactions_count());
   if (datab()->open_transactions_count()==1) {
     sql_stream s("BEGIN", *this);
   }

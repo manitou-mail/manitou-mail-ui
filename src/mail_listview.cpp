@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2013 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -21,6 +21,7 @@
 #include "msg_list_window.h"
 #include "selectmail.h"
 #include "icons.h"
+#include "date.h"
 
 #include <QKeyEvent>
 #include <QHeaderView>
@@ -168,8 +169,8 @@ mail_item_model::icon_status(uint status)
   }
 }
 
-QStandardItem*
-mail_item_model::insert_msg(mail_msg* msg, QStandardItem* parent/*=NULL*/)
+void
+mail_item_model::create_row(mail_msg* msg, QList<QStandardItem*>& items)
 {
   bool bold = ((msg->status() & mail_msg::statusRead)==0);
   QStandardItem* isubject = new QStandardItem(msg->Subject());
@@ -195,7 +196,6 @@ mail_item_model::insert_msg(mail_msg* msg, QStandardItem* parent/*=NULL*/)
     ifrom->setFont(f);
   }
 
-  QList<QStandardItem*> items;
   items.append(isubject);
   items.append(ifrom);
   QIcon* icon = icon_status(msg->status());
@@ -271,16 +271,76 @@ mail_item_model::insert_msg(mail_msg* msg, QStandardItem* parent/*=NULL*/)
     irecipient->setFont(f);
   }
   items.append(irecipient);
+}
 
+QStandardItem*
+mail_item_model::insert_msg(mail_msg* msg, QStandardItem* parent/*=NULL*/)
+{
+  QList<QStandardItem*> items;
+  create_row(msg, items);
   if (parent)
     parent->appendRow(items);
   else
     appendRow(items);
 
-  
-  items_map.insert(msg->get_id(), isubject);
-  //  DBG_PRINTF(8, "inserted mail_id=%d in model=%p", msg->get_id(), this);
-  return isubject;
+  items_map.insert(msg->get_id(), items[0]);
+  return items[0];
+}
+
+QStandardItem*
+mail_item_model::insert_msg_sorted(mail_msg* msg, QStandardItem* parent,
+				   int column, Qt::SortOrder order)
+{
+  DBG_PRINTF(4, "insert_msg_sorted order=%d column=%d", (int)order, column);
+  QList<QStandardItem*> items;
+  create_row(msg, items);
+  QStandardItem* item = items[0];
+  int row = insertion_point(items, parent, column, order);
+  DBG_PRINTF(4, "insertion point=%d", row);
+  if (parent) {
+    parent->insertRow(row, items);
+  }
+  else {
+    insertRow(row, items);
+  }
+  items_map.insert(msg->get_id(), item);
+  return item;
+}
+
+/* Returns the insertion position for new_row in a sorted list, or -1
+   if it should be appended */
+int
+mail_item_model::insertion_point(QList<QStandardItem*>& new_row,
+				 QStandardItem* parent,
+				 int column,
+				 Qt::SortOrder order)
+{
+  const QStandardItem* item_col = new_row[column];
+  Q_ASSERT(item_col!=NULL);
+  // binary search
+  int l=0;
+  if (!parent) {
+    parent=invisibleRootItem();
+  }
+  int r=parent->rowCount()-1;
+  while (l<=r) {
+    int mid=(l+r)/2;
+    const QStandardItem* mid_item=parent->child(mid, column);
+    Q_ASSERT(mid_item!=NULL);
+    if (*mid_item < *item_col) {
+      if (order==Qt::AscendingOrder)
+	l=mid+1;
+      else
+	r=mid-1;
+    }
+    else {
+      if (order==Qt::AscendingOrder)
+	r=mid-1;
+      else
+	l=mid+1;
+    }
+  }
+  return l;
 }
 
 /* 
@@ -690,24 +750,10 @@ mail_listview::force_msg_status(uint id, uint status, int priority)
 mail_msg*
 mail_listview::first_msg() const
 {
-#if 0
-  // The code below doesn't work because the rootIndex() is always invalid.
-  // Apparently QTreeView doesn't take care of it for us
-  QModelIndex root_index = this->rootIndex();
-  if (!root_index.isValid())
-    return NULL;
-  QStandardItem* item = model()->itemFromIndex(root_index);
-  if (!item)
-    return NULL;
-  QStandardItem* first_child = item->child(0,0);
-  if (!first_child)
-    return NULL;
-#else
   // take any item from the model, and go up to the root
   QStandardItem* first_child = model()->first_top_level_item();
   if (!first_child)
     return NULL;
-#endif
   QVariant v=first_child->data(mail_item_model::mail_msg_role);
   mail_msg* msg=v.value<mail_msg*>();
   return msg;
@@ -881,8 +927,27 @@ mail_listview::get_selected_indexes(QModelIndexList& list)
 void
 mail_listview::clear()
 {
+  DBG_PRINTF(4, "sort column=%d, nb columns=%d",
+	     header()->sortIndicatorSection(),
+	     header()->count());
+  /* Keep the sort column and set it again after recreating the
+     header. Otherwise sortIndicatorSection() is incremented by
+     count() after init_columns(). (looks like a Qt bug. Example:
+     section=6 before, section=14 after even if count()=8) */
+  int section=-1;
+  Qt::SortOrder order;
+  if (header()->isSortIndicatorShown()) {
+    section=header()->sortIndicatorSection();
+    order=header()->sortIndicatorOrder();
+  }
   model()->clear();
   init_columns(); // because clearing the model removes the column headers
+  if (section>=0) {
+    header()->setSortIndicator(section, order);
+  }
+  DBG_PRINTF(4, "sort column=%d, nb columns=%d",
+	     header()->sortIndicatorSection(),
+	     header()->count());
 }
 
 bool
@@ -948,6 +1013,7 @@ mail_listview::keyPressEvent(QKeyEvent* e)
 void
 mail_listview::init_columns()
 {
+  DBG_PRINTF(4, "init_columns");
   model()->init();
   setAllColumnsShowFocus(TRUE);
   static const int default_sizes[] = {280,170,32,32,24,24,115,170};
@@ -1034,36 +1100,43 @@ mail_listview::insert_sub_tree(std::map<mail_id_t,mail_msg*>& m, mail_msg *msg)
       // has a parent in the list
       parent = model()->item_from_id(parent_id);
       if (!parent) {
+	DBG_PRINTF(2, "ERROR: parent message not found");
 	// recurse to insert msg's parent before msg
 	parent = insert_sub_tree(m, parent_iter->second);
       }
     }
   }
-  return model()->insert_msg(msg, parent);
+  if (isSortingEnabled()) {
+    return model()->insert_msg_sorted(msg, parent,
+				      header()->sortIndicatorSection(),
+				      header()->sortIndicatorOrder());
+  }
+  else {
+    return model()->insert_msg(msg, parent);
+  }
 }
 
 void
 mail_listview::make_tree(std::list<mail_msg*>& list)
 {
   DBG_PRINTF(8, "make_tree()");
-  std::list<mail_msg*>::iterator Iter=list.begin();
+  std::list<mail_msg*>::iterator iter=list.begin();
   std::map<mail_id_t,mail_msg*> m;
 
   /* build a map [ mail_id => pointer to the message ]. The map is used
      below to quickly find if a parent belongs to the list or not */
-  while (Iter!=list.end()) {
-    m[(*Iter)->get_id()]=*(Iter++);
+  while (iter!=list.end()) {
+    m[(*iter)->get_id()]=*(iter++);
   }
 
-  Iter=list.begin();
+  iter=list.begin();
   std::map<mail_id_t,mail_msg*>::iterator parent_iter;
-  //  QMap<mail_id_t, mail_msg*> parents; // child=>parent
-  while (Iter!=list.end()) {
-    mail_msg* msg = model()->find((*Iter)->get_id());
+  while (iter!=list.end()) {
+    mail_msg* msg = model()->find((*iter)->get_id());
     if (!msg) {			// msg not already in list
-      insert_sub_tree(m, *Iter);
+      insert_sub_tree(m, *iter);
     }
-    ++Iter;
+    ++iter;
   }
   expandAll();
 }

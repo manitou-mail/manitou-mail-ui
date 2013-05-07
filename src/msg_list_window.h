@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2013 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -69,10 +69,6 @@ public:
     m_number=n;
   }
   void update_font(QFont f);
-protected:
-#if QT_VERSION<0x040000
-  void drawButtonLabel(QPainter *);
-#endif
 private:
   int m_number;
 public slots:
