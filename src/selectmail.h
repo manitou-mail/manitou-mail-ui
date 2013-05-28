@@ -46,7 +46,7 @@ class QToolButton;
 class tag_selector;
 class QButtonGroup;
 class QComboBox;
-
+class QDialogButtonBox;
 
 class fetch_thread: public QThread
 {
@@ -150,12 +150,7 @@ public:
   int m_status_unset;		// bitmask: OR'ed bits that have to be 0 in mail.status
 
   int m_newer_than;		/* newer than or N days old */
-  // detailed user input
-  struct {
-    int days;
-    int weeks;
-    int months;
-  } m_newer_details;
+  QString m_date_clause;
 
   int m_min_prio;
   uint m_tag_id;
@@ -286,25 +281,25 @@ private slots:
   void more_status();
   void zoom_on_sql();
   void timer_done();
+  void date_cb_changed(int);
 private:
   QString str_status_mask();
   edit_address_widget* m_wcontact;
-  QSpinBox* m_wdate_spin;
-  QButtonGroup* m_wdate_button_group;
+
   QComboBox* m_wAddrType;
   tag_selector* m_qtag_sel;
   edit_address_widget* m_wto;
   QLineEdit* m_wSubject;
   QLineEdit* m_wString;
   QLineEdit* m_wSqlStmt;
+  QComboBox* m_date_cb;
   QDateTimeEdit* m_wmin_date;
   QDateTimeEdit* m_wmax_date;
   QCheckBox* m_chk_datemin;
   QCheckBox* m_chk_datemax;
   QLineEdit* m_wStatus;
   QLineEdit* m_wMaxResults;
-  QPushButton* m_wCancelButton;
-  QPushButton* m_wOkButton;
+  QDialogButtonBox* m_btn_box;
   QPushButton* m_wStatusMoreButton;
   QToolButton* m_zoom_button;
   QCheckBox* m_trash_checkbox;
@@ -313,6 +308,7 @@ private:
   void to_filter(msgs_filter*);
   msgs_filter m_filter;
   void enable_inputs (bool enable);
+  void enable_date_range();
 
   fetch_thread m_thread;
   QTimer* m_timer;

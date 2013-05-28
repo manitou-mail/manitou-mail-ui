@@ -17,16 +17,6 @@
    Boston, MA 02111-1307, USA.
 */
 
-/*
-Partitioned wordsearch is currently not compatible with words
-exclusion so it's #undefined. It's not clear how much speed
-gain it provides, anyway. It may be reinstated in the future with
-more sophisticated code to support it, if more testing shows that it's
-worth the trouble.
-
-#define PARTITIONED_WORDSEARCH 1
-*/
-
 #include "main.h"
 #include "selectmail.h"
 #include "msg_list_window.h"
@@ -57,8 +47,8 @@ worth the trouble.
 #include <QDateTimeEdit>
 #include <QCheckBox>
 #include <QGridLayout>
-#include <QKeyEvent>
 #include <QHBoxLayout>
+#include <QDialogButtonBox>
 
 const int
 msgs_filter::max_possible_prio=32767;
@@ -80,6 +70,7 @@ msgs_filter::init()
   m_status_unset=0;
   m_include_trash = false;
   m_newer_than=0;
+  m_date_clause=QString::null;
   m_max_results=get_config().get_number("max_msgs_per_selection");
   if (m_max_results==0)
     m_max_results=1000;
@@ -532,6 +523,8 @@ msgs_filter::build_query(sql_query& q, bool fetch_more/*=false*/)
     if (m_thread_id) {
       q.add_clause("thread_id", (int)m_thread_id);
     }
+
+    // <date clause>
     if (!m_date_min.isNull() && m_date_min.isValid()) {
       QString date_clause;
       if (!m_date_max.isNull() && m_date_max.isValid()) {
@@ -545,32 +538,40 @@ msgs_filter::build_query(sql_query& q, bool fetch_more/*=false*/)
     else if (!m_date_max.isNull() && m_date_max.isValid()) {
       q.add_clause(QString("msg_date<'%1'::date+1::int").arg(m_date_max.toString("yyyy/M/d")));
     }
+
+    if (!m_date_clause.isEmpty()) {
+      if (m_date_clause=="today") {
+	q.add_clause("msg_date>=date_trunc('day',now()) AND msg_date<date_trunc('day',now())+'1 day'::interval");
+      }
+      else if (m_date_clause=="yesterday") {
+	q.add_clause("msg_date>=date_trunc('day',now())-'1 day'::interval AND msg_date<date_trunc('day',now())");
+      }
+      else if (m_date_clause.at(0)=='-') {
+	QRegExp rx("^-([0-9]+)$");
+	if (m_date_clause.indexOf(rx)==0) {
+	  int days=rx.capturedTexts().at(1).toInt();
+	  q.add_clause(QString("msg_date>=now()-'%1 days'::interval").arg(days));
+	}
+      }
+    }
+    // </date clause>
+
     if (!m_body_substring.isEmpty()) {
       q.add_table("body b");
       q.add_clause(QString("strpos(b.bodytext,'") + m_body_substring + QString("')>0 and m.mail_id=b.mail_id"));
     }
 
-    if (!m_fts.m_words.empty() || !m_fts.m_exclude_words.empty()) {
-#ifdef PARTITIONED_WORDSEARCH
-      m_psearch.get_index_parts(m_fts.m_words);
-      if (!m_psearch.m_parts.isEmpty()) {
-	QString words_incl = db_word::format_db_string_array(m_fts.m_words, db);
-	q.add_clause(QString("m.mail_id in (select * from wordsearch_part(%1,:part_no))").arg(words_incl));
-      }
-      else
-	q.add_clause("m.mail_id=0");
-#else
+    if (!m_fts.m_words.isEmpty()) {
       if (get_config().get_string("search/accents")=="unaccented" ||
 	  m_fts.m_operators["accents"]=="i" ||
 	  m_fts.m_operators["accents"]=="insensitive")
-      {
-	db_word::unaccent(m_fts.m_words);
-	db_word::unaccent(m_fts.m_exclude_words);
-      }
+	{
+	  db_word::unaccent(m_fts.m_words);
+	  db_word::unaccent(m_fts.m_exclude_words);
+	}
       QString words_incl = db_word::format_db_string_array(m_fts.m_words, db);
       QString words_excl = db_word::format_db_string_array(m_fts.m_exclude_words, db);
       q.add_clause(QString("m.mail_id in (select * from wordsearch(%1,%2))").arg(words_incl).arg(words_excl));
-#endif
     }
 
     if (!m_fts.m_substrs.empty()) {
@@ -645,11 +646,7 @@ msgs_filter::build_query(sql_query& q, bool fetch_more/*=false*/)
     else {
       // wordsearch has a different limit and sort
       // currently: none
-#ifdef PARTITIONED_WORDSEARCH
-      QString sFinal="ORDER BY to_char(msg_date,'YYYYMMDDHH24MISS')||m.mail_id::text DESC";
-#else
       QString sFinal="ORDER BY to_char(msg_date,'YYYYMMDDHH24MISS') DESC, m.mail_id DESC";
-#endif
       q.add_final(sFinal);
     }
 
@@ -873,9 +870,7 @@ msg_select_dialog::msg_select_dialog(bool open_new/*=true*/) : QDialog(0)
   m_new_selection=open_new;
 
   QVBoxLayout* topLayout = new QVBoxLayout(this);
-  //  QVBox* box=new QVBox(this,"vbox");
-  QLabel* lb=new QLabel(tr("Fill in one or more selection criteria:"), this);
-  topLayout->addWidget(lb);
+  topLayout->addWidget(new QLabel(tr("Fill in the selection criteria:")));
 
   QGridLayout* gridLayout = new QGridLayout();
   topLayout->addLayout(gridLayout);
@@ -893,60 +888,49 @@ msg_select_dialog::msg_select_dialog(bool open_new/*=true*/) : QDialog(0)
   gridLayout->addWidget(m_wcontact, nRow, 1);
 
   nRow++;
-  QLabel* lDate2 = new QLabel(tr("Dates between:"), this);
-  gridLayout->addWidget(lDate2, nRow, 0);
-  QWidget* hbdate = new QWidget;
-  m_chk_datemin = new QCheckBox(tr("min"));
-  m_wmin_date = new QDateTimeEdit;
-  m_chk_datemax = new QCheckBox(tr("max"));
-  m_wmax_date = new QDateTimeEdit;
+  gridLayout->addWidget(new QLabel(tr("Date:")), nRow, 0);
   QHBoxLayout* hldate = new QHBoxLayout;
   hldate->setSpacing(2);
+
+  m_date_cb = new QComboBox;
+  m_date_cb->addItem(tr("Any date"), QVariant("")); // index for "Any date" must be 0
+  m_date_cb->addItem(tr("Today"), QVariant("today"));
+  m_date_cb->addItem(tr("Yesterday"), QVariant("yesterday"));
+  m_date_cb->addItem(tr("Last 7 days"), QVariant("-7"));
+  m_date_cb->addItem(tr("Last 30 days"), QVariant("-30"));
+  m_date_cb->addItem(tr("Last 60 days"), QVariant("-60"));
+  m_date_cb->addItem(tr("Last 90 days"), QVariant("-90"));
+  m_date_cb->addItem(tr("Last 365 days"), QVariant("-365"));
+  m_date_cb->addItem(tr("Range..."), QVariant("range"));
+  connect(m_date_cb, SIGNAL(currentIndexChanged(int)), this, SLOT(date_cb_changed(int)));
+  hldate->addWidget(m_date_cb);
+
+  m_chk_datemin = new QCheckBox(tr("Start"));
+  m_chk_datemin->setStyleSheet("QCheckBox{spacing:0px}");
+  m_wmin_date = new QDateTimeEdit;
+  m_wmin_date->setCalendarPopup(true);
+  m_wmin_date->setDate(QDate::currentDate());
+
+  m_chk_datemax = new QCheckBox(tr("End"));
+  m_chk_datemax->setStyleSheet("QCheckBox{spacing:0px}");
+  m_wmax_date = new QDateTimeEdit;
+  m_wmax_date->setCalendarPopup(true);
+  m_wmax_date->setDate(QDate::currentDate());
+
   hldate->addWidget(m_chk_datemin);
   hldate->addWidget(m_wmin_date);
   hldate->addWidget(m_chk_datemax);
   hldate->addWidget(m_wmax_date);
-  hbdate->setLayout(hldate);
 
-  gridLayout->addWidget(hbdate, nRow, 1);
+  gridLayout->addLayout(hldate, nRow, 1);
 
   QString df = get_config().get_string("date_format");
-  QString dorder="yyyy.MM.dd";
-  
+  QString dorder="yyyy/MM/dd";
   if (df.startsWith("DD/MM/YYYY")) {
-    dorder="dd.MM.yyyy";		// european-style date
+    dorder="dd/MM/yyyy";		// european-style date
   }
   m_wmax_date->setDisplayFormat(dorder);
   m_wmin_date->setDisplayFormat(dorder);
-
-  {
-    nRow++;
-    QLabel* lDate=new QLabel(tr("Not older than:"), this);
-    gridLayout->addWidget(lDate,nRow,0);
-    QHBoxLayout* hbd = new QHBoxLayout();
-    m_wdate_spin = new QSpinBox(this);
-    m_wdate_spin->setMinimum(0);
-    m_wdate_spin->setSpecialValueText(tr("(Ignore)"));
-    hbd->addWidget(m_wdate_spin);
-
-    m_wdate_button_group = new QButtonGroup(this);
-    QHBoxLayout* interv_unit_layout = new QHBoxLayout;
-    QRadioButton* r_day = new QRadioButton(tr("days"));
-    QRadioButton* r_week = new QRadioButton(tr("weeks"));
-    QRadioButton* r_month = new QRadioButton(tr("months"));
-    m_wdate_button_group->addButton(r_day, 0);
-    m_wdate_button_group->addButton(r_week, 1);
-    m_wdate_button_group->addButton(r_month, 2);
-    interv_unit_layout->addWidget(r_day);
-    interv_unit_layout->addWidget(r_week);
-    interv_unit_layout->addWidget(r_month);
-  
-    hbd->addLayout(interv_unit_layout);
-    hbd->setStretchFactor(interv_unit_layout, 0);
-    hbd->addStretch(1);
-    r_day->setChecked(true);
-    gridLayout->addLayout(hbd, nRow, 1);
-  }
 
   nRow++;
   QLabel* lTo = new QLabel(tr("To:"), this);
@@ -982,7 +966,7 @@ msg_select_dialog::msg_select_dialog(bool open_new/*=true*/) : QDialog(0)
 
   // Selection by tag
   nRow++;
-  QLabel* lTag = new QLabel(tr("Contains tag:"), this);
+  QLabel* lTag = new QLabel(tr("Tag:"), this);
   gridLayout->addWidget(lTag,nRow,0);
 
   m_qtag_sel = new tag_selector(this);
@@ -1024,7 +1008,7 @@ msg_select_dialog::msg_select_dialog(bool open_new/*=true*/) : QDialog(0)
   gridLayout->addLayout(hbox_lt, nRow, 1);
 
   nRow++;
-  m_trash_checkbox = new QCheckBox(tr("In trash"),this);
+  m_trash_checkbox = new QCheckBox(tr("In trashcan"),this);
   gridLayout->addWidget(m_trash_checkbox, nRow, 1);
 
   nRow++;
@@ -1032,20 +1016,29 @@ msg_select_dialog::msg_select_dialog(bool open_new/*=true*/) : QDialog(0)
   hbox->setMargin(10);
   hbox->setSpacing(20);
 
-  m_wOkButton = new QPushButton(tr("OK"));
-  hbox->addWidget(m_wOkButton);
-  m_wOkButton->setDefault(true);
+  m_btn_box = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel | QDialogButtonBox::Help);
+  gridLayout->addWidget(m_btn_box, nRow, 0, 1, -1);
 
-  m_wCancelButton = new QPushButton(tr("Cancel"));
-  hbox->addWidget(m_wCancelButton);
-  QPushButton* help_btn = new QPushButton(tr("Help"));
-  hbox->addWidget(help_btn);
-  connect(help_btn, SIGNAL(clicked()), this, SLOT(help()));
+  connect(m_btn_box, SIGNAL(helpRequested()), this, SLOT(help()));
+  connect(m_btn_box, SIGNAL(accepted()), this, SLOT(ok()));
+  connect(m_btn_box, SIGNAL(rejected()), this, SLOT(cancel()));
+  enable_date_range();
+}
 
-  gridLayout->addLayout(hbox, nRow, 0, 1, -1);
-
-  connect(m_wOkButton, SIGNAL(clicked()), this, SLOT(ok()));
-  connect(m_wCancelButton, SIGNAL(clicked()), this, SLOT(cancel()));
+void
+msg_select_dialog::date_cb_changed(int index)
+{
+  Q_UNUSED(index);
+  enable_date_range();
+  if (m_date_cb->itemData(index).toString()=="range") {
+    m_chk_datemax->setEnabled(true);
+    m_chk_datemin->setEnabled(true);
+    if (!m_chk_datemax->isChecked() && !m_chk_datemin->isChecked()) {
+      /* if the user chooses the range option and no bound is checked yet,
+	 check one automatically to avoid no-range-at-all results */
+      m_chk_datemin->setChecked(true);
+    }
+  }
 }
 
 QString
@@ -1153,43 +1146,31 @@ msg_select_dialog::to_filter(msgs_filter* filter)
   filter->m_tag_id = m_qtag_sel->current_tag_id();
 
   filter->m_in_trash = m_trash_checkbox->isChecked();
-  if (m_chk_datemax->isChecked())
-    filter->m_date_max = m_wmax_date->date();
-  else
-    filter->m_date_max = QDate();
-  if (m_chk_datemin->isChecked())
-    filter->m_date_min = m_wmin_date->date();
-  else
-    filter->m_date_min = QDate();
-  bool ok;
-  int idate = m_wdate_spin->text().toInt(&ok);
-  if (ok) {
-    QAbstractButton* b = m_wdate_button_group->checkedButton();
-    if (b && idate>0) {
-      int d=0;
-      filter->m_newer_details.days=0;
-      filter->m_newer_details.weeks=0;
-      filter->m_newer_details.months=0;
-      switch(m_wdate_button_group->id(b)) {
-      case 0:
-	d=idate;
-	filter->m_newer_details.days=idate;
-	break;
-      case 1:
-	d=idate*7;
-	filter->m_newer_details.weeks=idate;
-	break;
-      case 2:
-	d=idate*30;
-	filter->m_newer_details.months=idate;
-	break;
-      }
-      filter->m_newer_than=d;
+
+  if (m_date_cb->currentIndex()>0) {
+    QString str=m_date_cb->itemData(m_date_cb->currentIndex()).toString();
+    filter->m_date_clause=str;
+    if (str=="range") {
+      if (m_chk_datemax->isChecked())
+	filter->m_date_max = m_wmax_date->date();
+      else
+	filter->m_date_max = QDate();
+      if (m_chk_datemin->isChecked())
+	filter->m_date_min = m_wmin_date->date();
+      else
+	filter->m_date_min = QDate();
     }
   }
+  else {
+    filter->m_date_clause=QString::null;
+    filter->m_date_min = QDate();
+    filter->m_date_max = QDate();
+  }
+
   if (m_wMaxResults->text().isEmpty())
     filter->m_max_results=0;	// no limit
   else {
+    bool ok;
     filter->m_max_results=m_wMaxResults->text().toUInt(&ok);
     if (!ok) {
       QMessageBox::information(this, "Error", tr("Error: non-numeric value for the maximum number of messages"));
@@ -1228,27 +1209,21 @@ msg_select_dialog::filter_to_dialog(const msgs_filter* filter)
   else
     m_wMaxResults->setText(QString::null);
 
-  if (filter->m_newer_than>0) {
-    int id=0,d=0;
-    if (filter->m_newer_details.days) {
-      id=0; d=filter->m_newer_details.days;
-    }
-    else if (filter->m_newer_details.weeks) {
-      id=1; d=filter->m_newer_details.weeks;
-    }
-    else if (filter->m_newer_details.months) {
-      id=2; d=filter->m_newer_details.months;
-    }
-    QAbstractButton* b = m_wdate_button_group->button(id);
-    if (b) {
-      QRadioButton* rb = dynamic_cast<QRadioButton*>(b);
-      rb->setChecked(true);
-      m_wdate_spin->setValue(d);
+  if (!filter->m_date_clause.isEmpty()) {
+    for (int i=1; i<m_date_cb->count(); i++) {
+      if (m_date_cb->itemData(i)==filter->m_date_clause) {
+	m_date_cb->setCurrentIndex(i);
+	break;
+      }
     }
   }
+  else
+    m_date_cb->setCurrentIndex(0);
+
   m_status_set_mask = filter->m_status_set;
   m_status_unset_mask = filter->m_status_unset;
   m_wStatus->setText(str_status_mask());
+  enable_date_range();
 }
 
 void
@@ -1281,8 +1256,9 @@ msg_select_dialog::timer_done()
       }
       else
 	QMessageBox::information(this, APP_NAME, tr("No results"));
-      m_wCancelButton->setText(tr("Cancel"));
+      m_btn_box->button(QDialogButtonBox::Cancel)->setText(tr("Cancel"));
       enable_inputs(true);
+      enable_date_range();
       m_thread.release();
     }
   }
@@ -1294,12 +1270,26 @@ msg_select_dialog::enable_inputs(bool enable)
   QWidget* widgets[] = {
     m_wcontact, m_wAddrType, m_qtag_sel, m_wto,
     m_wSubject, m_wString, m_wSqlStmt, m_wStatus, m_wMaxResults,
-    m_wOkButton, m_wStatusMoreButton, m_wmin_date, m_wmax_date,
-    m_wdate_spin, m_chk_datemax, m_chk_datemin,
+    m_wStatusMoreButton, m_wmin_date, m_wmax_date,
+    m_chk_datemax, m_chk_datemin,
     m_zoom_button
   };
   for (uint i=0; i<sizeof(widgets)/sizeof(widgets[0]); i++)
     widgets[i]->setEnabled(enable);
+  m_btn_box->button(QDialogButtonBox::Ok)->setEnabled(enable);
+}
+
+/* Enable the controls for the date range, but only if Range is selected
+   in the Date combobox */
+void
+msg_select_dialog::enable_date_range()
+{
+  int idx=m_date_cb->currentIndex();
+  bool en=(idx>=0 && m_date_cb->itemData(idx)=="range");
+  m_chk_datemax->setEnabled(en);
+  m_wmax_date->setEnabled(en);
+  m_chk_datemin->setEnabled(en);
+  m_wmin_date->setEnabled(en);
 }
 
 void
@@ -1316,9 +1306,7 @@ msg_select_dialog::ok()
     m_waiting_for_results = true;
     m_timer->start(100);		// check results every 1/10s
 
-    //    QIconSet ico_stop(FT_MAKE_ICON(FT_ICON16_STOP));
-    m_wCancelButton->setText(tr("Abort"));
-    //    m_wCancelButton->setIconSet(ico_stop);
+    m_btn_box->button(QDialogButtonBox::Cancel)->setText(tr("Abort"));
     enable_inputs(false);
     const QCursor cursor(Qt::WaitCursor);
     QApplication::setOverrideCursor(cursor);
@@ -1339,10 +1327,10 @@ msg_select_dialog::cancel()
     m_waiting_for_results = false;
     m_thread.cancel();
     m_thread.release();
-    m_wCancelButton->setText(tr("Cancel"));
-//    m_wCancelButton->setIconSet(QIconSet()); // empty pixmap
+    m_btn_box->button(QDialogButtonBox::Cancel)->setText(tr("Cancel"));
     QApplication::restoreOverrideCursor();
     enable_inputs(true);
+    enable_date_range();
   }
   else {
     // close the dialog
