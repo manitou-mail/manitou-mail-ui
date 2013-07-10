@@ -42,10 +42,6 @@
 #include "filter_log.h"
 #include "notepad.h"
 
-#ifdef HAVE_TRAYICON
-#include "trayicon.h"
-#endif
-
 #include <QApplication>
 #include <QStatusBar>
 #include <QProgressBar>
@@ -1374,7 +1370,8 @@ msg_list_window::change_font(QAction* which)
       if (m_ql_search) m_ql_search->setFont(f);
       if (m_toolbar) m_toolbar->setFont(f);
       statusBar()->setFont(f);
-      if (m_new_mail_btn) m_new_mail_btn->update_font(f);
+      if (m_new_mail_btn)
+	m_new_mail_btn->update_font(f);
       conf.set_string("display/font/menus", f.toString());
     }
     if (which==all) {
@@ -3044,12 +3041,6 @@ msg_list_window::timer_func()
     hide_abort_button();
 //    m_new_mail_btn->show();
 
-#if 0
-    if (m_loading_filter->exec_time() < 0) {
-      statusBar()->showMessage(tr("Query failed."));
-    }
-    else
-#endif
     {
       double exec_time = m_thread.m_exec_time/1000.0; // in seconds
       statusBar()->showMessage(tr("Query executed in %1 s.").arg(exec_time, 0, 'f', 2),3000);
@@ -3146,30 +3137,11 @@ newmail_button::enable(bool enable)
     else
       setText("");
     setEnabled(true);
-#ifdef HAVE_TRAYICON
-    static TrayIcon* tray;
-    if (!tray) {
-      tray = new TrayIcon();
-      tray->setIcon(FT_MAKE_ICON(FT_ICON16_NEW_MAIL));
-      connect(tray, SIGNAL(clicked( const QPoint&, int)), this,
-	SLOT(trayicon_click()));
-      tray->show();
-    }
-    if (m_number>0) {
-      tray->setToolTip(tr("%1 new message(s)").arg(m_number));
-    }
-#endif
   }
   else {
     //    setPixmap(QPixmap());	// empty pixmap
     setEnabled(false);
     setText(tr("New mail !"));
-#ifdef HAVE_TRAYICON
-    if (tray) {
-      delete tray;
-      tray=NULL;
-    }
-#endif
   }
 }
 
