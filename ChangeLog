@@ -1,4 +1,135 @@
+2013-07-16  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/app_config.cpp, src/mail_listview.cpp, src/main.cpp, src/main.h,
+  src/msg_status_cache.cpp, src/preferences.cpp: Implement new mail
+  notifications on the desktop for x11 and mac
+
+2013-07-10  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/msg_list_window.cpp: Remove dead code
+
+2013-05-28  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/selectmail.cpp, src/selectmail.h: Merge the dates criteria into a
+  single row in the dialog. Enable popup-calendars for start and end dates
+  controls.
+
+2013-05-07  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/db.cpp, src/mail_listview.cpp, src/mail_listview.h,
+  src/msg_list_window.cpp, src/msg_list_window.h, src/selectmail.cpp,
+  src/selectmail.h: Fixed insertion point of new mail when the sort order is on
+  date and descending
+
+2013-04-27  Daniel Verite <daniel@manitou-mail.org>
+
+  * acinclude.m4: Fix sed regexps to parse CXXFLAGS and CFLAGS when they
+  contain equal signs.
+
+2013-03-22  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/attachment_listview.cpp: Fix missing init of m_abort to check for
+  aborted download of attachment.
+
+2013-01-30  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/mbox_import_wizard.cpp: Add "Sent" in imported messages statuses
+
+2012-12-14  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/msg_list_window.cpp: Fix bug introduced by 07674dc: don't update an
+  uninitialized progressbar.
+
+2012-12-11  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/preferences.cpp: Add "initial fetch" in preferences/fetching linked to
+  "max_msgs_per_selection" config entry.
+
+  * translations/manitou_fr.ts: Updated french translation
+
+  * src/attachment.cpp, src/attachment.h, src/attachment_listview.cpp,
+  src/attachment_listview.h, src/msg_list_window.cpp, src/msg_list_window.h,
+  src/msg_list_window_pages.cpp: Add save to disk on attachment's contextual
+  menus and "open with..." with apps associated to file extensions on Windows.
+
+2012-11-21  Daniel Verite <daniel@manitou-mail.org>
+
+  * configure.in: Bump to version 1.3.1 Add -lshlwapi for MS-Windows
+
+2012-11-08  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/database.h, src/db.cpp, src/mailheader.cpp: Use the server's timezone
+  for Date fields on composed messages instead of the server's date and client
+  timezone. Should fix the incorrect +0000 timezone reported on certain Windows
+  systems.
+
+2012-10-30  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/message_view.cpp: Reset the command links in the message view.  This
+  clears the "Show text" or "Show HTML" links that may otherwise linger from
+  the previous message.
+
+2012-10-15  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/attachment.cpp, src/body_view.cpp, src/body_view.h: Fix display of Face
+  and X-Face pictures with Qt-4.8
+
+  * src/newmailwidget.cpp: Avoid peeking into an empty signature
+
+2012-10-09  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/message.cpp: Fix potential bug in mail_msg::set_quoted_body() when
+  there's nothing to quote. Protect against the configurable quote prefix being
+  insanely long.
+
+  * src/newmailwidget.cpp: Replace the obsolete QAction::activate() with
+  QAction::triggered()
+
+  * src/main.cpp: Workaround for QTBUG-11080 in Qt-4.6.2 (QUuid::createUuid()
+  produces duplicates)
+
+2012-09-29  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/helper.cpp, src/sql_editor.cpp, src/sql_editor.h: Help main page is now
+  index.html Remove SQL help button that has no corresponding help text.
+
+2012-09-25  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/selectmail.cpp, src/words.cpp: Fix potential bugs with query strings
+  being freed before the query runs.
+
+2012-09-22  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/main.cpp: MacOS X bundle improvements.  Use the help/ directory under
+  applicationDirPath(). Move *.qm translations from resources to files in the
+  application bundle.
+
+2012-09-21  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/words.cpp: Fix empty array syntax error for Postgres 8.3 and older.
+
+2012-09-20  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/selectmail.cpp: Run the user queries inside READ ONLY transactions to
+  protect against SQL mistakes.
+
+2012-09-19  Daniel Verite <daniel@manitou-mail.org>
+
+  * src/helper.cpp, src/login.cpp, src/login.h, src/main.cpp, src/main.h:
+  Instantiate login_dialog as a modeless dialog.  Fix the inability to focus on
+  the help window when the login dialog is opened.
+
+  * src/app_config.cpp, src/message_view.cpp, src/message_view.h,
+  src/msg_list_window.cpp, src/msg_list_window.h,
+  src/msg_list_window_pages.cpp: Add Copy and Select All to the body contextual
+  menu.  Make Ctrl+A select all in the message body. Set messages_order config
+  to oldest_first by default.
+
 2012-09-10  Daniel Verite <daniel@manitou-mail.org>
+
+  * ChangeLog, src/Makefile.am, src/attachment_listview.cpp, src/log_window.h,
+  src/msg_list_window.cpp, translations/manitou_fr.ts: Updated french
+  translation, ChangeLog and minor cleanup.
 
   * src/app_config.cpp, src/newmailwidget.cpp, src/newmailwidget.h,
   src/preferences.cpp: Add optional basic email syntax check for outgoing
