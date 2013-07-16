@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2013 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -90,7 +90,7 @@ struct prefs_dialog::preferences_widgets {
   button_group* w_preferred_format;
   button_group* w_dynamic_sender_column;
   QComboBox* w_date_format;
-  QLineEdit* w_last_n;
+  button_group* w_notifications;
   QComboBox* w_style;
 
   // directories tab
@@ -324,22 +324,6 @@ prefs_dialog::fetching_widget()
     grid->addWidget(le, row, 1);
     le->setValidator(new QIntValidator(2, 10, this));
   }
-
-#if 0 // obsolete since we have new mail instant notification
-  row++;
-  {
-    QLabel* l=new QLabel(tr("Check new mail every"), w);
-    QHBoxLayout* hb = new QHBoxLayout;
-    hb->setSpacing(3);
-    QSpinBox* sp = new QSpinBox();
-    hb->addWidget(sp);
-    sp->setMinimum(0);
-    hb->addWidget(new QLabel(tr("mn")));
-    grid->addWidget(l, row, 0);
-    grid->addLayout(hb, row, 1);
-    m_widgets->w_auto_check=sp;
-  }
-#endif
 
   row++;
   {
@@ -654,13 +638,15 @@ prefs_dialog::display_widget()
   }
   row++;
   {
-    QLabel* l=new QLabel(tr("N in 'last N messages'"),w1);
-    QLineEdit* ln=new QLineEdit(w1);
-    ln->setMaxLength(4);
-    ln->setMaximumWidth(50);
+    QLabel* l=new QLabel(tr("New mail notifications"),w1);
+    button_group* g=new button_group(QBoxLayout::LeftToRight, w1);
+    QRadioButton* hn=new QRadioButton(tr("System"));
+    QRadioButton* hm=new QRadioButton(tr("None"));
+    g->addButton(hn, 1);
+    g->addButton(hm, 0);
     grid->addWidget(l, row, 0);
-    grid->addWidget(ln, row, 1);
-    m_widgets->w_last_n=ln;
+    grid->addWidget(g, row, 1);
+    m_widgets->w_notifications=g;
   }
   row++;
   {
@@ -903,7 +889,6 @@ prefs_dialog::load_viewers()
 void
 prefs_dialog::conf_to_widgets(app_config& conf)
 {
-  m_widgets->w_last_n->setText(conf.get_string("last_n"));
   int idx;
   QString date_format=conf.get_string("date_format");
   if (date_format=="local")
@@ -944,6 +929,16 @@ prefs_dialog::conf_to_widgets(app_config& conf)
     m_widgets->w_clickable_urls->setButton(1);
     break;
   }
+
+  QString new_mail_notif=conf.get_string("display/notifications/new_mail");
+  if (new_mail_notif=="none") {
+    m_widgets->w_notifications->setButton(0);
+  }
+  else if (new_mail_notif=="system") {
+    m_widgets->w_notifications->setButton(1);
+  }
+  else
+    m_widgets->w_notifications->setButton(1); // system is default
 
   QString preferred_dspl=conf.get_string("display/body/preferred_format");
   if (preferred_dspl.toUpper() == "HTML") {
@@ -1039,7 +1034,6 @@ void
 prefs_dialog::widgets_to_conf(app_config& conf)
 {
   conf.set_string("default_identity", m_widgets->m_default_email);
-  conf.set_string("last_n", m_widgets->w_last_n->text());
   if (m_widgets->w_date_format->currentIndex()==0)
     conf.set_string("date_format", "local");
   else
@@ -1080,6 +1074,15 @@ prefs_dialog::widgets_to_conf(app_config& conf)
     break;
   case 1:
     conf.set_bool("display/auto_sender_column", false);
+    break;
+  }
+
+  switch (m_widgets->w_notifications->selected_id()) {
+  case 1:
+    conf.set_string("display/notifications/new_mail", "system");
+    break;
+  case 0:
+    conf.set_string("display/notifications/new_mail", "none");
     break;
   }
 

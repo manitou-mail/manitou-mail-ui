@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2013 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -40,6 +40,7 @@
 #include <QApplication>
 #include <QDebug>
 
+class QSystemTrayIcon;
 class QStringList;
 class mail_header;
 
@@ -97,10 +98,13 @@ public:
   void start_new_mail(const mail_header&);
   void set_style(const QString style);
   QString m_dbname;
+  void setup_desktop_tray_icon();
+  void desktop_notify(const QString,const QString);
 public slots:
   void cleanup();
 private:
   QString default_style_name;
+  QSystemTrayIcon* m_tray_icon;
 };
 
 

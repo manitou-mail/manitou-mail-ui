@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2013 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -104,17 +104,20 @@ msg_status_cache::db_new_mail_notif()
   DBG_PRINTF(5, "We have NEW MAIL!");
   db_cnx db;
   try {
-    sql_stream s("SELECT mail_id,status FROM mail_status WHERE mail_id>:p1", db);
+    sql_stream s("SELECT ms.mail_id,ms.status,sender,sender_fullname,subject,recipients FROM mail m JOIN mail_status ms USING(mail_id) WHERE ms.mail_id>:p1", db);
     s << m_max_mail_id;
     mail_id_t mail_id;
     int status;
     int count=0;
     while (!s.eos()) {
-      s >> mail_id >> status;
+      QString sender,sender_fullname,subject,recipients;
+      s >> mail_id >> status>> sender >> sender_fullname >> subject >> recipients;
       count++;
       DBG_PRINTF(5, "Seen mail_id %d with status %d", mail_id, status);
+      if (!(status & mail_msg::statusRead)) {
+	gl_pApplication->desktop_notify(tr("New mail"), QString("From: %1\nSubject: %2").arg(sender_fullname.isEmpty()?sender:sender_fullname).arg(subject));
+      }
       update(mail_id, status);
-      //      emit new_mail_notified(mail_id); // for the message port
       message_port::instance()->broadcast_new_mail(mail_id);
     }
     if (count>0 && get_config().get_bool("fetch/auto_incorporate_new_results", false)) {

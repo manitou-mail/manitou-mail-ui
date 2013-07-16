@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2013 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -28,6 +28,8 @@
 #include <QTranslator>
 #include <QHostInfo>
 #include <QSettings>
+#include <QIcon>
+#include <QSystemTrayIcon>
 #include <QUuid>
 
 #include "selectmail.h"
@@ -40,6 +42,7 @@
 #include "msg_status_cache.h"
 #include "app_config.h"
 #include "log_window.h"
+#include "icons.h"
 
 #include <stdarg.h>
 #include <time.h>
@@ -176,6 +179,30 @@ manitou_application::start_new_mail(const mail_header& header)
   }
   else {
     delete w;
+  }
+}
+
+void
+manitou_application::setup_desktop_tray_icon()
+{
+  m_tray_icon=NULL;
+
+#if defined(Q_WS_X11) || defined(Q_WS_MAC)
+  if (get_config().get_string("display/notifications/new_mail")=="system") {
+    if (QSystemTrayIcon::isSystemTrayAvailable()) {
+      QIcon icon(UI_ICON("manitou-logo.png"));
+      m_tray_icon = new QSystemTrayIcon(icon);
+      m_tray_icon->show();
+    }
+  }
+#endif
+}
+
+void
+manitou_application::desktop_notify(const QString title, const QString message)
+{
+  if (m_tray_icon) {
+    m_tray_icon->showMessage(title, message);
   }
 }
 
@@ -354,6 +381,7 @@ main(int argc, char **argv)
   users_repository::fetch();
   message_port::init();
   msg_status_cache::init_db();
+  app.setup_desktop_tray_icon();
 
   msg_list_window* w = new msg_list_window(&filter,0);
   w->show();

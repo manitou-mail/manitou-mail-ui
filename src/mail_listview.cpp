@@ -616,16 +616,8 @@ mail_listview::popup_ctxt_menu(const QPoint& pos)
   // More results
   action_more_results = qmenu.addAction(tr("More results"));
 
-  // Last N messages from sender
-  int last_n=30;
-  if (get_config().exists("last_n")) {
-    last_n=get_config().get_number("last_n");
-    if (last_n==0)
-      last_n=30;
-  }
-
   if (!msg->From().isEmpty()) {
-    s=tr("Last %1 messages from '%2'").arg(last_n).arg(msg->From());
+    s=tr("Last messages from '%1'").arg(msg->From());
     action_same_from = qmenu.addAction(s);
   }
 
@@ -664,7 +656,6 @@ mail_listview::popup_ctxt_menu(const QPoint& pos)
   else if (action == action_same_from) {
     filter.m_sAddress=msg->From();
     filter.m_nAddrType=msgs_filter::rFrom;
-    filter.m_max_results=last_n;
     filter.set_date_order(-1);	// latest results first
     action_opens_page = true;
   }
