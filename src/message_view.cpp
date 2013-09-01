@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2013 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -381,12 +381,13 @@ message_view::display_body(const display_prefs& prefs, int preferred_format)
   m_has_html_part = (html_attachment!=NULL || !body_html.isEmpty());
 
   if (preferred_format==1 || body_html.isEmpty()) {
-    QString b2 = disp.text_body_to_html(body_text, prefs);
-    b2.prepend(h);
-    b2.prepend("<html><body>");
-    b2.prepend("<div id=\"manitou-body\">");
+    QString b2 = "<html><body>";
+    b2.append(h);
+    b2.append("<div id=\"manitou-body\">");
+    b2.append(disp.text_body_to_html(body_text, prefs));
     b2.append("</div>");
     b2.append("</body></html>");
+
     set_html_contents(b2, 1);
     // partial load?
     if (m_pmsg->body_length()>0 && m_pmsg->body_fetched_length() < m_pmsg->body_length()) {
