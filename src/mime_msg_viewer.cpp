@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2013 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -23,6 +23,7 @@
 #include "mailheader.h"
 #include "message_view.h"
 #include "attachment_listview.h"
+#include "app_config.h"
 #include "icons.h"
 
 #include <QSplitter>
@@ -51,6 +52,16 @@ mime_msg_viewer::mime_msg_viewer(const char* msg, const display_prefs& prefs)
   QSplitter* splitter = new QSplitter(Qt::Vertical, this);
   layout->addWidget(splitter);
   m_view = new message_view(splitter, NULL);
+  QString font_name=get_config().get_string("display/font/msgbody");
+  if (!font_name.isEmpty()) {
+    QFont f;
+    f.fromString(font_name);
+    m_view->setFont(f);
+  }
+  else {
+    m_view->setFont(this->font());
+  }
+
   m_attchview = new attch_listview(splitter);
   m_attchview->hide();
 
@@ -61,13 +72,14 @@ mime_msg_viewer::mime_msg_viewer(const char* msg, const display_prefs& prefs)
      if conformant, it should be us-ascii actually */
   m_header = QString::fromLatin1(msg, hlen);
   mail_header mh;
-  QString header_html;
-  mh.format(header_html, m_header);
-  //mail_html.append("<hr>");
+  QString header_html="<div id=\"manitou-header\">";
+  mh.format(header_html, m_header);  
+  header_html.append("</div><br>");
+
   QString body_html;
   format_body(body_html, msg+hlen, prefs);
-  body_html.append("<html><body>");
-  body_html.prepend("</body></html>");
+  body_html.prepend("<html><body><div id=\"manitou-body\">");
+  body_html.append("</div></body></html>");
   m_view->set_html_contents(body_html, 1); // content-type=text
   m_view->prepend_body_fragment(header_html);
   resize(800,600);
