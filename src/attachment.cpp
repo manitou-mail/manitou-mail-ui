@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2013 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -23,6 +23,7 @@
 #include <fstream>
 
 #include <QFile>
+#include <QFileInfo>
 #include <QDir>
 #include <QRegExp>
 #include <QTextCodec>
@@ -506,15 +507,8 @@ attachment::store(uint mail_id)
     }
 
     sql_stream s("INSERT INTO attachments(attachment_id, mail_id, content_type, content_size, filename,mime_content_id) VALUES (:p1, :p2, ':p3', :p4, ':p5', :cid)", db);
-    QString basename;
-    int idx = m_filename.lastIndexOf("/");
-    if (idx >= 0) {
-      basename = m_filename.mid(idx+strlen("/"));
-    }
-    else {
-      basename = m_filename;
-    }
-    s << m_Id << mail_id << m_mime_type << m_size << basename;
+    QFileInfo fi(m_filename);
+    s << m_Id << mail_id << m_mime_type << m_size << fi.fileName();
 
     if (!m_mime_content_id.isEmpty())
       s << m_mime_content_id;
