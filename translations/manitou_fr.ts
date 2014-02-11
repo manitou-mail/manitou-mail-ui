@@ -360,12 +360,6 @@
         <translation>Ajouter &quot;%2&quot; au champ d&apos;entêtes %1</translation>
     </message>
     <message>
-        <source>The file &apos;manitou.qhc&apos; could not be found in any of the following directories:
-</source>
-        <translation type="obsolete">Le fichier &apos;manitou.qhc&apos; n&apos;a pu être trouvé dans aucun des répertoires suivants:
-</translation>
-    </message>
-    <message>
         <source>Unexpected character &apos;\&apos;</source>
         <translation>Caractère inattendu &apos;\&apos;</translation>
     </message>
@@ -420,7 +414,7 @@
     </message>
     <message>
         <source>In addition, could not execute ROLLBACK.</source>
-        <translation>De plus, un ROLLBACK n&apos;a pu être exécuté</translation>
+        <translation>De plus, un ROLLBACK n&apos;a pu être exécuté.</translation>
     </message>
 </context>
 <context>
@@ -470,12 +464,8 @@
         <translation>Dépôt source public git et suivi de bogues:</translation>
     </message>
     <message>
-        <source>Email:&lt;br&gt;support%2manitou-mail.org&lt;/a&gt;</source>
-        <translation type="obsolete">Email:&lt;br&gt;support%2manitou-mail.org&lt;/a&gt;</translation>
-    </message>
-    <message>
         <source>Email:&lt;br&gt;support%1manitou-mail.org&lt;/a&gt;</source>
-        <translation>Email:&lt;br&gt;support%2manitou-mail.org&lt;/a&gt;</translation>
+        <translation>Email:&lt;br&gt;support%1manitou-mail.org&lt;/a&gt;</translation>
     </message>
 </context>
 <context>
@@ -540,7 +530,7 @@
     </message>
     <message>
         <source>Assign a tag to the message.</source>
-        <translation>Assigner une étiquette au message</translation>
+        <translation>Assigner une étiquette au message.</translation>
     </message>
     <message>
         <source>Set status</source>
@@ -580,7 +570,7 @@
     </message>
     <message>
         <source>Set a message header field. If the field is already present, it will be updated with the new value, otherwise the field will be added.</source>
-        <translation>Positionne un champ d&apos;entête. Si le champ est déjà présent, son contenu sera mis à jour avec la nouvelle valeur. Autrement le champ sera ajouté</translation>
+        <translation>Positionne un champ d&apos;entête. Si le champ est déjà présent, son contenu sera mis à jour avec la nouvelle valeur. Autrement le champ sera ajouté.</translation>
     </message>
     <message>
         <source>Remove header</source>
@@ -645,7 +635,7 @@
     </message>
     <message>
         <source>Remove any occurrence of the designated field from the header.</source>
-        <translation>Supprime toutes les occurrences dans les entêtes du champ désigné</translation>
+        <translation>Supprime toutes les occurrences dans les entêtes du champ désigné.</translation>
     </message>
 </context>
 <context>
@@ -671,7 +661,7 @@
     </message>
     <message>
         <source>Set the status of the message.</source>
-        <translation>Change le statut du message</translation>
+        <translation>Change le statut du message.</translation>
     </message>
     <message>
         <source>Read</source>
@@ -953,6 +943,26 @@
     <message>
         <source>Downloading attached file: %1</source>
         <translation>Charge le fichier attaché: %1</translation>
+    </message>
+    <message>
+        <source>Save to disk</source>
+        <translation>Enregistrer sur disque</translation>
+    </message>
+    <message>
+        <source>Please select one or several attachments</source>
+        <translation>Veuillez sélectionner un ou plusieurs attachements</translation>
+    </message>
+    <message>
+        <source>Save to directory...</source>
+        <translation>Sauver dans répertoire...</translation>
+    </message>
+    <message>
+        <source>Downloading attachment into: %1</source>
+        <translation>Charge l&apos;attachment dans: %1</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>Fichier</translation>
     </message>
 </context>
 <context>
@@ -1321,7 +1331,7 @@ Save now?</source>
     </message>
     <message>
         <source>matches regexp</source>
-        <translation>concorde avec exp. reg.</translation>
+        <translation>concorde avec exp. reg</translation>
     </message>
     <message>
         <source>Filter expression editor</source>
@@ -1878,12 +1888,12 @@ Les messages non encore importés seront perdus.</translation>
         <translation>Plus de résultats</translation>
     </message>
     <message>
-        <source>Last %1 messages from &apos;%2&apos;</source>
-        <translation>Les derniers %1 messages de &apos;%2&apos;</translation>
-    </message>
-    <message>
         <source>All messages tagged as &apos;%1&apos;</source>
         <translation>Tous les messages portant l&apos;étiquette &apos;%1&apos;</translation>
+    </message>
+    <message>
+        <source>Last messages from &apos;%1&apos;</source>
+        <translation>Derniers messages de &apos;%1&apos;</translation>
     </message>
 </context>
 <context>
@@ -2529,6 +2539,10 @@ Les messages non encore importés seront perdus.</translation>
         <source>Automatic purge:</source>
         <translation>Purge automatique:</translation>
     </message>
+    <message>
+        <source>Sent</source>
+        <translation>Envoyé</translation>
+    </message>
 </context>
 <context>
     <name>mbox_import_wizard_page_upload</name>
@@ -2937,16 +2951,8 @@ Les messages non encore importés seront perdus.</translation>
         <translation>Pas de résultat</translation>
     </message>
     <message>
-        <source>Query failed.</source>
-        <translation>Echec de la requête.</translation>
-    </message>
-    <message>
         <source>Query executed in %1 s.</source>
         <translation>Requête exécutée en %1 s.</translation>
-    </message>
-    <message>
-        <source>Please select one or several attachments</source>
-        <translation>Veuillez sélectionner un ou plusieurs attachements</translation>
     </message>
     <message>
         <source>Please select one message only</source>
@@ -3033,10 +3039,6 @@ Les messages non encore importés seront perdus.</translation>
         <translation>Arrêter</translation>
     </message>
     <message>
-        <source>Downloading attachment into: %1</source>
-        <translation>Charge l&apos;attachment dans: %1</translation>
-    </message>
-    <message>
         <source>%1 message(s) processed.</source>
         <translation>%1 message(s) traité(s).</translation>
     </message>
@@ -3067,14 +3069,6 @@ Les messages non encore importés seront perdus.</translation>
     <message>
         <source>Save mailbox</source>
         <translation>Sauver boite mail</translation>
-    </message>
-    <message>
-        <source>Save to directory...</source>
-        <translation>Sauver dans répertoire...</translation>
-    </message>
-    <message>
-        <source>File</source>
-        <translation>Fichier</translation>
     </message>
     <message>
         <source>Show Filters Log</source>
@@ -3144,38 +3138,6 @@ Les messages non encore importés seront perdus.</translation>
         <translation>Requête</translation>
     </message>
     <message>
-        <source>Fill in one or more selection criteria:</source>
-        <translation>Remplissez un ou plusieurs critères de sélection:</translation>
-    </message>
-    <message>
-        <source>min</source>
-        <translation>min</translation>
-    </message>
-    <message>
-        <source>max</source>
-        <translation>max</translation>
-    </message>
-    <message>
-        <source>(Ignore)</source>
-        <translation>(Ignorer)</translation>
-    </message>
-    <message>
-        <source>days</source>
-        <translation>jours</translation>
-    </message>
-    <message>
-        <source>weeks</source>
-        <translation>semaines</translation>
-    </message>
-    <message>
-        <source>months</source>
-        <translation>mois</translation>
-    </message>
-    <message>
-        <source>Contains tag:</source>
-        <translation>Contient l&apos;étiquette:</translation>
-    </message>
-    <message>
         <source>Status:</source>
         <translation>Statut:</translation>
     </message>
@@ -3196,20 +3158,8 @@ Les messages non encore importés seront perdus.</translation>
         <translation>messages</translation>
     </message>
     <message>
-        <source>In trash</source>
-        <translation>Dans la corbeille</translation>
-    </message>
-    <message>
-        <source>OK</source>
-        <translation>OK</translation>
-    </message>
-    <message>
         <source>Cancel</source>
         <translation>Annuler</translation>
-    </message>
-    <message>
-        <source>Help</source>
-        <translation>Aide</translation>
     </message>
     <message>
         <source>Rd</source>
@@ -3260,14 +3210,6 @@ Les messages non encore importés seront perdus.</translation>
         <translation>Erreur de chargement</translation>
     </message>
     <message>
-        <source>Dates between:</source>
-        <translation>Entre les dates:</translation>
-    </message>
-    <message>
-        <source>Not older than:</source>
-        <translation>Pas plus ancien que:</translation>
-    </message>
-    <message>
         <source>Subject:</source>
         <translation>Sujet:</translation>
     </message>
@@ -3286,6 +3228,73 @@ Les messages non encore importés seront perdus.</translation>
     <message>
         <source>Zoom</source>
         <translation>Zoom</translation>
+    </message>
+    <message>
+        <source>Fill in the selection criteria:</source>
+        <translation>Remplissez les critères de sélection:</translation>
+    </message>
+    <message>
+        <source>Date:</source>
+        <translation>Date:</translation>
+    </message>
+    <message>
+        <source>Any date</source>
+        <translation>Indifférent</translation>
+    </message>
+    <message>
+        <source>Today</source>
+        <translation>Aujourd&apos;hui</translation>
+    </message>
+    <message>
+        <source>Yesterday</source>
+        <translation>Hier</translation>
+    </message>
+    <message>
+        <source>Last 7 days</source>
+        <translation>7 derniers jours</translation>
+    </message>
+    <message>
+        <source>Last 30 days</source>
+        <translation>30 derniers jours</translation>
+    </message>
+    <message>
+        <source>Last 60 days</source>
+        <translation>60 derniers jours</translation>
+    </message>
+    <message>
+        <source>Last 90 days</source>
+        <translation>90 derniers jours</translation>
+    </message>
+    <message>
+        <source>Last 365 days</source>
+        <translation>365 derniers jours</translation>
+    </message>
+    <message>
+        <source>Range...</source>
+        <translation>Intervalle...</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation>Début</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>Fin</translation>
+    </message>
+    <message>
+        <source>Tag:</source>
+        <translation>Label:</translation>
+    </message>
+    <message>
+        <source>In trashcan</source>
+        <translation>En corbeille</translation>
+    </message>
+</context>
+<context>
+    <name>msg_status_cache</name>
+    <message>
+        <source>New mail</source>
+        <translation>Nouveau courrier</translation>
     </message>
 </context>
 <context>
@@ -3526,10 +3535,6 @@ Expédier malgré tout?</translation>
 <context>
     <name>newmail_button</name>
     <message>
-        <source>%1 new message(s)</source>
-        <translation>%1 nouveaux message(s)</translation>
-    </message>
-    <message>
         <source>New mail !</source>
         <translation>Nouveau message(s) !</translation>
     </message>
@@ -3661,16 +3666,8 @@ Expédier malgré tout?</translation>
         <translation>Format de date</translation>
     </message>
     <message>
-        <source>N in &apos;last N messages&apos;</source>
-        <translation>N dans &apos;les derniers N messages&apos;</translation>
-    </message>
-    <message>
         <source>Style</source>
         <translation>Style</translation>
-    </message>
-    <message>
-        <source>Check new mail every</source>
-        <translation>Recherche de nouveaux messages tous les</translation>
     </message>
     <message>
         <source>mn</source>
@@ -3814,7 +3811,7 @@ Expédier malgré tout?</translation>
     </message>
     <message>
         <source>This can be overriden with the &lt;i&gt;accents:insensitive&lt;/i&gt; or &lt;i&gt;accents:sensitive&lt;/i&gt; operators in the search box.</source>
-        <translation>Peut être modifié avec les opérateurs du champ de recherche &lt;i&gt;accents:insensitive&lt;/i&gt; ou &lt;i&gt;accents:sensitive&lt;/i&gt; </translation>
+        <translation>Peut être modifié avec les opérateurs du champ de recherche &lt;i&gt;accents:insensitive&lt;/i&gt; ou &lt;i&gt;accents:sensitive&lt;/i&gt;.</translation>
     </message>
     <message>
         <source>Messages order</source>
@@ -3835,6 +3832,22 @@ Expédier malgré tout?</translation>
     <message>
         <source>Search</source>
         <translation>Chercher</translation>
+    </message>
+    <message>
+        <source>Initial fetch</source>
+        <translation>Chargement initial</translation>
+    </message>
+    <message>
+        <source>New mail notifications</source>
+        <translation>Notification nouveaux messages</translation>
+    </message>
+    <message>
+        <source>System</source>
+        <translation>Système</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation>Aucun</translation>
     </message>
 </context>
 <context>
@@ -3868,14 +3881,6 @@ Voulez-vous le mettre à jour malgré cela?</translation>
 </context>
 <context>
     <name>qassistant</name>
-    <message>
-        <source>Remote Control</source>
-        <translation type="obsolete">Contrôle distant</translation>
-    </message>
-    <message>
-        <source>Could not start Qt Assistant from %1.</source>
-        <translation type="obsolete">Impossible de démarrer l&apos;assistant Qt de %1.</translation>
-    </message>
     <message>
         <source>User interface documentation</source>
         <translation>Documentation de l&apos;interface utilisateur</translation>
