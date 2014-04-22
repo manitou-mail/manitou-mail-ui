@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2014 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -446,11 +446,11 @@ new_mail_widget::set_wrap_mode()
 {
   if (m_wrap_lines) {
     m_bodyw->setWordWrapMode(QTextOption::WordWrap);
-    // m_bodyw->setWrapColumnOrWidth(80);
-    m_bodyw->setLineWrapMode(QPlainTextEdit::WidgetWidth);
+    m_bodyw->setLineWrapColumnOrWidth(78);
+    m_bodyw->setLineWrapMode(QTextEdit::FixedColumnWidth);
   }
   else {
-    m_bodyw->setLineWrapMode(QPlainTextEdit::NoWrap);
+    m_bodyw->setLineWrapMode(QTextEdit::NoWrap);
   }
 }
 
@@ -1038,7 +1038,7 @@ new_mail_widget::insert_signature()
       QTextCursor cursor = m_bodyw->textCursor();
       cursor.movePosition(QTextCursor::End);
       int pos = cursor.position();
-      m_bodyw->appendPlainText(sig);
+      m_bodyw->append(sig);
       cursor.setPosition(pos);
       m_bodyw->setTextCursor(cursor);
     }

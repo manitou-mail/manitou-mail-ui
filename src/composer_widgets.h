@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2014 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -40,11 +40,11 @@ class QDropEvent;
 class QDragMoveEvent;
 class QDragEnterEvent;
 
-class body_edit_widget : public QPlainTextEdit
+class body_edit_widget : public QTextEdit
 {
   Q_OBJECT
 public:
-  body_edit_widget (QWidget* parent=NULL);
+  body_edit_widget(QWidget* parent=NULL);
   virtual ~body_edit_widget() {}
 protected:
   void dragEnterEvent(QDragEnterEvent*);

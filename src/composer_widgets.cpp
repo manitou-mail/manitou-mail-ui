@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2014 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -400,9 +400,9 @@ input_addresses_widget::cancel()
 }
 
 body_edit_widget::body_edit_widget(QWidget* p)
-  : QPlainTextEdit(p)
+  : QTextEdit(p)
 {
-//  setTextFormat(Qt::PlainText);
+  setAcceptRichText(false);
   QString fontname=get_config().get_string("newmail/font");
   if (!fontname.isEmpty() && fontname!="xft") {
     QFont f;
@@ -428,7 +428,7 @@ body_edit_widget::dragEnterEvent(QDragEnterEvent* event)
   if (event->mimeData()->hasUrls())
     event->acceptProposedAction();
   else
-    QPlainTextEdit::dragEnterEvent(event);
+    QTextEdit::dragEnterEvent(event);
 }
 
 void
@@ -438,7 +438,7 @@ body_edit_widget::dragMoveEvent(QDragMoveEvent* event)
   /* We don't let the base dragMoveEvent handle URLs to avoid it
      taking control over the caret and not releasing it after the drop */
   if (!event->mimeData()->hasUrls())
-    QPlainTextEdit::dragMoveEvent(event);
+    QTextEdit::dragMoveEvent(event);
 }
 
 void
@@ -451,7 +451,7 @@ body_edit_widget::dropEvent(QDropEvent* event)
     }    
   }
   else
-    QPlainTextEdit::dropEvent(event);
+    QTextEdit::dropEvent(event);
 }
 
 ///
