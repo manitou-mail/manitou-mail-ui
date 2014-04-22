@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2013 Daniel Verite
+/* Copyright (C) 2004-2014 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -1959,16 +1959,10 @@ msg_list_window::abort_operation()
 {
   m_abort=true;
   if (m_waiting_for_results) {	// query in progress
-    m_waiting_for_results = false;
+    // m_waiting_for_results = false;
     m_thread.cancel();
-    m_thread.release();
-    hide_abort_button();
-    enable_interaction(true);
-    m_new_mail_btn->show();
-    unsetCursor();
-    statusBar()->showMessage(tr("Query cancelled."));
   }
-  emit abort_progress();
+  emit abort_progress(); // currently used for attachments downloads
 }
 
 void
@@ -3041,10 +3035,13 @@ msg_list_window::timer_func()
     hide_abort_button();
 //    m_new_mail_btn->show();
 
-    {
+    if (!m_thread.m_cancelled) {
       double exec_time = m_thread.m_exec_time/1000.0; // in seconds
       statusBar()->showMessage(tr("Query executed in %1 s.").arg(exec_time, 0, 'f', 2),3000);
     }
+    else
+      statusBar()->showMessage(tr("Query cancelled."));
+
     if (m_loading_filter) {
       delete m_loading_filter;
       m_loading_filter = NULL;

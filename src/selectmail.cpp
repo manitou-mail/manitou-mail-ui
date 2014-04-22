@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2013 Daniel Verite
+/* Copyright (C) 2004-2014 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -240,6 +240,7 @@ fetch_thread::fetch_thread()
 {
   m_cnx=NULL;
   m_fetch_more=false;
+  m_cancelled=false;
 }
 
 // Launch the query and fetch results fetch. Overrides QThread::run()
@@ -283,8 +284,8 @@ fetch_thread::run()
   }
   else {
     // search not involving the word indexes
+    db_transaction trans(*m_cnx);
     try {
-      db_transaction trans(*m_cnx);
       sql_stream st("SET TRANSACTION READ ONLY", *m_cnx);
       sql_stream sq(m_query, *m_cnx);
       sq.execute();
@@ -294,6 +295,7 @@ fetch_thread::run()
     }
     catch(db_excpt& x) {
       m_errstr = x.errmsg();
+      trans.rollback();
     }
   }
   m_exec_time = start.elapsed();
@@ -307,7 +309,13 @@ fetch_thread::cancel()
   if (m_cnx) {
     DBG_PRINTF(5, "fetch_thread::cancel()");
     PGconn* c = m_cnx->connection();
-    PQrequestCancel(c);
+    char errbuf[256];
+    PGcancel* cancel = PQgetCancel(c);
+    if (cancel) {
+      PQcancel(cancel, errbuf, sizeof(errbuf));
+      PQfreeCancel(cancel);
+      m_cancelled=true;
+    }
   }
   m_fetch_more=false;
 }

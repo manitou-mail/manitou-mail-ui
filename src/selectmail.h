@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2013 Daniel Verite
+/* Copyright (C) 2004-2014 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -74,6 +74,7 @@ public:
 
   progressive_wordsearch m_psearch;
   bool m_fetch_more;
+  bool m_cancelled;
 };
 
 // Options from the searchbox
