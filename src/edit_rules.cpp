@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2014 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -551,6 +551,10 @@ filter_edit::current_name_edited(const QString& new_name)
   if (sel.size()==1) {
     expr_lvitem* item = static_cast<expr_lvitem*>(sel.at(0));
     item->setText(icol_name, new_name);
+  }
+  if (m_current_expr) {
+    m_current_expr->m_expr_name = new_name;
+    m_current_expr->m_dirty = true;
   }
 }
 
