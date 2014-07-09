@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2014 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -40,6 +40,7 @@
 #include <QApplication>
 #include <QDesktopServices>
 #include <QDropEvent>
+#include <QWebSettings>
 
 #ifdef MANITOU_DATADIR
 #include "icons.h"
@@ -151,6 +152,9 @@ html_editor::html_editor(QWidget* parent): QWebView(parent)
   connect(this, SIGNAL(loadFinished(bool)), SLOT(load_finished(bool)));
   page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
   connect(this, SIGNAL(linkClicked(const QUrl&)), SLOT(link_clicked(const QUrl&)));
+  QWebSettings* settings = page()->settings();
+  settings->setFontFamily(QWebSettings::StandardFont, "Arial");
+  settings->setFontSize(QWebSettings::DefaultFontSize, 14);
 }
 
 html_editor::~html_editor()
