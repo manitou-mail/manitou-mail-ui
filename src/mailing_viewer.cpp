@@ -180,7 +180,16 @@ mailing_viewer::show_merge()
       // merge
       m_current_text = tm.merge_template(opt->text_part, vars);
       m_current_html = tm.merge_template(opt->html_part, vars);
-      m_current_header = tm.merge_template(opt->header, vars);
+      /* filter out cr and lf from values to merge into the header since
+	 line breaks are not supported in headers */
+      QStringList vars_headers;
+      for (int i=0; i<vars.size(); i++) {
+	QString v=vars[i].replace("\r\n", "\n");
+	v=v.replace('\r', '\n');
+	v=v.replace('\n', ' ');
+	vars_headers.append(v);
+      }
+      m_current_header = tm.merge_template(opt->header, vars_headers);
       merged=true;
     }
     catch(...) {
