@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2014 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -29,8 +29,6 @@ class sql_null
  public:
   sql_null() {}
   ~sql_null() {}
-private:
-  int m_placeholder;		/* avoid a MSVC++ bug with empty classes */
 };
 
 class sql_query 
