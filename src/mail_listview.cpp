@@ -1111,23 +1111,21 @@ void
 mail_listview::make_tree(std::list<mail_msg*>& list)
 {
   DBG_PRINTF(8, "make_tree()");
-  std::list<mail_msg*>::iterator iter=list.begin();
+  std::list<mail_msg*>::iterator iter;
   std::map<mail_id_t,mail_msg*> m;
 
-  /* build a map [ mail_id => pointer to the message ]. The map is used
-     below to quickly find if a parent belongs to the list or not */
-  while (iter!=list.end()) {
-    m[(*iter)->get_id()]=*(iter++);
+  /* build a map [ mail_id => pointer to the message ]. The map is
+     used inside insert_sub_tree to quickly find if a parent belongs
+     to the list or not */
+  for (iter=list.begin(); iter!=list.end(); ++iter) {
+    m[(*iter)->get_id()]=*(iter);
   }
 
-  iter=list.begin();
-  std::map<mail_id_t,mail_msg*>::iterator parent_iter;
-  while (iter!=list.end()) {
+  for (iter=list.begin(); iter!=list.end(); ++iter) {
     mail_msg* msg = model()->find((*iter)->get_id());
     if (!msg) {			// msg not already in list
       insert_sub_tree(m, *iter);
     }
-    ++iter;
   }
   expandAll();
 }
