@@ -42,13 +42,7 @@
 #include <QDropEvent>
 #include <QWebSettings>
 
-#ifdef MANITOU_DATADIR
 #include "icons.h"
-#else
- #ifndef HTML_ICON
-   #define HTML_ICON(a) QIcon(a)
- #endif
-#endif
 
 struct html_editor::action_type
 html_editor::m_action_definitions[] = {
