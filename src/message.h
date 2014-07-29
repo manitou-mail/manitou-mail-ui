@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2014 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -129,6 +129,7 @@ public:
     return m_body_length;
   }
   void set_quoted_body(const QString&, const QString&, body_format);
+  QString forwarded_header_excerpt();
 
   QString From() const { return m_sFrom; }
   QString sender_name() const { return m_sender_name; }

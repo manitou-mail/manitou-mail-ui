@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2014 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -410,7 +410,6 @@ mail_msg::identity_id()
 bool
 mail_msg::set_tag (uint id, bool set /*=true*/)
 {
-  bool result;
   db_cnx db;
   try {
     if (set) {
@@ -421,7 +420,6 @@ mail_msg::set_tag (uint id, bool set /*=true*/)
       sql_stream s2("DELETE FROM mail_tags WHERE mail_id=:p1 AND tag=:p2", db);
       s2 << GetId() << id;
     }
-    result = true;
   }
   catch(db_excpt& p) {
     /* If there's an unique index violation when inserting, we want to
@@ -1163,11 +1161,53 @@ mail_msg::setup_forward()
   }
   QString fwd_body;
   find_text_to_quote(fwd_body);
-  fwd_body = sf_quote + "\n" + fwd_body + ef_quote + "\n";
+
+  QString quoted_header = this->forwarded_header_excerpt();
+  fwd_body = sf_quote + "\n" + quoted_header + "\n" + fwd_body + "\n" + ef_quote + "\n";
+  
   msg.set_body_text(fwd_body);
   msg.set_fwded_mail_id(this->get_id());
 
   return msg;
+}
+
+QString
+mail_msg::forwarded_header_excerpt()
+{
+  static const char *hkeep[] = {
+    "date:", "from:", "to:", "cc:", "reply-to:", "bcc:", "subject:"
+  };
+
+  const QString& h = this->get_headers();
+  uint npos=0;
+  uint nend=h.length();
+  QString output;
+
+  const int nh=sizeof(hkeep)/sizeof(hkeep[0]);
+  QString slines[nh];
+
+  while (npos<nend) {
+    // position of end of current line
+    int npos_lf=h.indexOf('\n',npos);
+    if (npos_lf==-1)
+      npos_lf=nend;
+
+    for (int i=0; i<nh; i++) {
+      uint nhlen=strlen(hkeep[i]);
+      if (h.mid(npos,nhlen).toLower() == hkeep[i]) {
+	slines[i]= h.mid(npos,nhlen) + h.mid(npos+nhlen, 1+npos_lf-(npos+nhlen));
+	break;
+      }
+    }
+    npos=npos_lf+1;
+  }
+  // order the headers as in hkeep and not as they appear in the
+  // original message
+  for (int j=0; j<nh; j++) {
+    if (slines[j].length()>0)
+      output+=slines[j];
+  }
+  return output;
 }
 
 QString&
