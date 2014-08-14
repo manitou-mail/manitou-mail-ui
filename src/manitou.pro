@@ -1,133 +1,178 @@
-TEMPLATE=app
-SUBDIRS=xface
-TARGET=manitou
-QT += assistant qt3support
-CONFIG += qt  thread exceptions warn_off rtti assistant
-OBJECTS_DIR=o
-MOC_DIR=moc
-
+TEMPLATE = app
+TARGET = manitou
+DEPENDPATH += . xface
+CONFIG += release
+INCLUDEPATH += . .. xface /usr/local/pgsql/include
+QT += network webkit
 DEFINES += WITH_PGSQL
-LIBS += -Lxface -lxface
-unix {
-  INCLUDEPATH += $$(PG_INCLUDE_DIR) ..
-  LIBS += -L$$(PG_LIB_DIR) -lpq
-  CONFIG += console
-}
-win32 {
-  TMP=$$(PGSQL_SRC)
-  isEmpty(TMP) {
-    error(The PGSQL_SRC environment variable must be defined to point to postgresql source code)
-  }
-  INCLUDEPATH += $$(PGSQL_SRC)/interfaces/libpq $$(PGSQL_SRC)/include ..
-  LIBS += -L$$(PGSQL_SRC)/interfaces/libpq -lpq -lwsock32 -lwinmm
-  DEFINES += _WINDOWS WIN_FIXME WITH_PGSQL
+LIBS += -L/usr/local/pgsql/lib -lpq
+ICON = ../icons/manitou.icns
+RESOURCES += manitou.qrc
+#TRANSLATIONS = ../translations/manitou_fr.ts
+TRANS_QM_FILES = ../translations/manitou_fr.qm ../translations/manitou_de.qm ../translations/manitou_es.qm
+
+mac {
+    HelpFiles.files = ../help 
+    TranslationFiles.files = $${TRANS_QM_FILES}
+    HelpFiles.path = Contents/MacOS
+    TranslationFiles.path = Contents/MacOS/translations
+    QMAKE_BUNDLE_DATA += HelpFiles TranslationFiles
 }
 
-SOURCES=about.cpp \
- addressbook.cpp \
- addresses.cpp \
- attachment.cpp \
- attachment_listview.cpp \
- bitvector.cpp \
- body_edit.cpp \
- body_view.cpp \
- browser.cpp \
- date.cpp \
- db.cpp \
- edit_rules.cpp \
- errors.cpp \
- filter_rules.cpp \
- headers_groupview.cpp \
- helper.cpp \
- identities.cpp \
- login.cpp \
- mailheader.cpp \
- mail_listview.cpp \
- mail_displayer.cpp \
- main.cpp \
- message.cpp \
- message_port.cpp \
- mime_msg_viewer.cpp \
- msg_list_window.cpp \
- msg_list_window_pages.cpp \
- msg_properties.cpp \
- msgs_page_list.cpp \
- newmailwidget.cpp \
- notewidget.cpp \
- preferences.cpp \
- prog_chooser.cpp \
- query_listview.cpp \
- searchbox.cpp \
- selectmail.cpp \
- sha1.cpp \
- sql_editor.cpp \
- sqlquery.cpp \
- sqlstream.cpp \
- tags.cpp \
- tagsbox.cpp \
- tagsdialog.cpp \
-# trayicon.cpp \
-# trayicon_win.cpp \
- users.cpp \
- user_queries.cpp \
- words.cpp
-
-HEADERS= about.h \
- addressbook.h \
- addresses.h \
- attachment.h \
- attachment_listview.h \
- browser.h \
- bitvector.h \
- body_edit.h \
- body_view.h \
- database.h \
- date.h \
- db.h \
- dbtypes.h \
- dragdrop.h \
- edit_rules.h \
- errors.h \
- filter_rules.h \
- headers_groupview.h \
- helper.h \
- icons.h \
- identities.h \
- login.h \
- mailheader.h \
- mail_displayer.h \
- mail_listview.h \
- main.h \
- message_port.h \
- mime_msg_viewer.h \
- msg_list_window.h \
- msg_properties.h \
- msgs_page_list.h \
- newmailwidget.h \
- notewidget.h \
- preferences.h \
- prog_chooser.h \
- query_listview.h \
- searchbox.h \
- selectmail.h \
- sha1.h \
- sql_editor.h \
- sqlquery.h \
- sqlstream.h \
- tags.h \
- tagsbox.h \
- tagsdialog.h \
-# trayicon.h \
- users.h \
- user_queries.h \
- words.h \
- xpm_attached.h \
- xpm_forwarded.h \
- xpm_new.h \
- xpm_processed.h \
- xpm_read.h \
- xpm_replied.h \
- xpm_trash.h
-
-
-TRANSLATIONS = manitou_fr.ts manitou_es.ts
+# Input
+HEADERS += about.h \
+           addressbook.h \
+           addresses.h \
+           app_config.h \
+           attachment.h \
+           attachment_listview.h \
+           bitvector.h \
+           body_edit.h \
+           body_view.h \
+           browser.h \
+           composer_widgets.h \
+           database.h \
+           date.h \
+           db.h \
+           db_listener.h \
+           dbtypes.h \
+           dragdrop.h \
+           edit_address_widget.h \
+           edit_rules.h \
+           errors.h \
+           filter_log.h \
+           filter_rules.h \
+           headers_groupview.h \
+           helper.h \
+           html_editor.h \
+           icons.h \
+           identities.h \
+           import_window.h \ 
+           login.h \
+           mail_displayer.h \
+           mail_listview.h \
+           mail_template.h \
+           mailheader.h \
+           mailing.h \
+           mailing_viewer.h \
+           mailing_window.h \
+           mailing_wizard.h \
+           main.h \
+           mbox_file.h \
+           mbox_import_wizard.h \
+           message.h \
+           message_port.h \
+           message_view.h \
+           mime_msg_viewer.h \
+           msg_list_window.h \
+           msg_properties.h \
+           msg_status_cache.h \
+           msgs_page_list.h \
+           mygetopt.h \
+           newmailwidget.h \
+           notepad.h \
+           notewidget.h \
+           preferences.h \
+           prog_chooser.h \
+           query_listview.h \
+           searchbox.h \
+           selectmail.h \
+           sha1.h \
+           sql_editor.h \
+           sqlquery.h \
+           sqlstream.h \
+           tags.h \
+           tagsbox.h \
+           log_window.h \
+           tagsdialog.h \
+           text_merger.h \
+           ui_controls.h \
+           ui_feedback.h \
+           user_queries.h \
+           users.h \
+           filter_results_window.h \
+           filter_action_editor.h \
+           filter_expr_editor.h \
+           words.h \
+           filter_eval.h \
+           xface/compface.h \
+           xface/data.h \
+           xface/vars.h \
+           xface/xface.h
+SOURCES += about.cpp \
+           filter_eval.cpp \
+           filter_results_window.cpp \
+           filter_action_editor.cpp \
+           filter_expr_editor.cpp \
+           addressbook.cpp \
+           addresses.cpp \
+           app_config.cpp \
+           attachment.cpp \
+           attachment_listview.cpp \
+           bitvector.cpp \
+           body_edit.cpp \
+           body_view.cpp \
+           browser.cpp \
+           composer_widgets.cpp \
+           date.cpp \
+           db.cpp \
+           db_listener.cpp \
+           edit_address_widget.cpp \
+           edit_rules.cpp \
+           errors.cpp \
+           filter_log.cpp \
+           filter_rules.cpp \
+           getopt.cpp \
+           getopt1.cpp \
+           headers_groupview.cpp \
+           helper.cpp \
+           html_editor.cpp \
+           identities.cpp \
+           import_window.cpp \ 
+           login.cpp \
+           log_window.cpp \
+           mail_displayer.cpp \
+           mail_listview.cpp \
+           mail_template.cpp \
+           mailheader.cpp \
+           mailing.cpp \
+           mailing_viewer.cpp \
+           mailing_window.cpp \
+           mailing_wizard.cpp \
+           main.cpp \
+           mbox_file.cpp \
+           mbox_import_wizard.cpp \
+           message.cpp \
+           message_port.cpp \
+           message_view.cpp \
+           mime_msg_viewer.cpp \
+           msg_list_window.cpp \
+           msg_list_window_pages.cpp \
+           msg_properties.cpp \
+           msg_status_cache.cpp \
+           msgs_page_list.cpp \
+           newmailwidget.cpp \
+           notepad.cpp \
+           notewidget.cpp \
+           preferences.cpp \
+           prog_chooser.cpp \
+           query_listview.cpp \
+           searchbox.cpp \
+           selectmail.cpp \
+           sha1.cpp \
+           sql_editor.cpp \
+           sqlquery.cpp \
+           sqlstream.cpp \
+           tags.cpp \
+           tagsbox.cpp \
+           tagsdialog.cpp \
+           text_merger.cpp \
+           ui_feedback.cpp \
+           user_queries.cpp \
+           users.cpp \
+           words.cpp \
+           xface/arith.cpp \
+           xface/compress.cpp \
+           xface/file.cpp \
+           xface/gen.cpp \
+           xface/xface.cpp
