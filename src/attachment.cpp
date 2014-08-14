@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2013 Daniel Verite
+/* Copyright (C) 2004-2014 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -33,6 +33,7 @@
 #include <QUuid>
 
 #include "sha1.h"
+#include "unistd.h"
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -492,7 +493,7 @@ attachment::free_data()
 }
 
 bool
-attachment::store(uint mail_id)
+attachment::store(uint mail_id, ui_feedback* ui)
 {
   db_cnx db;
   try {
@@ -515,7 +516,7 @@ attachment::store(uint mail_id)
     else
       s << sql_null();
 
-    if (!import_file_content()) {
+    if (!import_file_content(ui)) {
       DBG_PRINTF(2, "Error while importing file contents: %s", m_filename.toLocal8Bit().constData());
       db.rollback_transaction();
       return false;
@@ -606,49 +607,102 @@ attachment::create_mime_content_id()
   members updated: m_size, m_Id
 */
 bool
-attachment::import_file_content()
+attachment::import_file_content(ui_feedback* ui)
 {
   db_cnx db;
 
   try {
     db.begin_transaction();
-    Oid lobjId=0;
+    Oid lobj_id=0;
 
+    /* Look up the attachment by its fingerprint.
+       If it's already found in the db, we create a new reference to its large-object id
+       without importing a new copy of the contents */
     if (!m_sha1_b64.isEmpty()) {
       sql_stream sfp("SELECT content FROM attachment_contents WHERE fingerprint=:p1", db);
       sfp << m_sha1_b64;
       if (!sfp.eos()) {
-	sfp >> lobjId;
+	sfp >> lobj_id;
       }
     }
 
     if (m_filename.length()>0) {
       QByteArray qb_fname = QFile::encodeName(m_filename);
-      if (lobjId==0) {
-	lobjId = lo_import(db.connection(), qb_fname.constData());
-	if (lobjId==0) {
-	  DBG_PRINTF(2, "Error lo_import filename=%s", qb_fname.constData());
-	  db.rollback_transaction();
-	  return false;
+      if (lobj_id==0) {
+	if (!ui) {
+	  // if not reporting progress, import in one go
+	  lobj_id = lo_import(db.connection(), qb_fname.constData());
+	  if (lobj_id==0) {
+	    throw QString("Error lo_import filename=%1").arg(qb_fname.constData());
+	  }
+	}
+	else {
+	  QFileInfo fi(m_filename);
+	  int size=0;
+	  const int max_size = (1U<<31)-1; // 2GB: max size of a PG large object
+	  if (fi.exists()) {
+	    if (fi.size() > max_size)
+	      size = max_size;
+	    else
+	      size = (int)fi.size();
+	  }
+	  else {
+	    DBG_PRINTF(2, "Error: file '%s' does not exist", qb_fname.constData());
+	    db.rollback_transaction();
+	    return false;
+	  }
+	  const int chunk_size = 65536/8;
+	  ui->set_maximum((size+chunk_size-1)/chunk_size);
+	  ui->set_status_text(QObject::tr("Uploading file %1").arg(fi.fileName()));
+	  PGconn* cnx=db.connection();
+	  lobj_id = lo_creat(cnx, INV_READ | INV_WRITE);
+	  if (lobj_id<=0)
+	    throw QString("lo_creat failed");
+
+	  int fd = lo_open(cnx, lobj_id, INV_WRITE);
+	  if (fd<0)
+	    throw QString("Error lo_open lobj_id=%1").arg(lobj_id);
+
+	  QFile file(m_filename);
+	  char buffer[chunk_size];
+	  qint64 rd=0;
+	  qint64 written=0;
+	  int i=0;
+	  if (!file.open(QIODevice::ReadOnly))
+	    throw QString("Error opening file");
+
+	  while (rd>=0 && !file.atEnd() && !file.error() && written<max_size) {
+	    rd=file.read(buffer, chunk_size);
+	    if (rd>0) {
+	      int nb = lo_write(cnx, fd, buffer, rd); // returns negative on failure
+	      if (nb>=0)
+		written += nb;
+	      else {
+		throw QString("Error lo_write lobj_id=%1").arg(lobj_id);
+	      }
+	    }
+	    ui->set_value(++i);
+	  }
+	  lo_close(cnx, fd);
 	}
       }
     }
     else if (m_size>0 && m_data!=NULL) {
-      if (lobjId==0) {
-	lobjId = lo_creat(db.connection(), INV_READ | INV_WRITE);
-	int lobjFd = lo_open (db.connection(), lobjId, INV_WRITE);
-	lo_write(db.connection(), lobjFd, m_data, m_size);
-	lo_close(db.connection(), lobjFd);
+      if (lobj_id==0) {
+	lobj_id = lo_creat(db.connection(), INV_READ | INV_WRITE);
+	int lobj_fd = lo_open (db.connection(), lobj_id, INV_WRITE);
+	lo_write(db.connection(), lobj_fd, m_data, m_size);
+	lo_close(db.connection(), lobj_fd);
       }
     }
     else {
-      DBG_PRINTF(2, "no filename and no size or no data");
+      DBG_PRINTF(2,"no filename and no size or no data");
       db.rollback_transaction();
       return true;		// nothing to store
     }
 
     sql_stream s("INSERT INTO attachment_contents(attachment_id, content, fingerprint) VALUES (:p1,:p2,:p3)", db);
-    s << m_Id << (unsigned long)lobjId;
+    s << m_Id << (unsigned long)lobj_id;
     if (!m_sha1_b64.isEmpty())
       s << m_sha1_b64;
     else
@@ -658,6 +712,11 @@ attachment::import_file_content()
   catch(db_excpt& p) {
     db.rollback_transaction();
     DBEXCPT(p);
+    return false;
+  }
+  catch(QString err) {
+    DBG_PRINTF(2, err.toLocal8Bit().constData());
+    db.rollback_transaction();
     return false;
   }
   return true;
@@ -714,11 +773,11 @@ attachments_list::get_by_content_id(const QString mime_content_id)
 }
 
 bool
-attachments_list::store()
+attachments_list::store(ui_feedback* ui)
 {
   std::list<attachment>::iterator it;
   for (it=begin(); it!=end(); it++) {
-    if (!(*it).store(m_mailId))
+    if (!(*it).store(m_mailId, ui))
       return false;
   }
   return true;

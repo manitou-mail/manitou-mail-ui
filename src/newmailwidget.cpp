@@ -58,7 +58,8 @@
 #include <QVBoxLayout>
 #include <QStackedWidget>
 #include <QRegExp>
-
+#include <QStatusBar>
+#include <QProgressBar>
 
 /***********************/
 /* new_mail_widget     */
@@ -163,6 +164,7 @@ new_mail_widget::new_mail_widget(mail_msg* msg, QWidget* parent)
 {
   lSubject = NULL;
   m_wSubject = NULL;
+  m_progress_bar = NULL;
 
   setWindowTitle(tr("New message"));
   m_wrap_lines = true;
@@ -800,7 +802,19 @@ new_mail_widget::send()
   }
 
 
-  if (m_msg.store()) {
+  ui_feedback* ui = new ui_feedback(this);
+  statusBar()->showMessage(tr("Saving message"));
+
+  if (!m_progress_bar) {
+    m_progress_bar = new QProgressBar(this);
+    statusBar()->addPermanentWidget(m_progress_bar);
+  }
+
+  connect(ui, SIGNAL(set_max(int)), m_progress_bar, SLOT(setMaximum(int)));
+  connect(ui, SIGNAL(set_val(int)), m_progress_bar, SLOT(setValue(int)));
+  connect(ui, SIGNAL(set_text(const QString&)), statusBar(), SLOT(showMessage(const QString&)));
+
+  if (m_msg.store(ui)) {
     /* If this message was a reply, then tell to the originator mailitem
        to update it's status */
     if (m_msg.inReplyTo() != 0) {
@@ -818,6 +832,11 @@ new_mail_widget::send()
   }
   else {
     QMessageBox::critical(this, tr("Error"), "Error while saving the message");
+    statusBar()->showMessage(tr("Send failed."), 3000);
+    if (m_progress_bar) {
+      delete m_progress_bar;
+      m_progress_bar=NULL;
+    }
   }
 }
 

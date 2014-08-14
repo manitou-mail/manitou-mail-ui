@@ -27,6 +27,9 @@
 #include "addresses.h"
 #include "mailheader.h"
 #include "attachment.h"
+//#include "ui_feedback.h"
+
+class ui_feedback;
 
 #include <vector>
 
@@ -182,7 +185,7 @@ public:
 
   bool update_priority();
 
-  bool store();
+  bool store(ui_feedback* ui=NULL);
   bool mdelete();
   bool trash();
   bool untrash();

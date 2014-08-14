@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2014 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -25,6 +25,7 @@
 #include "dbtypes.h"
 #include "database.h"
 #include "sqlstream.h"
+#include "ui_feedback.h"
 #include <QStringList>
 #include <QNetworkReply>
 #include <QNetworkRequest>
@@ -59,11 +60,11 @@ public:
   int streamout_chunk(struct lo_ctxt* slo, std::ofstream& of);
 
   void streamout_content(std::ofstream&);
-  bool store(uint mail_id);
+  bool store(uint mail_id, ui_feedback* ui=NULL);
 
   /* Insert the contents of a file into the ATTACHMENT_CONTENTS table
      members updated: m_size, m_Id */
-  bool import_file_content();
+  bool import_file_content(ui_feedback* ui=NULL);
 
   static QString guess_mime_type(const QString);
   uint size() { fetch(); return m_size; }
@@ -175,7 +176,7 @@ public:
   attachments_list();
   virtual ~attachments_list();
   bool fetch();
-  bool store();
+  bool store(ui_feedback* ui=NULL);
   void setMailId(mail_id_t id) { m_mailId=id; }
   attachment* get_by_content_id(const QString mime_content_id);
 

@@ -53,7 +53,7 @@ class QActionGroup;
 class QLabel;
 class QToolBar;
 class QStackedWidget;
-
+class QProgressBar;
 
 class new_mail_widget : public QMainWindow
 {
@@ -169,6 +169,8 @@ private:
   QAction* m_action_html_text;
   QActionGroup* m_identities_group;
   QMap<QAction*,mail_identity*> m_identities_actions;
+
+  QProgressBar* m_progress_bar;
 public:
   static QString m_last_attch_dir;
 };

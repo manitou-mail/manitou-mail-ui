@@ -26,6 +26,7 @@
 #include "identities.h"
 #include "app_config.h"
 #include "mail_displayer.h"
+#include "ui_feedback.h"
 
 #include <QUuid>
 #include <QObject>
@@ -816,7 +817,7 @@ mail_msg::build_message_id()
 
 // Store the new message into the database
 bool
-mail_msg::store()
+mail_msg::store(ui_feedback* ui)
 {
   bool result=false;
   PGresult* res;
@@ -915,7 +916,7 @@ mail_msg::store()
       result = (result && store_note());
     }
     m_Attachments.setMailId(m_nMailId);
-    result=(result && m_Attachments.store());
+    result=(result && m_Attachments.store(ui));
     if (result)
       db.commit_transaction();
     else {
