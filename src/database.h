@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2014 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -56,6 +56,7 @@ public:
   virtual void logoff()=0;
   virtual bool reconnect()=0;
   virtual QString escape_string_literal(const QString)=0;
+  virtual QString escape_identifier(const QString)=0;
   void end_transaction();
   int open_transactions_count() const;
   const QString& encoding() const {
@@ -127,6 +128,7 @@ public:
   bool reconnect();
   bool ping();
   QString escape_string_literal(const QString);
+  QString escape_identifier(const QString);
   PGconn* connection() {
     return m_pgConn;
   }
@@ -179,6 +181,7 @@ public:
 
   static const QString& dbname();
   QString escape_string_literal(const QString);
+  QString escape_identifier(const QString);
 private:
   pgConnection* m_cnx;
   bool m_alerts_enabled;

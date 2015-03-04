@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2014 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -395,6 +395,14 @@ pgConnection::escape_string_literal(const QString src)
   return out;
 }
 
+QString
+pgConnection::escape_identifier(const QString identifier)
+{
+  QByteArray arr = identifier.toUtf8();
+  char* quoted = PQescapeIdentifier(m_pgConn, arr.constData(), (size_t)arr.size());
+  return QString::fromUtf8(quoted);
+}
+
 #if 0
 db_transaction::db_transaction(database& db): m_commit_done(false)
 {
@@ -523,6 +531,12 @@ db_cnx::escape_string_literal(const QString str)
   return m_cnx->escape_string_literal(str);
 }
 
+QString
+db_cnx::escape_identifier(const QString str)
+{
+  return m_cnx->escape_identifier(str);
+}
+
 pg_notifier::pg_notifier(pgConnection* cnx)
 {
   m_pgcnx = cnx;
@@ -568,6 +582,7 @@ pg_notifier::process_notification()
   }
 }
 
+#if 0
 std::list<QString>
 ReferencesList(const QString &s)
 {
@@ -591,5 +606,4 @@ ReferencesList(const QString &s)
   }
   return l;
 }
-
-
+#endif
