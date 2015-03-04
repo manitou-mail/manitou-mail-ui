@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2014 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -21,6 +21,7 @@
 #define INC_USERS_H
 
 #include <QString>
+#include <QList>
 #include <map>
 
 class user 
@@ -31,11 +32,16 @@ public:
   QString name(int user_id);
   static int current_user_id();
   static bool create_if_missing(const QString fullname);
+  bool update_fields();
   bool fetch(int user_id);
+
+  static bool create_db_user(const QString login, const QString password);
+  static bool check_db_role(const QString login, bool case_sensitive);
 
   QString m_fullname;
   int m_user_id;
   QString m_login;
+  QString m_db_login;
   QString m_email;
   QString m_custom_field1;
   QString m_custom_field2;
@@ -53,6 +59,7 @@ public:
   static void fetch();
   static void reset();
   static QString name(int id);
+  static QList<user> get_list();
 };
 
 #endif // INC_USERS_H

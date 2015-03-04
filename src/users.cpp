@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2014 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -92,7 +92,30 @@ user::fetch(int user_id)
     s << user_id;
     if (!s.eos()) {
       s >> m_fullname >> m_login >> m_email >> m_custom_field1 >> m_custom_field2 >> m_custom_field3;
+      m_user_id = user_id;
     }
+  }
+  catch(db_excpt& p) {
+    DBEXCPT (p);
+    return false;
+  }
+  return true;
+}
+
+bool
+user::update_fields()
+{
+  db_cnx db;
+  try {
+    sql_stream s("UPDATE users SET fullname=:p1,login=:p2,email=:p3,custom_field1=:p4,custom_field2=:p5,custom_field3=:p6 WHERE user_id=:id", db);
+    QString* fields[] = {&m_fullname, &m_login, &m_email, &m_custom_field1, &m_custom_field2, &m_custom_field3 };
+    for (uint i=0; i<sizeof(fields)/sizeof(fields[0]); i++) {
+      if (fields[i]->isEmpty())
+	s << sql_null();
+      else
+	s << *fields[i];
+    }
+    s << m_user_id;
   }
   catch(db_excpt& p) {
     DBEXCPT (p);
@@ -151,7 +174,7 @@ users_repository::reset()
 }
 
 QString
-users_repository::name (int id)
+users_repository::name(int id)
 {
   std::map<int,QString>::const_iterator i;
   i = m_users_map.find(id);
@@ -159,4 +182,67 @@ users_repository::name (int id)
     return i->second;
   else
     return QString();
+}
+
+QList<user>
+users_repository::get_list()
+{
+  QList<user> list;
+  db_cnx db;
+  try {
+    sql_stream s("SELECT coalesce(u.user_id,0),fullname,pu.usename,login,email,custom_field1,custom_field2,custom_field3 FROM users u FULL JOIN pg_user pu ON (pu.usename=u.login) ORDER BY login", db);
+    while (!s.eos()) {
+      user u;
+      s >> u.m_user_id >> u.m_fullname >> u.m_db_login >> u.m_login >> u.m_email >> u.m_custom_field1 >> u.m_custom_field2 >> u.m_custom_field3;
+      list.append(u);
+    }
+  }
+  catch(db_excpt& p) {
+    DBEXCPT (p);
+  }
+  return list;
+}
+
+bool
+user::create_db_user(const QString login, const QString password)
+{
+  db_cnx db;
+
+  QString qlogin = db.escape_identifier(login);
+  QString qpassword = db.escape_string_literal(password);
+  QString query = QString("CREATE USER \"%1\" PASSWORD '%2'").arg(qlogin).arg(qpassword);
+
+  try {
+    sql_stream s(query, db);
+  }
+  catch(db_excpt& p) {
+    DBEXCPT(p);
+    return false;
+  }
+  return true;
+}
+
+bool
+user::check_db_role(const QString login, bool case_sensitive)
+{
+  db_cnx db;
+  try {
+    const char* query;
+    if (case_sensitive) {
+      query = "SELECT 1 FROM pg_roles WHERE rolname=:p1";
+    }
+    else {
+      query = "SELECT 1 FROM pg_roles WHERE lower(rolname)=lower(:p1)";
+    }
+    sql_stream s("SELECT 1 FROM pg_roles WHERE rolname=:p1", db);
+    s << login;
+    if (!s.eos()) {
+      return true;
+    }
+    return false;
+  }
+  catch(db_excpt& p) {
+    DBEXCPT(p);
+    return false;
+  }
 }
