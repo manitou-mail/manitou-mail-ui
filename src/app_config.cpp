@@ -40,6 +40,7 @@ const char* app_config::m_default_values[] = {
   "composer/format_for_new_mail", "text/plain",
   "composer/address_check", "basic",
   "display/notifications/new_mail", "system",
+  "display/wordsearch/progress_bar", "0",
   NULL
 };
 

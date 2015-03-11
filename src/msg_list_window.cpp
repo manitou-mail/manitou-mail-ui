@@ -94,7 +94,11 @@ msg_list_window::search_db()
   //  DBG_PRINTF(3, "words=(%s)\n", f.m_words.join("/").latin1());
   //  DBG_PRINTF(3, "substrs=(%s)\n", f.m_substrs.join("/").latin1());
   //  f.m_words = QStringList::split(" ", txt);
-  sel_filter(f);
+
+  if (get_config().get_bool("display/wordsearch/progress_bar"))
+    f.m_has_progress_bar = true;
+
+  sel_filter(f);		// fetch asynchronously
   m_query_lv->clear_selection();
   QStringList::Iterator it = f.m_fts.m_words.begin();
   m_highlighted_text.clear();
@@ -725,6 +729,7 @@ msg_list_window::msg_list_window (const msgs_filter* filter, display_prefs* dpre
   m_qlist = NULL;
   m_filter = new msgs_filter(*filter);
   m_pCurrentItem = NULL;
+  m_progress_bar = NULL;
 
   // application icon
   setWindowIcon(FT_MAKE_ICON(FT_ICON16_EDIT));
@@ -2011,11 +2016,22 @@ msg_list_window::sel_filter(const msgs_filter& f)
 {
   setCursor(Qt::WaitCursor);
 //  m_new_mail_btn->hide();
-  show_abort_button();
-  enable_interaction(false);
-  statusBar()->showMessage(tr("Querying database..."));
 
   m_loading_filter = new msgs_filter(f);
+
+  if (m_loading_filter->m_has_progress_bar)
+    install_progressbar(tr("Querying database..."));
+  else {
+    show_abort_button();
+    enable_interaction(false);
+    statusBar()->showMessage(tr("Querying database..."));
+  }
+
+  // the fetch thread may signal the progress of the query
+  connect(&m_thread, SIGNAL(progress(int)),
+	  this, SLOT(show_progress(int)),
+	  Qt::QueuedConnection);
+
   int r = m_loading_filter->asynchronous_fetch(&m_thread);
   if (r==1) {
     m_waiting_for_results = true;
@@ -3007,7 +3023,11 @@ msg_list_window::timer_func()
     DBG_PRINTF(5, "End of asynchronous fetch detected in timer_func()");
     m_waiting_for_results = false;
 
-    enable_interaction(true);
+
+    if (m_loading_filter && !m_loading_filter->m_has_progress_bar) {
+      // Only if no progress bar. Otherwise uninstall_progressbar() will handle this.
+      enable_interaction(true);
+    }
 
     if (m_thread.m_fetch_more) { // FIXME: use a better abstraction
       // this is a "fetch more" operation. It uses the current filter (m_filter)
@@ -3032,7 +3052,12 @@ msg_list_window::timer_func()
     m_thread.release();
 
     unsetCursor();
-    hide_abort_button();
+
+    if (m_loading_filter->m_has_progress_bar)
+      uninstall_progressbar();
+    else
+      hide_abort_button();
+
 //    m_new_mail_btn->show();
 
     if (!m_thread.m_cancelled) {
