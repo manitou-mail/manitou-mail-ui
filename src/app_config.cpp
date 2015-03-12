@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2013 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -41,6 +41,7 @@ const char* app_config::m_default_values[] = {
   "composer/address_check", "basic",
   "display/notifications/new_mail", "system",
   "display/wordsearch/progress_bar", "0",
+  "query_dialog/address_autocompleter", "1",
   NULL
 };
 

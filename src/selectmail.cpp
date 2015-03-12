@@ -113,6 +113,7 @@ msgs_filter::~msgs_filter()
 void
 msgs_filter::preprocess_fetch(fetch_thread& thread)
 {
+  Q_UNUSED(thread);
 }
 
 
@@ -756,6 +757,7 @@ msg_select_dialog::msg_select_dialog(bool open_new/*=true*/) : QDialog(0)
   m_wAddrType->addItem("Any");
   gridLayout->addWidget(m_wAddrType,nRow,0);
   m_wcontact = new edit_address_widget(this);
+
   gridLayout->addWidget(m_wcontact, nRow, 1);
 
   nRow++;
@@ -894,6 +896,12 @@ msg_select_dialog::msg_select_dialog(bool open_new/*=true*/) : QDialog(0)
   connect(m_btn_box, SIGNAL(accepted()), this, SLOT(ok()));
   connect(m_btn_box, SIGNAL(rejected()), this, SLOT(cancel()));
   enable_date_range();
+
+  if (!get_config().get_bool("query_dialog/address_autocompleter")) {
+    m_wcontact->enable_completer(false);
+    m_wto->enable_completer(false);
+  }
+
 }
 
 void

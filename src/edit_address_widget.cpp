@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2009 Daniel Vérité
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -51,12 +51,24 @@ edit_address_widget::edit_address_widget(QWidget* parent) : QLineEdit(parent)
 
   connect(popup, SIGNAL(clicked(QModelIndex)), popup, SLOT(hide()));
 
+  m_completer_enabled = true;
+
   connect(this, SIGNAL(textEdited(const QString&)),
 	  this, SLOT(check_completions(const QString&)));
 }
 
 edit_address_widget::~edit_address_widget()
 {
+}
+
+void
+edit_address_widget::enable_completer(bool enable)
+{
+  m_completer_enabled = enable;
+  if (!enable && popup && popup->isVisible()) {
+    popup->clear();
+    popup->hide();
+  }
 }
 
 void
@@ -103,6 +115,9 @@ edit_address_widget::show_popup()
 void
 edit_address_widget::show_completions()
 {
+  if (!m_completer_enabled)
+    return;
+
   QString prefix; // substring on which the completion is to be based
 
   int pos = cursorPosition();
@@ -156,6 +171,7 @@ edit_address_widget::check_completions(const QString& newtext)
   if (modified) {
     setText(copy);		// will not recurse
   }
+
   // Cancel the timer if it's already running.
   if (m_timer)
     delete m_timer;
