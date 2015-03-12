@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -100,6 +100,7 @@ extern QString gl_xpm_path;
 #define ICON16_IMPORTANT "emblem-important.png"
 #define ICON16_DIALOG_OK "dialog-ok.png"
 #define ICON16_IMPORT_MBOX "icon-import-mbox.png"
+#define ICON16_EXPORT_MESSAGES "filesaveas.png"
 
 #define FT_MAKE_ICON(name) QPixmap(gl_xpm_path+"/"+name)
 #define UI_ICON(name) QIcon(gl_xpm_path+"/"+name)

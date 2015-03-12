@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2014 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -437,6 +437,9 @@ msg_list_window::init_menu()
 
   m_menu_actions[me_File_Import_Mailbox] =
     m_pMenuFile->addAction(UI_ICON(ICON16_IMPORT_MBOX), tr("Import mailbox"), this, SLOT(import_mailbox()));
+
+  m_menu_actions[me_File_Export_Messages] =
+    m_pMenuFile->addAction(UI_ICON(ICON16_EXPORT_MESSAGES), tr("Export messages"), this, SLOT(export_messages()));
 
   m_pMenuFile->addSeparator();
 
@@ -1571,6 +1574,13 @@ msg_list_window::import_mailbox()
 {
   extern void open_import_window();
   open_import_window();
+}
+
+void
+msg_list_window::export_messages()
+{
+  extern void open_export_window();
+  open_export_window();
 }
 
 void
