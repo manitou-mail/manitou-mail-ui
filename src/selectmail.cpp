@@ -1002,7 +1002,13 @@ msg_select_dialog::zoom_on_sql()
 void
 msg_select_dialog::to_filter(msgs_filter* filter)
 {
-  filter->m_body_substring = m_wString->text();
+  if (!m_wString->text().isEmpty() && get_config().get_bool("query_dialog/iwi_search")) {
+    // transform substring into words to query through the inverted word index
+    filter->parse_search_string(m_wString->text(), filter->m_fts);
+  }
+  else {
+    filter->m_body_substring = m_wString->text();
+  }
   filter->m_subject = m_wSubject->text();
   filter->m_sql_stmt = m_wSqlStmt->text();
   if (!m_wcontact->text().trimmed().isEmpty())
