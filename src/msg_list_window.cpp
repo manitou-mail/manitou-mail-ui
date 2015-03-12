@@ -91,6 +91,7 @@ msg_list_window::search_db()
   //  f.m_max_results=200;
   f.set_date_order(-1);	// latest results first
   f.parse_search_string(txt, f.m_fts);
+  f.m_max_results=get_config().get_number("max_msgs_per_selection");
   //  DBG_PRINTF(3, "words=(%s)\n", f.m_words.join("/").latin1());
   //  DBG_PRINTF(3, "substrs=(%s)\n", f.m_substrs.join("/").latin1());
   //  f.m_words = QStringList::split(" ", txt);

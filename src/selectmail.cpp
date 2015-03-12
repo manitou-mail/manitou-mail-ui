@@ -501,7 +501,7 @@ msgs_filter::build_query(sql_query& q, bool fetch_more/*=false*/)
       }
     }
 
-    if (m_fts.m_words.isEmpty()) {
+    {
       QString sFinal="ORDER BY msg_date";
       if (m_order<0)
 	sFinal+=" DESC";
@@ -513,12 +513,6 @@ msgs_filter::build_query(sql_query& q, bool fetch_more/*=false*/)
 	s.sprintf(" LIMIT %u", m_max_results+1);
 	sFinal+=s;
       }
-      q.add_final(sFinal);
-    }
-    else {
-      // wordsearch has a different limit and sort
-      // currently: none
-      QString sFinal="ORDER BY to_char(msg_date,'YYYYMMDDHH24MISS') DESC, m.mail_id DESC";
       q.add_final(sFinal);
     }
 
