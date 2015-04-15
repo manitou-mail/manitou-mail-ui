@@ -27,6 +27,8 @@
 class QPushButton;
 class QProgressBar;
 class QTimer;
+class QDateTimeEdit;
+class QCheckBox;
 
 class export_window: public QWidget
 {
@@ -41,6 +43,10 @@ private:
   void save_raw_file(mail_id_t id, db_cnx& db, QString dirname);
   QProgressBar* m_progress_bar;
   QTimer* m_timer;
+  QDateTimeEdit* m_wmin_date;
+  QDateTimeEdit* m_wmax_date;
+  QCheckBox* m_chk_datemin;
+  QCheckBox* m_chk_datemax;
 
   QPushButton* m_btn_start;
   QPushButton* m_btn_stop;
