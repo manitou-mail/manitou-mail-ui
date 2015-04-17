@@ -1879,6 +1879,9 @@ msg_list_window::attch_selected(QTreeWidgetItem* p, int column _UNUSED_)
       v->show();
     }
   }
+  else if (pa->mime_type()=="message/delivery-status" && pa->application().isEmpty()) {
+    view_attachment();
+  }
   else {
     if (!pa->application().isEmpty()) {
       // launch helper application (MIME viewer)
