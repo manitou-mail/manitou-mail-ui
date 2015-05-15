@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -81,6 +81,7 @@ private slots:
   void load_finished(bool);
   void complete_body_load();
 private:
+  QString escape_js_string(const QString src);
   void reset_state();
   QMap<QString,bool> m_enabled_commands;
   QString command_links();

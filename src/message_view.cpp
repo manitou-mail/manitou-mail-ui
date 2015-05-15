@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2013 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -417,12 +417,50 @@ message_view::prepend_body_fragment(const QString& fragment)
 {
   QWebPage* page = m_bodyv->page();
   page->settings()->setAttribute(QWebSettings::JavascriptEnabled, true);
-  QString s = fragment;
-  s.replace("'", "\\'");
-  s.replace("\n", "\\n");
-  QString js = QString("try {var b=document.getElementsByTagName('body')[0]; var p=document.createElement('div'); p.innerHTML='%1'; b.insertBefore(p, b.firstChild); 1;} catch(e) { e; }").arg(s);
+  QString js = QString("try {var b=document.getElementsByTagName('body')[0]; var p=document.createElement('div'); p.innerHTML=\"%1\"; b.insertBefore(p, b.firstChild); 1;} catch(e) { e; }").arg(escape_js_string(fragment));
   QVariant v = page->mainFrame()->evaluateJavaScript(js);
   page->settings()->setAttribute(QWebSettings::JavascriptEnabled, false);
+}
+
+QString
+message_view::escape_js_string(const QString src)
+{
+  QString res;  
+  res.reserve(src.length()*2);
+  for (int i=0; i<src.length(); i++) {
+    ushort code=src[i].unicode();
+    if (code <= 127) {
+      switch(code) {
+      case (ushort)'\b':
+	res.append(QLatin1String("\\b"));
+	break;
+      case (ushort)'\f':
+	res.append(QLatin1String("\\f"));
+	break;
+      case (ushort)'\t':
+	res.append(QLatin1String("\\t"));
+	break;
+      case (ushort)'\n':
+	res.append(QLatin1String("\\n"));
+	break;
+      case (ushort)'\r':
+	res.append(QLatin1String("\\r"));
+	break;
+      case (ushort)'"':
+	res.append(QLatin1String("\\\""));
+	break;
+      case (ushort)'\\':
+	res.append(QLatin1String("\\\\"));
+	break;
+      default:
+	res.append(src[i]);
+	break;
+      }
+    }
+    else
+      res.append(src[i]);
+  }
+  return res;
 }
 
 void
