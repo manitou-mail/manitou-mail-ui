@@ -261,7 +261,10 @@ private slots:
   void zoom_on_sql();
   void timer_done();
   void date_cb_changed(int);
+
 private:
+  void set_date_style();
+
   QString str_status_mask();
   edit_address_widget* m_wcontact;
 

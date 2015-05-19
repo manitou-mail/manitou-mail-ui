@@ -44,11 +44,12 @@
 #include <QTimer>
 #include <QFontMetrics>
 #include <QRadioButton>
-#include <QDateTimeEdit>
+#include <QDateEdit>
 #include <QCheckBox>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QDialogButtonBox>
+#include <QCalendarWidget>
 
 const int
 msgs_filter::max_possible_prio=32767;
@@ -773,16 +774,18 @@ msg_select_dialog::msg_select_dialog(bool open_new/*=true*/) : QDialog(0)
   hldate->addWidget(m_date_cb);
 
   m_chk_datemin = new QCheckBox(tr("Start"));
-  m_chk_datemin->setStyleSheet("QCheckBox{spacing:0px}");
-  m_wmin_date = new QDateTimeEdit;
+  //  m_chk_datemin->setStyleSheet("QCheckBox{spacing:0px}");
+  m_wmin_date = new QDateEdit;
   m_wmin_date->setCalendarPopup(true);
   m_wmin_date->setDate(QDate::currentDate());
 
   m_chk_datemax = new QCheckBox(tr("End"));
-  m_chk_datemax->setStyleSheet("QCheckBox{spacing:0px}");
-  m_wmax_date = new QDateTimeEdit;
+  //  m_chk_datemax->setStyleSheet("QCheckBox{spacing:0px}");
+  m_wmax_date = new QDateEdit;
   m_wmax_date->setCalendarPopup(true);
   m_wmax_date->setDate(QDate::currentDate());
+
+  set_date_style();
 
   hldate->addWidget(m_chk_datemin);
   hldate->addWidget(m_wmin_date);
@@ -790,14 +793,6 @@ msg_select_dialog::msg_select_dialog(bool open_new/*=true*/) : QDialog(0)
   hldate->addWidget(m_wmax_date);
 
   gridLayout->addLayout(hldate, nRow, 1);
-
-  QString df = get_config().get_string("date_format");
-  QString dorder="yyyy/MM/dd";
-  if (df.startsWith("DD/MM/YYYY")) {
-    dorder="dd/MM/yyyy";		// european-style date
-  }
-  m_wmax_date->setDisplayFormat(dorder);
-  m_wmin_date->setDisplayFormat(dorder);
 
   nRow++;
   QLabel* lTo = new QLabel(tr("To:"), this);
@@ -896,6 +891,41 @@ msg_select_dialog::msg_select_dialog(bool open_new/*=true*/) : QDialog(0)
     m_wto->enable_completer(false);
   }
 
+}
+
+void
+msg_select_dialog::set_date_style()
+{
+  QString df = get_config().get_string("date_format");
+  QString fmt;
+  if (df.startsWith("DD/MM/YYYY")) {
+    fmt="dd/MM/yyyy";		// european-style date
+  }
+  else if (df.startsWith("MM/DD/YYYY")) {
+    fmt="MM/dd/yyyy";		// american-style date
+  }
+  else {
+    // non fixed date_format
+    // check if the day comes after the month (american style) or the opposite
+    QString ddf=m_wmax_date->displayFormat();
+    QRegExp rx("M+\\WD+\\WY+", Qt::CaseInsensitive);
+    if (rx.exactMatch(ddf)) {
+      fmt="MM/dd/yyyy";
+    }
+    else {
+      fmt="dd/MM/yyyy";      
+    }
+  }
+  m_wmax_date->setDisplayFormat(fmt);
+  m_wmin_date->setDisplayFormat(fmt);
+
+  // QCalendarWidget does not automatically set the first day of week
+  // based on locale, so do it explicitly.
+  QCalendarWidget* calmin = m_wmin_date->calendarWidget();
+  calmin->setFirstDayOfWeek(QLocale::system().firstDayOfWeek());
+
+  QCalendarWidget* calmax = m_wmax_date->calendarWidget();
+  calmax->setFirstDayOfWeek(QLocale::system().firstDayOfWeek());
 }
 
 void
