@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2014 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -22,7 +22,6 @@
 
 #include <QDialog>
 #include <QKeyEvent>
-#include <QThread>
 #include <QStringList>
 #include <QDateTime>
 #include <QTime>
@@ -35,6 +34,7 @@
 #include "mail_listview.h"
 #include "edit_address_widget.h"
 #include "filter_rules.h"
+#include "fetch_thread.h"
 
 class QLineEdit;
 class QSpinBox;
@@ -48,34 +48,6 @@ class QButtonGroup;
 class QComboBox;
 class QDialogButtonBox;
 
-class fetch_thread: public QThread
-{
-public:
-  fetch_thread();
-  virtual void run();
-  void release();
-  void cancel();
-  db_cnx* m_cnx;
-  int m_max_results;
-  int m_step_count; // increase each time the thread is reused (fetch more)
-  std::list<mail_result>* m_results;
-  int store_results(sql_stream& stream, int max_nb);
-  QString m_query;
-  QString m_errstr;
-  int m_exec_time;   // query exec time in milliseconds
-  int m_tuples_count;
-
-  // boundaries
-  mail_id_t m_max_mail_id;
-  mail_id_t m_min_mail_id;
-  QString m_max_msg_date;
-  QString m_min_msg_date;
-  QString m_boundary;
-
-  progressive_wordsearch m_psearch;
-  bool m_fetch_more;
-  bool m_cancelled;
-};
 
 // Options from the searchbox
 class fts_options
@@ -161,6 +133,8 @@ public:
   bool m_in_trash;
   bool m_include_trash;
 
+  bool m_has_progress_bar;
+
   filter_expr m_filter_expression;
   bool m_has_filter_expr;
   expr_list m_filter_expr_list;
@@ -180,7 +154,9 @@ public:
   int m_exec_time;
   QString m_errmsg;
 
+#if 0
   progressive_wordsearch m_psearch;
+#endif
 
 private:
   bool m_auto_refresh;
@@ -218,9 +194,11 @@ private:
      result to get */
   bool m_has_more_results;
 
+#if 0
   /* keep the last part_no we joined against for IWI search. A
      subsequent "fetch more" will start from this part */
   int m_iwi_last_part_no;
+#endif
 };
 
 // Array of checkboxes for viewing, editing or selecting
@@ -283,7 +261,10 @@ private slots:
   void zoom_on_sql();
   void timer_done();
   void date_cb_changed(int);
+
 private:
+  void set_date_style();
+
   QString str_status_mask();
   edit_address_widget* m_wcontact;
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2013 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -159,6 +159,7 @@ public slots:
   void preferences();
   void open_global_notepad();
   void import_mailbox();
+  void export_messages();
   void new_window();
   void close_window();
   void edit_tags();
@@ -302,6 +303,7 @@ private:
     me_File_Preferences,
     me_File_Global_Notepad,
     me_File_Import_Mailbox,
+    me_File_Export_Messages,
     me_File_Mailing,
     me_Edit_Cut,
     me_Edit_Copy,

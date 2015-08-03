@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2009 Daniel Vérité
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -57,6 +57,7 @@ public:
   edit_address_widget(QWidget* parent=NULL);
   virtual ~edit_address_widget();
   void show_popup();
+  void enable_completer(bool);
 public slots:
   void check_completions(const QString&);
   void show_completions();
@@ -64,6 +65,7 @@ public slots:
 private:
   QListWidget* popup;
   email_completer* completer;
+  bool m_completer_enabled;
   QTimer* m_timer;
 };
 

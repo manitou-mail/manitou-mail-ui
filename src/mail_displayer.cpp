@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -46,6 +46,9 @@ mail_displayer::find_urls(const QString& s, std::list<std::pair<int,int> >* matc
   QRegExp url("(https?://|www\\.)[\\w\\-]+(\\.[\\w\\-]+)*([^>\"\\s\\[\\]\\)])*");
   while ((pos=url.indexIn(s, pos))>=0) {
     len=url.matchedLength();
+    QChar lastchar=s.at(pos+len-1);
+    if (lastchar==',' || lastchar=='.'|| lastchar==';')
+      len--;
     matches->push_back(std::pair<int,int>(pos, len));
     pos+=len;
   }

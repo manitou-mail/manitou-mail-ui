@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2014 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -44,11 +44,12 @@
 #include <QTimer>
 #include <QFontMetrics>
 #include <QRadioButton>
-#include <QDateTimeEdit>
+#include <QDateEdit>
 #include <QCheckBox>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QDialogButtonBox>
+#include <QCalendarWidget>
 
 const int
 msgs_filter::max_possible_prio=32767;
@@ -70,6 +71,7 @@ msgs_filter::init()
   m_status_unset=0;
   m_include_trash = false;
   m_newer_than=0;
+  m_has_progress_bar = false;
   m_date_clause=QString::null;
   m_max_results=get_config().get_number("max_msgs_per_selection");
   if (m_max_results==0)
@@ -112,7 +114,7 @@ msgs_filter::~msgs_filter()
 void
 msgs_filter::preprocess_fetch(fetch_thread& thread)
 {
-  thread.m_psearch = m_psearch; // not necessary, also done by asynchronous_fetch
+  Q_UNUSED(thread);
 }
 
 
@@ -132,7 +134,6 @@ msgs_filter::postprocess_fetch(fetch_thread& thread)
     m_date_bound = thread.m_min_msg_date;
     m_boundary = thread.m_boundary;
   }
-  m_psearch = thread.m_psearch;
 }
 
 int
@@ -194,142 +195,6 @@ msgs_filter::load_result_list(PGresult* res, std::list<mail_result>* l, int max_
     return 0;
 }
 
-int
-fetch_thread::store_results(sql_stream& s, int max_nb)
-{
-  int i=0;
-  QString date_stamp;
-  mail_result r;
-
-  while (!s.eos() && (max_nb==-1 || i<max_nb)) {
-    s >> r.m_id >> r.m_from >> r.m_subject >> r.m_date >> r.m_thread_id
-      >> r.m_status >> r.m_in_replyto >> r.m_sender_name >> r.m_pri >> r.m_flags
-      >> r.m_recipients;
-    msg_status_cache::update(r.m_id, r.m_status);
-    m_results->push_back(r);
-
-    date_stamp = r.m_date.isEmpty() ? QString("00000000000000%1").arg(r.m_id) :
-      QString("%1%2").arg(r.m_date).arg(r.m_id);
-    if (m_boundary.isEmpty() || m_boundary < date_stamp)
-      m_boundary = date_stamp;
-
-    if (m_min_msg_date.isEmpty() && !r.m_date.isEmpty())
-      m_min_msg_date=r.m_date;
-    else if (r.m_date < m_min_msg_date)
-      m_min_msg_date=r.m_date;
-
-    if (m_max_msg_date.isEmpty() && !r.m_date.isEmpty())
-      m_max_msg_date=r.m_date;
-    else if (r.m_date > m_max_msg_date)
-      m_max_msg_date=r.m_date;
-
-    if (m_min_mail_id==0)
-      m_min_mail_id=r.m_id;
-    else if (r.m_id < m_min_mail_id)
-      m_min_mail_id=r.m_id;
-
-    if (r.m_id > m_max_mail_id)
-      m_max_mail_id=r.m_id;
-
-    i++;
-  }
-  return i;
-}
-
-fetch_thread::fetch_thread()
-{
-  m_cnx=NULL;
-  m_fetch_more=false;
-  m_cancelled=false;
-}
-
-// Launch the query and fetch results fetch. Overrides QThread::run()
-void
-fetch_thread::run()
-{
-  if (!m_cnx) return;
-  DBG_PRINTF(5,"fetch_thread::run(), max_results=%d", m_max_results);
-  m_errstr=QString::null;
-  QTime start = QTime::currentTime();
-
-  m_tuples_count=0;
-  m_min_mail_id = m_max_mail_id = 0;
-  m_max_msg_date = QString::null;
-  m_min_msg_date = QString::null;
-  m_boundary = QString::null;
-
-  // special case repeated executions of the query for piecemeal fetch of
-  // IWI results
-  if (!m_psearch.m_parts.isEmpty()) {
-    /* if it's a "fetch more" kind of search, m_nb_fetched_parts is the index of
-       the last IWI part that was joined against at the previous step,
-       otherwise it's 0 */
-    int parts_idx = m_psearch.m_nb_fetched_parts;
-    do {
-      int part_no = m_psearch.m_parts.at(parts_idx++);
-      QString s=m_query;
-      try {
-	sql_stream sq(m_query, *m_cnx);
-	sq << part_no;
-	sq.execute();
-	store_results(sq, m_max_results-m_tuples_count);
-	m_tuples_count += sq.row_count();
-      }
-      catch(db_excpt& x) {
-	m_errstr = x.errmsg();
-	break;
-      }
-    } while (m_tuples_count<m_max_results && parts_idx<m_psearch.m_parts.size());
-    m_psearch.m_nb_fetched_parts = parts_idx-1;
-  }
-  else {
-    // search not involving the word indexes
-    db_transaction trans(*m_cnx);
-    try {
-      sql_stream st("SET TRANSACTION READ ONLY", *m_cnx);
-      sql_stream sq(m_query, *m_cnx);
-      sq.execute();
-      trans.commit();
-      store_results(sq, m_max_results>0?m_max_results:-1);
-      m_tuples_count = sq.row_count();
-    }
-    catch(db_excpt& x) {
-      m_errstr = x.errmsg();
-      trans.rollback();
-    }
-  }
-  m_exec_time = start.elapsed();
-
-}
-
-// stop the fetch
-void
-fetch_thread::cancel()
-{
-  if (m_cnx) {
-    DBG_PRINTF(5, "fetch_thread::cancel()");
-    PGconn* c = m_cnx->connection();
-    char errbuf[256];
-    PGcancel* cancel = PQgetCancel(c);
-    if (cancel) {
-      PQcancel(cancel, errbuf, sizeof(errbuf));
-      PQfreeCancel(cancel);
-      m_cancelled=true;
-    }
-  }
-  m_fetch_more=false;
-}
-
-void
-fetch_thread::release()
-{
-  DBG_PRINTF(4, "fetch_thread::release()");
-  if (m_cnx) {
-    delete m_cnx;
-    m_cnx=NULL;
-  }
-  m_fetch_more=false;
-}
 
 int
 msgs_filter::parse_search_string(QString s, fts_options& opt)
@@ -637,7 +502,7 @@ msgs_filter::build_query(sql_query& q, bool fetch_more/*=false*/)
       }
     }
 
-    if (m_fts.m_words.isEmpty()) {
+    {
       QString sFinal="ORDER BY msg_date";
       if (m_order<0)
 	sFinal+=" DESC";
@@ -649,12 +514,6 @@ msgs_filter::build_query(sql_query& q, bool fetch_more/*=false*/)
 	s.sprintf(" LIMIT %u", m_max_results+1);
 	sFinal+=s;
       }
-      q.add_final(sFinal);
-    }
-    else {
-      // wordsearch has a different limit and sort
-      // currently: none
-      QString sFinal="ORDER BY to_char(msg_date,'YYYYMMDDHH24MISS') DESC, m.mail_id DESC";
       q.add_final(sFinal);
     }
 
@@ -689,7 +548,7 @@ msgs_filter::asynchronous_fetch(fetch_thread* t, bool fetch_more/*=false*/)
     t->m_results = m_fetch_results;
     t->m_fetch_more = fetch_more;
     t->m_max_results = m_max_results;
-    t->m_psearch = m_psearch;
+
     if (!t->m_cnx) {
       t->m_cnx = new db_cnx(true);
       if (!t->m_cnx->ping()) {
@@ -893,6 +752,7 @@ msg_select_dialog::msg_select_dialog(bool open_new/*=true*/) : QDialog(0)
   m_wAddrType->addItem("Any");
   gridLayout->addWidget(m_wAddrType,nRow,0);
   m_wcontact = new edit_address_widget(this);
+
   gridLayout->addWidget(m_wcontact, nRow, 1);
 
   nRow++;
@@ -914,16 +774,18 @@ msg_select_dialog::msg_select_dialog(bool open_new/*=true*/) : QDialog(0)
   hldate->addWidget(m_date_cb);
 
   m_chk_datemin = new QCheckBox(tr("Start"));
-  m_chk_datemin->setStyleSheet("QCheckBox{spacing:0px}");
-  m_wmin_date = new QDateTimeEdit;
+  //  m_chk_datemin->setStyleSheet("QCheckBox{spacing:0px}");
+  m_wmin_date = new QDateEdit;
   m_wmin_date->setCalendarPopup(true);
   m_wmin_date->setDate(QDate::currentDate());
 
   m_chk_datemax = new QCheckBox(tr("End"));
-  m_chk_datemax->setStyleSheet("QCheckBox{spacing:0px}");
-  m_wmax_date = new QDateTimeEdit;
+  //  m_chk_datemax->setStyleSheet("QCheckBox{spacing:0px}");
+  m_wmax_date = new QDateEdit;
   m_wmax_date->setCalendarPopup(true);
   m_wmax_date->setDate(QDate::currentDate());
+
+  set_date_style();
 
   hldate->addWidget(m_chk_datemin);
   hldate->addWidget(m_wmin_date);
@@ -931,14 +793,6 @@ msg_select_dialog::msg_select_dialog(bool open_new/*=true*/) : QDialog(0)
   hldate->addWidget(m_wmax_date);
 
   gridLayout->addLayout(hldate, nRow, 1);
-
-  QString df = get_config().get_string("date_format");
-  QString dorder="yyyy/MM/dd";
-  if (df.startsWith("DD/MM/YYYY")) {
-    dorder="dd/MM/yyyy";		// european-style date
-  }
-  m_wmax_date->setDisplayFormat(dorder);
-  m_wmin_date->setDisplayFormat(dorder);
 
   nRow++;
   QLabel* lTo = new QLabel(tr("To:"), this);
@@ -1031,6 +885,47 @@ msg_select_dialog::msg_select_dialog(bool open_new/*=true*/) : QDialog(0)
   connect(m_btn_box, SIGNAL(accepted()), this, SLOT(ok()));
   connect(m_btn_box, SIGNAL(rejected()), this, SLOT(cancel()));
   enable_date_range();
+
+  if (!get_config().get_bool("query_dialog/address_autocompleter")) {
+    m_wcontact->enable_completer(false);
+    m_wto->enable_completer(false);
+  }
+
+}
+
+void
+msg_select_dialog::set_date_style()
+{
+  QString df = get_config().get_string("date_format");
+  QString fmt;
+  if (df.startsWith("DD/MM/YYYY")) {
+    fmt="dd/MM/yyyy";		// european-style date
+  }
+  else if (df.startsWith("MM/DD/YYYY")) {
+    fmt="MM/dd/yyyy";		// american-style date
+  }
+  else {
+    // non fixed date_format
+    // check if the day comes after the month (american style) or the opposite
+    QString ddf=m_wmax_date->displayFormat();
+    QRegExp rx("M+\\WD+\\WY+", Qt::CaseInsensitive);
+    if (rx.exactMatch(ddf)) {
+      fmt="MM/dd/yyyy";
+    }
+    else {
+      fmt="dd/MM/yyyy";      
+    }
+  }
+  m_wmax_date->setDisplayFormat(fmt);
+  m_wmin_date->setDisplayFormat(fmt);
+
+  // QCalendarWidget does not automatically set the first day of week
+  // based on locale, so do it explicitly.
+  QCalendarWidget* calmin = m_wmin_date->calendarWidget();
+  calmin->setFirstDayOfWeek(QLocale::system().firstDayOfWeek());
+
+  QCalendarWidget* calmax = m_wmax_date->calendarWidget();
+  calmax->setFirstDayOfWeek(QLocale::system().firstDayOfWeek());
 }
 
 void
@@ -1137,7 +1032,13 @@ msg_select_dialog::zoom_on_sql()
 void
 msg_select_dialog::to_filter(msgs_filter* filter)
 {
-  filter->m_body_substring = m_wString->text();
+  if (!m_wString->text().isEmpty() && get_config().get_bool("query_dialog/iwi_search")) {
+    // transform substring into words to query through the inverted word index
+    filter->parse_search_string(m_wString->text(), filter->m_fts);
+  }
+  else {
+    filter->m_body_substring = m_wString->text();
+  }
   filter->m_subject = m_wSubject->text();
   filter->m_sql_stmt = m_wSqlStmt->text();
   if (!m_wcontact->text().trimmed().isEmpty())
@@ -1334,7 +1235,7 @@ msg_select_dialog::cancel()
     // stop the query but don't close the dialog
     m_waiting_for_results = false;
     m_thread.cancel();
-    m_thread.release();
+    //    m_thread.release();
     m_btn_box->button(QDialogButtonBox::Cancel)->setText(tr("Cancel"));
     QApplication::restoreOverrideCursor();
     enable_inputs(true);
