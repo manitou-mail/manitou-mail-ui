@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -73,7 +73,7 @@ class wordsearch_resultset
 public:
   wordsearch_resultset();
   ~wordsearch_resultset();
-  void get_result_bits(std::list<uint>& l,
+  void get_result_bits(std::list<mail_id_t>& l,
 		       mail_id_t limit,
 		       int direction, // -1,+1 or 0
 		       uint max_results);

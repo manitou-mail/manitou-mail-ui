@@ -293,6 +293,17 @@ sql_stream::operator<<(unsigned long l)
 }
 
 sql_stream&
+sql_stream::operator<<(quint64 l)
+{
+  check_binds();
+  char buf[21];
+  sprintf(buf,"%llu", l);
+  replace_placeholder(m_nArgPos, buf, strlen(buf));
+  next_bind();
+  return *this;
+}
+
+sql_stream&
 sql_stream::operator<<(short s)
 {
   check_binds();
@@ -456,6 +467,17 @@ sql_stream::operator>>(unsigned int& i)
     i=(unsigned int)ul;
   else
     i=0;
+  next_result();
+  return *this;
+}
+
+sql_stream&
+sql_stream::operator>>(quint64& i)
+{
+  check_eof();
+  m_val_null = PQgetisnull(m_pgRes, m_rowNumber, m_colNumber);
+  i = (m_val_null ? 0 : strtoull(PQgetvalue(m_pgRes, m_rowNumber, m_colNumber),
+				 NULL, 10));
   next_result();
   return *this;
 }

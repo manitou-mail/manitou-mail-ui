@@ -263,7 +263,7 @@ wordsearch_resultset::get_result_bits(std::list<mail_id_t>& l,
 				      int direction,
 				      uint max_results)
 {
-  DBG_PRINTF(7, "get_result_bits(limit=%d,direction=%d,max_results=%u)", limit, direction, max_results);
+  DBG_PRINTF(7, "get_result_bits(limit=" MAIL_ID_FMT_STRING ",direction=%d,max_results=%u)", limit, direction, max_results);
   std::map<uint,bit_vector*>::iterator it;
   uint cnt_results=0;
 /*  if (max_results==0)

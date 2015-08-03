@@ -1,4 +1,4 @@
-/* Copyright (C) 2004,2005,2006 Daniel Vérité
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -50,7 +50,7 @@ body_edit::~body_edit()
 }
 
 void
-body_edit::set_contents(uint mail_id, const QString& txt)
+body_edit::set_contents(mail_id_t mail_id, const QString& txt)
 {
   m_we->setPlainText(txt);
   m_we->document()->setModified(false);

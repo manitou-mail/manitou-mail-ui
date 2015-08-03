@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2014 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -60,7 +60,7 @@ public:
   int streamout_chunk(struct lo_ctxt* slo, std::ofstream& of);
 
   void streamout_content(std::ofstream&);
-  bool store(uint mail_id, ui_feedback* ui=NULL);
+  bool store(mail_id_t mail_id, ui_feedback* ui=NULL);
 
   /* Insert the contents of a file into the ATTACHMENT_CONTENTS table
      members updated: m_size, m_Id */
@@ -130,7 +130,7 @@ public:
   static bool fetch_filename_suffixes(QMap<QString,QString>&);
 
 protected:
-  mail_id_t m_Id;
+  int m_Id;
   char *m_data;			// with malloc() and free()
   QString m_filename;
   QString m_charset;
@@ -181,7 +181,7 @@ public:
   attachment* get_by_content_id(const QString mime_content_id);
 
 private:
-  uint m_mailId;
+  mail_id_t m_mailId;
   bool m_bFetched;
 };
 

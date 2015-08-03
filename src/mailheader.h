@@ -1,4 +1,4 @@
-/* Copyright (C) 2004,2009 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -20,14 +20,14 @@
 #ifndef INC_MAILHEADER_H
 #define INC_MAILHEADER_H
 
-#include <qstring.h>
+#include <QString>
 
 class mail_header
 {
 public:
   mail_header():m_mail_id(0) {}
   virtual ~mail_header() {}
-  void setMailId(unsigned int mail_id) {
+  void setMailId(mail_id_t mail_id) {
     m_mail_id=mail_id;
   }
   void setMessageId(const QString& msg_id) {
@@ -52,7 +52,7 @@ public:
   QString m_messageId;
   QString m_xface;
   QString m_lines;
-  unsigned int m_mail_id;
+  mail_id_t m_mail_id;
   QString m_envelope_from;
   static void decode_rfc822(const QString src, QString& dest);
   static uint header_length(const char* rawmsg);

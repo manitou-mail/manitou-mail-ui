@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2013 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -353,15 +353,15 @@ mail_item_model::insertion_point(QList<QStandardItem*>& new_row,
 void
 mail_item_model::update_msg(const mail_msg* msg)
 {
-  DBG_PRINTF(4, "update_msg of %d", msg->get_id());
+  DBG_PRINTF(4, "update_msg of " MAIL_ID_FMT_STRING, msg->get_id());
   QStandardItem* item=item_from_id(msg->get_id());
   if (!item)
     return;
   QModelIndex index=item->index();
   QStandardItem* isubject = itemFromIndex(index);
   bool bold=isubject->font().bold();
-  DBG_PRINTF(5, "mail_id=%d, status=%d, bold=%d", msg->get_id(), msg->status(),
-	     bold);
+  DBG_PRINTF(5, "mail_id=" MAIL_ID_FMT_STRING ", status=%d, bold=%d",
+	     msg->get_id(), msg->status(), bold);
   if ((msg->status()!=0 && bold) || (msg->status()==0 && !bold)) {
     // reverse bold attribute
     QFont f=isubject->font();
@@ -407,7 +407,7 @@ mail_item_model::update_msg(const mail_msg* msg)
 void
 mail_item_model::remove_msg(mail_msg* msg)
 {
-  DBG_PRINTF(8, "remove_msg(mail_id=%d)", msg->get_id());
+  DBG_PRINTF(8, "remove_msg(mail_id=" MAIL_ID_FMT_STRING ")", msg->get_id());
   QMap<mail_id_t, QStandardItem*>::iterator it = items_map.find(msg->get_id());
   if (it!=items_map.end()) {
     QStandardItem* item = it.value();
@@ -425,13 +425,16 @@ mail_item_model::remove_msg(mail_msg* msg)
       }
     }
     // 
-    DBG_PRINTF(9, "removing mail_id=%d from model at index.row=%d index.column=%d", msg->get_id(), item->index().row(), item->index().column());
+    DBG_PRINTF(9, "removing mail_id=" MAIL_ID_FMT_STRING
+	       " from model at index.row=%d index.column=%d",
+	       msg->get_id(), item->index().row(),
+	       item->index().column());
     QModelIndex index = item->index();
     removeRow(index.row(), index.parent());
     items_map.erase(it);
   }
   else {
-    DBG_PRINTF(1, "ERR: mail_id=%d not found in items_map", msg->get_id());
+    DBG_PRINTF(1, "ERR: mail_id=" MAIL_ID_FMT_STRING " not found in items_map", msg->get_id());
   }
 }
 
@@ -700,15 +703,15 @@ mail_listview::refresh(mail_id_t id)
 void
 mail_listview::update_msg(const mail_msg *msg)
 {
-  DBG_PRINTF(8, "update_msg(mail_id=%d)", msg->get_id());
+  DBG_PRINTF(8, "update_msg(mail_id=" MAIL_ID_FMT_STRING ")", msg->get_id());
   model()->update_msg(msg);
 }
 
 // slot
 void
-mail_listview::change_msg_status(uint id, uint mask_set, uint mask_unset)
+mail_listview::change_msg_status(mail_id_t id, uint mask_set, uint mask_unset)
 {
-  DBG_PRINTF(8, "change_msg_status(mail_id=%d)", id);
+  DBG_PRINTF(8, "change_msg_status(mail_id=" MAIL_ID_FMT_STRING ")", id);
   mail_msg* pm=find(id);
   if (pm)
     pm->setStatus((mask_set | pm->status()) & ~mask_unset);
@@ -720,9 +723,9 @@ mail_listview::change_msg_status(uint id, uint mask_set, uint mask_unset)
   moved to msg_list_window instead
 */
 void
-mail_listview::force_msg_status(uint id, uint status, int priority)
+mail_listview::force_msg_status(mail_id_t id, uint status, int priority)
 {
-  DBG_PRINTF(8, "force_msg_status(mail_id=%d)", id);
+  DBG_PRINTF(8, "force_msg_status(mail_id=" MAIL_ID_FMT_STRING ")", id);
   mail_msg* pm=find(id);
   if (pm) {
     pm->set_status(status);

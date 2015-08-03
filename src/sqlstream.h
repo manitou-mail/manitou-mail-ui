@@ -22,6 +22,7 @@
 
 #include <vector>
 
+#include "dbtypes.h"
 #include "database.h"
 #include "sqlquery.h"
 #include <QString>
@@ -74,6 +75,7 @@ public:
   sql_stream& operator<<(short);
   sql_stream& operator<<(unsigned short);
   sql_stream& operator<<(float);
+  sql_stream& operator<<(quint64);
   sql_stream& operator<<(sql_null);
 
   sql_stream& operator>>(int&);
@@ -82,6 +84,7 @@ public:
   sql_stream& operator>>(char*);
   sql_stream& operator>>(char&);
   sql_stream& operator>>(float&);
+  sql_stream& operator>>(quint64&);
   sql_stream& operator>>(double&);
   sql_stream& operator>>(QString&);
 

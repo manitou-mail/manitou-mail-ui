@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2014 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -493,7 +493,7 @@ attachment::free_data()
 }
 
 bool
-attachment::store(uint mail_id, ui_feedback* ui)
+attachment::store(mail_id_t mail_id, ui_feedback* ui)
 {
   db_cnx db;
   try {

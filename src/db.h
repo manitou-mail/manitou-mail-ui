@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -31,8 +31,10 @@
 
 #include <list>
 
+#include "dbtypes.h"
 #include "date.h"
 #include "database.h"
+
 
 int ConnectDb(const char*, QString*);
 void DisconnectDb();
