@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -78,6 +78,7 @@ public:
 
   sql_stream& operator>>(int&);
   sql_stream& operator>>(unsigned int&);
+  sql_stream& operator>>(bool&);
   sql_stream& operator>>(char*);
   sql_stream& operator>>(char&);
   sql_stream& operator>>(float&);
@@ -88,6 +89,9 @@ public:
 
   /** send the query to the server */
   void execute();
+
+  /** set results pointer to first row */
+  void rewind();
 
   /** returns true if there are no more results to read from the stream,
       or false otherwise */

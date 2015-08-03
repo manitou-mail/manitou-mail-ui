@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -419,6 +419,13 @@ sql_stream::next_result()
 }
 
 void
+sql_stream::rewind()
+{
+  m_colNumber = 0;
+  m_rowNumber = 0;
+}
+
+void
 sql_stream::check_eof()
 {
   if (eof())
@@ -460,6 +467,17 @@ sql_stream::operator>>(char& c)
   m_val_null = PQgetisnull(m_pgRes, m_rowNumber, m_colNumber);
   char* p=PQgetvalue(m_pgRes, m_rowNumber, m_colNumber);
   c = p?*p:'\0';
+  next_result();
+  return *this;
+}
+
+sql_stream&
+sql_stream::operator>>(bool& c)
+{
+  check_eof();
+  m_val_null = PQgetisnull(m_pgRes, m_rowNumber, m_colNumber);
+  char* p=PQgetvalue(m_pgRes, m_rowNumber, m_colNumber);
+  c=(p!=NULL && *p=='t');
   next_result();
   return *this;
 }
