@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -441,7 +441,7 @@ tags_treeview::dropEvent(QDropEvent* event)
   DBG_PRINTF(5, "dropEvent");
   QList<QModelIndex> idxs = selectedIndexes();
   QTreeWidgetItem* dragged_item;
-  tag_item* dragged_tag;
+  tag_item* dragged_tag=NULL;
   if (idxs.size()==1) {
     dragged_item = itemFromIndex(idxs.at(0));
     if (dragged_item) {
@@ -471,9 +471,11 @@ tags_treeview::dropEvent(QDropEvent* event)
       tag_item* rem_item = dynamic_cast<tag_item*>(dragged_item->parent()->takeChild(index));
       dest_item->addChild(rem_item);
       dest_item->sortChildren(0, Qt::AscendingOrder);
-      dragged_tag->tag().set_parent_id(dest_item->tag().id());
-      dragged_tag->set_dirty(true);
-      setCurrentItem(dragged_tag);
+      if (dragged_tag) {	// always true?
+	dragged_tag->tag().set_parent_id(dest_item->tag().id());
+	dragged_tag->set_dirty(true);
+	setCurrentItem(dragged_tag);
+      }
     }
   }
 }
