@@ -1873,7 +1873,9 @@ msg_list_window::attch_selected(QTreeWidgetItem* p, int column _UNUSED_)
     edit_note();
     return;
   }
-  if (pa->mime_type()=="message/rfc822" || pa->mime_type()=="text/rfc822-headers") {
+  if ( (pa->mime_type()=="message/rfc822" ||
+        pa->mime_type()=="text/rfc822-headers") && pa->application().isEmpty() )
+  {
     const char* contents = pa->get_contents();
     if (contents) {
       mime_msg_viewer* v = new mime_msg_viewer(contents, display_vars);
