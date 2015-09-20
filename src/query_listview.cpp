@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -231,7 +231,7 @@ query_listview::map_count(int mask_not_set, uint tag_id)
   for (qsi=m_tagged.begin(); qsi!=m_tagged.end() ; ++qsi) {
     if (qsi->first==tag_id) {
       qs_mail_map* m = qsi->second;
-      std::map<uint,int>::iterator it = m->begin();
+      std::map<mail_id_t,int>::iterator it = m->begin();
       for (; it!=m->end(); ++it) {
 	if ((it->second & mask_not_set)==0) {
 	  cnt++;
@@ -433,7 +433,8 @@ query_listview::fetch_tag_map()
   try {
     int mask = mail_msg::statusTrashed + mail_msg::statusArchived + mail_msg::statusSent;
     sql_stream s(QString("SELECT ms.mail_id,mt.tag,ms.status,m.priority FROM (mail m JOIN mail_status ms USING (mail_id)) LEFT OUTER JOIN mail_tags mt ON mt.mail_id=ms.mail_id WHERE ms.status&%1=0").arg(mask), db); // status is not (sent OR archived OR trashed)
-    unsigned int mail_id, tag, status;
+    mail_id_t mail_id;
+    unsigned int tag, status;
     int pri;
     qs_tag_map::iterator it;
 
@@ -664,8 +665,8 @@ query_listview::update_status_counters()
 void
 query_listview::mail_status_changed(mail_msg* msg, int nstatus)
 {
-  uint mail_id = msg->get_id();
-  DBG_PRINTF(8, "mail_status_changed mail_id=%u, status=%d", mail_id, nstatus);
+  mail_id_t mail_id = msg->get_id();
+  DBG_PRINTF(8, "mail_status_changed mail_id=" MAIL_ID_FMT_STRING ",status=%d", mail_id, nstatus);
   msg_status_cache::update(mail_id, nstatus);
 
   qs_tag_map::iterator itt;
@@ -676,7 +677,7 @@ query_listview::mail_status_changed(mail_msg* msg, int nstatus)
   if (nstatus>=0 && !(nstatus&archd) && !(nstatus&trshd)) {
     // if the msg is not archived and not trashed,
     // then we try to get its tags and update the corresponding counters
-    DBG_PRINTF(8, "mail_id=%u is candidate for query_listview", mail_id);
+    DBG_PRINTF(8, "mail_id=" MAIL_ID_FMT_STRING " is candidate for query_listview", mail_id);
     std::list<uint>& tags = msg->get_tags();
     std::list<uint>::iterator it;
     for (it=tags.begin(); it!=tags.end(); ++it) {

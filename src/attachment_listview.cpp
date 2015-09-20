@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -177,6 +177,7 @@ attch_listview::popup_ctxt_menu(const QPoint& pos)
       v->resize(640,480);
       v->setPlainText(contents);
       v->setWindowTitle(tr("Attachment as text"));
+      v->setReadOnly(true);
       v->show();
     }
   }

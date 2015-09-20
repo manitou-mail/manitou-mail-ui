@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -430,7 +430,7 @@ network_manager::createRequest(Operation op, const QNetworkRequest& req, QIODevi
     if (url.hasQueryItem("id") && url.hasQueryItem("o")) {
       QString headers = m_pmsg->get_headers();
       bool id_ok, o_ok;
-      uint id = url.queryItemValue("id").toUInt(&id_ok);
+      mail_id_t id = mail_msg::id_from_string(url.queryItemValue("id"), &id_ok);
       int offset = url.queryItemValue("o").toInt(&o_ok);
       if (id_ok && o_ok && id == m_pmsg->get_id()) {
 	int lf_pos = headers.indexOf('\n', offset);

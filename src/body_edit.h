@@ -1,4 +1,4 @@
-/* Copyright (C) 2004,2005,2006 Daniel Vérité
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -20,8 +20,10 @@
 #ifndef INC_BODY_EDIT_H
 #define INC_BODY_EDIT_H
 
-#include <qwidget.h>
-#include <qstring.h>
+#include <QWidget>
+#include <QString>
+#include "dbtypes.h"
+
 class QTextEdit;
 
 class body_edit : public QWidget
@@ -30,12 +32,12 @@ class body_edit : public QWidget
 public:
   body_edit(QWidget* parent=0);
   virtual ~body_edit();
-  void set_contents(uint mail_id, const QString&);
+  void set_contents(mail_id_t mail_id, const QString&);
 signals:
-  void text_updated(uint mail_id, const QString*);
+  void text_updated(mail_id_t mail_id, const QString*);
 private:
   QTextEdit* m_we;
-  uint m_mail_id;
+  mail_id_t m_mail_id;
 private slots:
   void ok();
 };

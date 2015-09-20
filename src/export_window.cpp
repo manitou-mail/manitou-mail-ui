@@ -227,7 +227,7 @@ export_window::start()
 void
 export_window::save_raw_file(mail_id_t id, db_cnx& db, QString dirname)
 {
-  DBG_PRINTF(6, "dumping file for mail_id=%d", id);
+  DBG_PRINTF(6, "dumping file for mail_id=" MAIL_ID_FMT_STRING, id);
   PGconn* pgconn = db.connection();
 
   QString query= QString("SELECT raw_file_contents(%1)").arg(id);

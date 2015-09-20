@@ -969,7 +969,8 @@ msg_list_window::global_refresh_status(mail_id_t mail_id)
 void
 msg_list_window::propagate_status(mail_msg* item, int code/*=0*/)
 {
-  DBG_PRINTF(8, "propagate_status(id=%d, code=%d)", item->get_id(), code);
+  DBG_PRINTF(8, "propagate_status(id=" MAIL_ID_FMT_STRING ", code=%d)",
+	     item->get_id(), code);
   // tell all pages (except the current page that should be the
   // caller) about the change
   std::list<msgs_page*>::iterator page_it;
@@ -1872,7 +1873,9 @@ msg_list_window::attch_selected(QTreeWidgetItem* p, int column _UNUSED_)
     edit_note();
     return;
   }
-  if (pa->mime_type()=="message/rfc822" || pa->mime_type()=="text/rfc822-headers") {
+  if ( (pa->mime_type()=="message/rfc822" ||
+        pa->mime_type()=="text/rfc822-headers") && pa->application().isEmpty() )
+  {
     const char* contents = pa->get_contents();
     if (contents) {
       mime_msg_viewer* v = new mime_msg_viewer(contents, display_vars);
@@ -3067,7 +3070,7 @@ msg_list_window::timer_func()
 
     unsetCursor();
 
-    if (m_loading_filter->m_has_progress_bar)
+    if (m_loading_filter && m_loading_filter->m_has_progress_bar)
       uninstall_progressbar();
     else
       hide_abort_button();

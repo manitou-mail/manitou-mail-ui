@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2014 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -65,6 +65,15 @@ public:
   mail_id_t GetId() const { return m_nMailId; }
   mail_id_t getId() const { return m_nMailId; }
   mail_id_t get_id() const { return m_nMailId; }
+  static mail_id_t id_from_string(const QString s, bool* ok=0) {
+#if defined(DB_MAIL_ID_32)
+    return s.toUInt(ok);
+#elif defined(DB_MAIL_ID_64)
+    return s.toULongLong(ok);
+#else
+    #error "no suitable DB_MAIL_ID_xx definition"
+#endif
+  }
   void SetId(mail_id_t id) {
     m_nMailId=id;
     m_Attachments.setMailId(id);

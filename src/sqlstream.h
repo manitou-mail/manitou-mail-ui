@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -22,6 +22,7 @@
 
 #include <vector>
 
+#include "dbtypes.h"
 #include "database.h"
 #include "sqlquery.h"
 #include <QString>
@@ -74,13 +75,16 @@ public:
   sql_stream& operator<<(short);
   sql_stream& operator<<(unsigned short);
   sql_stream& operator<<(float);
+  sql_stream& operator<<(quint64);
   sql_stream& operator<<(sql_null);
 
   sql_stream& operator>>(int&);
   sql_stream& operator>>(unsigned int&);
+  sql_stream& operator>>(bool&);
   sql_stream& operator>>(char*);
   sql_stream& operator>>(char&);
   sql_stream& operator>>(float&);
+  sql_stream& operator>>(quint64&);
   sql_stream& operator>>(double&);
   sql_stream& operator>>(QString&);
 
@@ -88,6 +92,9 @@ public:
 
   /** send the query to the server */
   void execute();
+
+  /** set results pointer to first row */
+  void rewind();
 
   /** returns true if there are no more results to read from the stream,
       or false otherwise */

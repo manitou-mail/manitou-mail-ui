@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -293,6 +293,17 @@ sql_stream::operator<<(unsigned long l)
 }
 
 sql_stream&
+sql_stream::operator<<(quint64 l)
+{
+  check_binds();
+  char buf[21];
+  sprintf(buf,"%llu", l);
+  replace_placeholder(m_nArgPos, buf, strlen(buf));
+  next_bind();
+  return *this;
+}
+
+sql_stream&
 sql_stream::operator<<(short s)
 {
   check_binds();
@@ -419,6 +430,13 @@ sql_stream::next_result()
 }
 
 void
+sql_stream::rewind()
+{
+  m_colNumber = 0;
+  m_rowNumber = 0;
+}
+
+void
 sql_stream::check_eof()
 {
   if (eof())
@@ -454,12 +472,34 @@ sql_stream::operator>>(unsigned int& i)
 }
 
 sql_stream&
+sql_stream::operator>>(quint64& i)
+{
+  check_eof();
+  m_val_null = PQgetisnull(m_pgRes, m_rowNumber, m_colNumber);
+  i = (m_val_null ? 0 : strtoull(PQgetvalue(m_pgRes, m_rowNumber, m_colNumber),
+				 NULL, 10));
+  next_result();
+  return *this;
+}
+
+sql_stream&
 sql_stream::operator>>(char& c)
 {
   check_eof();
   m_val_null = PQgetisnull(m_pgRes, m_rowNumber, m_colNumber);
   char* p=PQgetvalue(m_pgRes, m_rowNumber, m_colNumber);
   c = p?*p:'\0';
+  next_result();
+  return *this;
+}
+
+sql_stream&
+sql_stream::operator>>(bool& c)
+{
+  check_eof();
+  m_val_null = PQgetisnull(m_pgRes, m_rowNumber, m_colNumber);
+  char* p=PQgetvalue(m_pgRes, m_rowNumber, m_colNumber);
+  c=(p!=NULL && *p=='t');
   next_result();
   return *this;
 }
