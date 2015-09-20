@@ -1,4 +1,29 @@
- v1.3.0, Sep 2012
+ v1.4.0, Sep 2015
+--------------------------
+user interface:
+- added save to disk on attachment's contextual menus
+- on Windows, added "open with..." with apps associated to file extensions
+- fixed lack of timezone for Date fields (reported on certain Windows systems).
+- fixed non-unique message-id for composed mails (Qt-4.6 bug)
+- fixed possible appearance of spurious show text/show html links
+- fixed display of Face/X-Face with Qt-4.8
+- fixed new mail insertion point in reverse sort order
+- improved dates controls in Query Selection dialog.
+- added desktop notifications for new mail (Unix desktop)
+- added progress bar for uploaded attachments of outgoing messages.
+- support for 64 bits wide mail_id
+
+
+manitou-mdx:
+- support for maildir as the source of incoming mail
+- outgoing_plugins are now allowed in the [common] section
+- use Digest::SHA instead of the phased out Digest::SHA1
+- support for gzipped mail files including in maildir
+- added import-list option to import an arbitrary list of files
+- optional partitioning of the words table
+- improved text indexing to skip base64 junk in bodies.
+
+ v1.3.0, Oct 4 2012
 --------------------------
 user interface
 - add accent-insensitive, word exclusion, find by email in search.
