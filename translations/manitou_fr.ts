@@ -416,6 +416,10 @@
         <source>In addition, could not execute ROLLBACK.</source>
         <translation>De plus, un ROLLBACK n&apos;a pu être exécuté.</translation>
     </message>
+    <message>
+        <source>Uploading file %1</source>
+        <translation>Envoi du fichier %1</translation>
+    </message>
 </context>
 <context>
     <name>about_box</name>
@@ -456,16 +460,16 @@
         <translation>Compilé avec Qt %1, executé avec Qt %2</translation>
     </message>
     <message>
-        <source>This is &lt;b&gt;Manitou-Mail&lt;/b&gt; version %1, (c) 2004-2012 Daniel V&amp;#233;rit&amp;#233; (&lt;i&gt;daniel@manitou-mail.org&lt;/i&gt;).</source>
-        <translation>&lt;b&gt;Manitou-Mail&lt;/b&gt; version %1, (c) 2004-2012 Daniel V&amp;#233;rit&amp;#233; (&lt;i&gt;daniel@manitou-mail.org&lt;/i&gt;).</translation>
-    </message>
-    <message>
         <source>Public git repository and issue tracker: </source>
         <translation>Dépôt source public git et suivi de bogues:</translation>
     </message>
     <message>
         <source>Email:&lt;br&gt;support%1manitou-mail.org&lt;/a&gt;</source>
         <translation>Email:&lt;br&gt;support%1manitou-mail.org&lt;/a&gt;</translation>
+    </message>
+    <message>
+        <source>This is &lt;b&gt;Manitou-Mail&lt;/b&gt; version %1, (c) 2004-2015 Daniel V&amp;#233;rit&amp;#233; (&lt;i&gt;daniel@manitou-mail.org&lt;/i&gt;).</source>
+        <translation>&lt;b&gt;Manitou-Mail&lt;/b&gt; version %1, (c) 2004-2015 Daniel V&amp;#233;rit&amp;#233; (&lt;i&gt;daniel@manitou-mail.org&lt;/i&gt;).</translation>
     </message>
 </context>
 <context>
@@ -1032,6 +1036,41 @@
     <message>
         <source>Locate text file</source>
         <translation>Emplacement du fichier texte</translation>
+    </message>
+</context>
+<context>
+    <name>export_window</name>
+    <message>
+        <source>Export messages</source>
+        <translation>Exporter messages</translation>
+    </message>
+    <message>
+        <source>Tag:</source>
+        <translation>Label:</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation>Début</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>Fin</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation>Stopper</translation>
+    </message>
+    <message>
+        <source>Please select a tag</source>
+        <translation>Veuillez sélectionner un label</translation>
+    </message>
+    <message>
+        <source>Save to directory...</source>
+        <translation>Sauver dans répertoire...</translation>
+    </message>
+    <message>
+        <source>No message to export.</source>
+        <translation>Pas de message à exporter</translation>
     </message>
 </context>
 <context>
@@ -3130,6 +3169,10 @@ Les messages non encore importés seront perdus.</translation>
         <source>Select all</source>
         <translation>Sélectionner tout</translation>
     </message>
+    <message>
+        <source>Export messages</source>
+        <translation>Exporter messages</translation>
+    </message>
 </context>
 <context>
     <name>msg_select_dialog</name>
@@ -3530,6 +3573,14 @@ Expédier malgré tout?</translation>
     <message>
         <source>Warning</source>
         <translation>Avertissement</translation>
+    </message>
+    <message>
+        <source>Saving message</source>
+        <translation>Sauvegarde du message</translation>
+    </message>
+    <message>
+        <source>Send failed.</source>
+        <translation>Echec de l&apos;envoi</translation>
     </message>
 </context>
 <context>
