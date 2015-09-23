@@ -1,4 +1,4 @@
- v1.3.1, Jul 2015
+ v1.4.0, Sep 2015
 --------------------------
 user interface:
 - added save to disk on attachment's contextual menus
@@ -9,13 +9,13 @@ user interface:
 - fixed display of Face/X-Face with Qt-4.8
 - fixed new mail insertion point in reverse sort order
 - improved dates controls in Query Selection dialog.
-- added desktop notifications for new mail (not for Windows yet)
+- added desktop notifications for new mail (Unix desktop)
 - added progress bar for uploaded attachments of outgoing messages.
 - support for 64 bits wide mail_id
 
 
 manitou-mdx:
-- support for maildir and mailbox as the source of incoming mail
+- support for maildir as the source of incoming mail
 - outgoing_plugins are now allowed in the [common] section
 - use Digest::SHA instead of the phased out Digest::SHA1
 - support for gzipped mail files including in maildir

@@ -439,8 +439,10 @@ msg_list_window::init_menu()
   m_menu_actions[me_File_Import_Mailbox] =
     m_pMenuFile->addAction(UI_ICON(ICON16_IMPORT_MBOX), tr("Import mailbox"), this, SLOT(import_mailbox()));
 
+#if 0 // later
   m_menu_actions[me_File_Export_Messages] =
     m_pMenuFile->addAction(UI_ICON(ICON16_EXPORT_MESSAGES), tr("Export messages"), this, SLOT(export_messages()));
+#endif
 
   m_pMenuFile->addSeparator();
 
