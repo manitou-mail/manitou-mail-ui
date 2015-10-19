@@ -107,7 +107,7 @@ body_view::set_body_style()
   force_style_sheet();
 #else
   QString style = default_style + body_style + header_style;
-  QByteArray b = style.toAscii().toBase64();
+  QByteArray b = style.toLatin1().toBase64();
   page()->settings()->setUserStyleSheetUrl(QUrl(QString("data:text/css;charset=utf-8;base64,")+QString(b)));  
 #endif
 }
@@ -292,13 +292,13 @@ internal_img_network_reply::internal_img_network_reply(const QNetworkRequest& re
   position=0;
   setRequest(req);
   if (type==1) { // Face
-    m_buffer = QByteArray::fromBase64(encoded_img.toAscii().constData());
+    m_buffer = QByteArray::fromBase64(encoded_img.toLatin1().constData());
   }
   else { // X-Face
     QImage qi;
     QString s;
-    xface_to_xpm(encoded_img.toAscii().constData(), s);
-    if (qi.loadFromData((const uchar*)s.toAscii().constData(), s.length(), "XPM")) {
+    xface_to_xpm(encoded_img.toLatin1().constData(), s);
+    if (qi.loadFromData((const uchar*)s.toLatin1().constData(), s.length(), "XPM")) {
       QBuffer b(&m_buffer);
       qi.save(&b, "PNG");
     }
@@ -427,6 +427,7 @@ network_manager::createRequest(Operation op, const QNetworkRequest& req, QIODevi
     return empty_network_reply(op, req);
   }
   else if (url.scheme()=="manitou" && (url.authority()=="xface" || url.authority()=="face")) {
+#if QT_VERSION<0x050000 // later
     if (url.hasQueryItem("id") && url.hasQueryItem("o")) {
       QString headers = m_pmsg->get_headers();
       bool id_ok, o_ok;
@@ -446,6 +447,7 @@ network_manager::createRequest(Operation op, const QNetworkRequest& req, QIODevi
 	return new internal_img_network_reply(req, ascii_line, type, this);
       }
     }
+#endif
     return empty_network_reply(op, req);
   }
   else if (req.url().scheme()=="style") { // internal scheme for styling contents

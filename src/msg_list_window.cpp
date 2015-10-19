@@ -2643,8 +2643,8 @@ msg_list_window::closeEvent(QCloseEvent *e)
 void
 msg_list_window::search_generic(const QString& text, int where, int options)
 {
-  bool found=FALSE;
-  bool wrapped=FALSE;
+  bool found=false;
+  bool wrapped=false;
 
   static mail_msg* msg_last_hit = NULL;
   static QString string_last_hit;
@@ -2704,7 +2704,7 @@ msg_list_window::search_generic(const QString& text, int where, int options)
 	if (cur_msg==start_msg)	// all done
 	  cur_msg=NULL;
 	else if (cur_msg==NULL && !wrapped) {
-	  wrapped=TRUE;
+	  wrapped=true;
 	  cur_msg=m_qlist->first_msg(); // wrap around
 	}
       }

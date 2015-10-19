@@ -100,6 +100,7 @@ void
 message_view::link_clicked(const QUrl& url)
 {
   if (url.scheme()=="mailto") {
+#if QT_VERSION<0x050000 // later
     // TODO: use more headers, particularly "body"
     mail_header header;
     if (!url.path().isEmpty())
@@ -108,6 +109,7 @@ message_view::link_clicked(const QUrl& url)
       header.m_subject=url.queryItemValue("subject");
     }
     gl_pApplication->start_new_mail(header);
+#endif
   }
   else if (url.scheme().isEmpty()) {
     const QString cmd=url.toString();

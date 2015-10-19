@@ -1009,7 +1009,7 @@ mail_listview::init_columns()
 {
   DBG_PRINTF(4, "init_columns");
   model()->init();
-  setAllColumnsShowFocus(TRUE);
+  setAllColumnsShowFocus(true);
   static const int default_sizes[] = {280,170,32,32,24,24,115,170};
   QString s;
   const int ncols = (int)(sizeof(default_sizes)/sizeof(default_sizes[0]));

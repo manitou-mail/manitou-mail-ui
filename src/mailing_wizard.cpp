@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -289,7 +289,7 @@ mailing_wizard_page_data_file::validatePage()
   QString path = m_filename->text();
   QFile f(path);
   if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
-    QString errmsg = QIODevice::tr(f.errorString().toAscii().constData());
+    QString errmsg = QIODevice::tr(f.errorString().toLatin1().constData());
     QMessageBox::critical(NULL, tr("Error"), tr("Can't open file '%2': %1").arg(errmsg).arg(path));
     return false;
   }
@@ -724,7 +724,7 @@ double_file_input::check_file_existence(const QString path)
   if (!path.isEmpty()) {
     QFile f(path);
     if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
-      QString errmsg = QIODevice::tr(f.errorString().toAscii().constData());
+      QString errmsg = QIODevice::tr(f.errorString().toLatin1().constData());
       QMessageBox::critical(NULL, tr("Error"), tr("Can't open file '%2': %1").arg(errmsg).arg(path));
       return false;
     }
@@ -934,7 +934,7 @@ mailing_wizard_page_template::load_file_templates(const QString filename_text,
   if (!filename_text.isEmpty()) {
     QFile f(filename_text);
     if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
-      QString errmsg = QIODevice::tr(f.errorString().toAscii().constData());
+      QString errmsg = QIODevice::tr(f.errorString().toLatin1().constData());
       throw errmsg;
     }
   
@@ -946,7 +946,7 @@ mailing_wizard_page_template::load_file_templates(const QString filename_text,
   if (!filename_html.isEmpty()) {
     QFile f(filename_html);
     if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
-      QString errmsg = QIODevice::tr(f.errorString().toAscii().constData());
+      QString errmsg = QIODevice::tr(f.errorString().toLatin1().constData());
       throw errmsg;
     }
   
@@ -1060,7 +1060,7 @@ mailing_wizard_page_template::validatePage()
     int subm = m_wpart_files->submitted_files();
     QString errmsg;
 
-    int which;
+    int which=3;
     switch(m_format) {
     case mailing_db::format_html_only:
       which=2;

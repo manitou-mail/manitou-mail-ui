@@ -217,11 +217,11 @@ append_decoded_qp(const QString& s, char* buf)
 {
   int jb=0;
   for (int j=0; j<s.length(); j++) {
-    char c=s.at(j).toAscii();
+    char c=s.at(j).toLatin1();
     if (c=='=') {
       if (j<s.length()-2) {
 	try {
-	  char c1=to_hex(s.at(j+1).toAscii(), s.at(j+2).toAscii());
+	  char c1=to_hex(s.at(j+1).toLatin1(), s.at(j+2).toLatin1());
 	  buf[jb++]=c1;
 	  j+=2;
 	  continue;
@@ -347,7 +347,7 @@ mail_header::decode_line(QString& s)
     //printf("\tcodecname=%s\n", (*it).latin1());
     QTextCodec* codec=QTextCodec::codecForName((*it).toLatin1());
     ++it;
-    char enctype=(*it).at(0).toUpper().toAscii();
+    char enctype=(*it).at(0).toUpper().toLatin1();
     ++it;
     int bufsz=(*it).length();
 #ifdef __GNUG__
@@ -399,11 +399,11 @@ mail_header::decode_rfc822(const QString src, QString& dest)
   QString curline;
   int len=src.length();
   for (int i=0; i<len; i++) {
-    char c=src.at(i).toAscii();
+    char c=src.at(i).toLatin1();
     switch(c) {
     case '\n':
       if (i+1<len) {
-	char c1=src.at(i+1).toAscii();
+	char c1=src.at(i+1).toLatin1();
 	if (c1!=' ' && c1!='\t') {
 	  curline.append(c);
 	}
@@ -411,7 +411,7 @@ mail_header::decode_rfc822(const QString src, QString& dest)
 	  curline.append(' ');
 	  i++;
 	  while (i<len && (c1==' ' || c1=='\t')) {
-	    c1=src.at(i).toAscii();
+	    c1=src.at(i).toLatin1();
 	    i++;
 	  }
 	  if (i<len) {

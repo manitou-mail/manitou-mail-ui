@@ -217,7 +217,9 @@ input_addresses_widget::input_addresses_widget(const QString& addresses)
   m_addr_list->header()->resizeSection(1, date_width);
   m_addr_list->header()->resizeSection(0, m_addr_list->header()->length()-date_width);
 */
+#if QT_VERSION<0x050000
   m_addr_list->header()->setResizeMode(QHeaderView::ResizeToContents);
+#endif
   connect(m_addr_list, SIGNAL(itemActivated(QTreeWidgetItem*,int)),
 	  this, SLOT(addr_selected(QTreeWidgetItem*,int)));
 

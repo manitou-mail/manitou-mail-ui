@@ -231,6 +231,8 @@ attachment::launch_os_viewer(const QString document_path)
   shellInfo.lpParameters = NULL;
   shellInfo.nShow = SW_SHOW;
   ::ShellExecuteEx(&shellInfo);
+#else
+  Q_UNUSED(document_path);
 #endif
 }
 

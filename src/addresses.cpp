@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -245,7 +245,6 @@ void  // static
 mail_address::join_address_lines(QString& line)
 {
   int pos=0;
-  int lastpos=-1;
   int len = line.length();
   QString d; // destination
 
@@ -261,7 +260,6 @@ mail_address::join_address_lines(QString& line)
 
   while (pos<len) {
     if (line.at(pos)=='\n' || line.at(pos)==',') {
-      lastpos=pos;
       while (pos<len && (line.at(pos)=='\n' ||line.at(pos)==','))
 	pos++;
       if (pos<len) {
