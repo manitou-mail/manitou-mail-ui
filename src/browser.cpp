@@ -43,35 +43,46 @@ browser::open_url(const QString& u)
   if (url.indexOf("http://", 0, Qt::CaseInsensitive)!=0 && url.indexOf("https://", 0, Qt::CaseInsensitive)!=0) {
     url.prepend("http://");
   }
+  browser::open_url(QUrl(url));
+}
 
+void
+browser::open_url(const QUrl& url)
+{
   QString browser = get_config().get_string("browser");
   if (browser.isEmpty()) {
-    if (!QDesktopServices::openUrl(QUrl(url))) {
+    DBG_PRINTF(4, "openUrl: %s", url.toString().toLocal8Bit().constData());
+    if (!QDesktopServices::openUrl(url)) {
       QMessageBox::critical(NULL, tr("Error"), tr("Unable to open URL"));
     }
   }
   else {
     // a specific browser has been set in the preferences
-    int pos = browser.indexOf("$1");
     QStringList args;
     QString appname;
+    /* Copy the url into a QByteArray and back to a QString instead of calling url.toString().
+       The reason is QUrl::toString() would convert any percent-encoded chars to "human-readable"
+       which we don't want */
+    QByteArray b_url = url.toEncoded();
+    if (b_url.isEmpty()) {
+      QMessageBox::critical(NULL, tr("Error"), tr("Unable to parse URL"));
+      return;
+    }
+    QString s_url = QString::fromLatin1(b_url.constData());
+
+    int pos = browser.indexOf("$1");
+
     if (pos>=0) {
-      browser.replace("$1", url);
+      browser.replace("$1", s_url);
       args = browser.split(" ", QString::SkipEmptyParts);
       appname = args.takeFirst();
     }
     else {
-      args << url;
+      args << s_url;
       appname=browser;
     }
     QProcess* p = new QProcess;
     DBG_PRINTF(4, "launch %s args=%s", appname.toLocal8Bit().constData(), args.join("\n").toLocal8Bit().constData());
     p->start(appname, args);
   }
-}
-
-void
-browser::open_url(const QUrl& url)
-{
-  browser::open_url(url.toString());
 }
