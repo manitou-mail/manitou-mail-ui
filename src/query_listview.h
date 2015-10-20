@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -58,11 +58,12 @@ public:
     tree_node,
     new_all,
     new_not_tagged,
-    nonproc_all,
-    nonproc_not_tagged,
+    current_all,
+    current_not_tagged,
     current_prio,
-    archived_tagged,
     current_tagged,
+    archived_tagged,
+    archived_untagged,
     virtfold_sent,
     virtfold_trashcan,
     user_defined
@@ -76,7 +77,7 @@ public:
   int m_unique_id;
   
   /* Text for the tooltips for leafs inside the 'Current messages' branch */
-  static QString nonproc_tooltip_text(int nb, int unread);
+  static QString current_tooltip_text(int nb, int unread);
 
 private:
   static int id_generator;
@@ -165,6 +166,8 @@ private:
 
   // built-in query branches
   query_tag_lvitem* m_item_tags;
+  query_lvitem* m_item_archived;
+  query_lvitem* m_item_archived_untagged;
   query_lvitem* m_item_current_tags;
   query_lvitem* m_item_new_all;
   query_lvitem* m_item_current_all;

@@ -184,6 +184,9 @@ query_listview::highlight_entry(query_lvitem::item_type type, uint tag_id)
   case query_lvitem::archived_tagged:
     item = find_tag(m_item_tags, tag_id);
     break;
+  case query_lvitem::archived_untagged:
+    item = m_item_archived_untagged;
+    break;
   default:
     item = NULL;
     break;
@@ -266,12 +269,12 @@ query_listview::create_branch_current(const tag_node* root)
   m_item_current = new query_lvitem(tr("Current messages"));
   insertTopLevelItem(index_branch_current, m_item_current);
 
-  m_item_current_all = new query_lvitem(m_item_current, query_lvitem::nonproc_all, tr("All"));
+  m_item_current_all = new query_lvitem(m_item_current, query_lvitem::current_all, tr("All"));
 
   make_item_current_tags(root);
   m_item_current_prio = new query_lvitem(m_item_current, query_lvitem::current_prio, tr("Prioritized"));
 
-  m_item_current_untagged = new query_lvitem(m_item_current, query_lvitem::nonproc_not_tagged, QString::null);
+  m_item_current_untagged = new query_lvitem(m_item_current, query_lvitem::current_not_tagged, QString::null);
   update_tag_current_counter(0); // update counts of Current->[Not tagged] branch
 
 
@@ -288,8 +291,8 @@ query_listview::init()
   fetch_tag_map();
   tags_definition_list tag_list;
   tag_list.fetch();
-  tag_node root;
-  root.get_child_tags(tag_list);
+  tag_node root_tag;
+  root_tag.get_child_tags(tag_list);
 
   // New messages
   query_lvitem* item_new = new query_lvitem(this, tr("Unread messages"));
@@ -297,13 +300,19 @@ query_listview::init()
   m_item_new_untagged = new query_lvitem(item_new, query_lvitem::new_not_tagged, tr("Not tagged"));
   item_new->setExpanded(true);
 
-  create_branch_current(&root);
+  create_branch_current(&root_tag);
 
   // Tagged messages
-  // The root is a pseudo-tag with an id=0
-  m_item_tags = new query_tag_lvitem(this, query_lvitem::archived_tagged, tr("Archived tagged mail"));
+  // The root_tag is a pseudo-tag with an id=0
+  m_item_archived = new query_lvitem(this, tr("Archived messages"));
+  m_item_archived_untagged = new query_lvitem(m_item_archived,
+					      query_lvitem::archived_untagged,
+					      tr("Untagged"));
+  m_item_tags = new query_tag_lvitem(m_item_archived,
+				     query_lvitem::archived_tagged,
+				     tr("Tagged"));
 
-  insert_child_tags(&root, m_item_tags, query_lvitem::archived_tagged, NULL);
+  insert_child_tags(&root_tag, m_item_tags, query_lvitem::archived_tagged, NULL);
   m_item_tags->sortChildren(0, Qt::AscendingOrder);
 
 
@@ -318,7 +327,7 @@ query_listview::init()
   reload_user_queries();
 
   display_counter(query_lvitem::new_all);
-  display_counter(query_lvitem::nonproc_all);
+  display_counter(query_lvitem::current_all);
   display_counter(query_lvitem::new_not_tagged);
 }
 
@@ -385,8 +394,8 @@ query_listview::tags_restructured()
   DBG_PRINTF(5, "tags_restructured");
   tags_definition_list tag_list;
   tag_list.fetch();
-  tag_node root;
-  root.get_child_tags(tag_list);
+  tag_node root_tag;
+  root_tag.get_child_tags(tag_list);
 
   /* Update the m_item_tags tree (all tags) */
 
@@ -399,14 +408,14 @@ query_listview::tags_restructured()
   m_item_tags->remove_children();
 
   // recreate the tree
-  insert_child_tags(&root, m_item_tags, query_lvitem::archived_tagged, &opened);
+  insert_child_tags(&root_tag, m_item_tags, query_lvitem::archived_tagged, &opened);
   m_item_tags->sortChildren(0, Qt::AscendingOrder);
 
   /* Update m_item_current_tags tree (tagged, non-archived messages) */
   QSet<query_tag_lvitem*> remove_set;
   for (int idx=0; idx<m_item_current_tags->childCount(); ++idx) {
     query_tag_lvitem* t = static_cast<query_tag_lvitem*>(m_item_current_tags->child(idx));
-    const tag_node* n = root.find(t->m_tag_id);
+    const tag_node* n = root_tag.find(t->m_tag_id);
     if (n) {
       update_tag_current_counter(t->m_tag_id);
     }
@@ -524,7 +533,7 @@ query_listview::display_counter(query_lvitem::item_type type)
     m_item_new_all->setFont(0, f);
     break;
 
-  case query_lvitem::nonproc_all:
+  case query_lvitem::current_all:
     {
       int unread_count = msg_status_cache::unread_count();
       int unprocessed_count = msg_status_cache::unprocessed_count();
@@ -537,7 +546,7 @@ query_listview::display_counter(query_lvitem::item_type type)
       f = m_item_current_all->font(0);
       f.setBold(unread_count>0);
       m_item_current_all->setFont(0, f);
-      m_item_current_all->setToolTip(0, query_lvitem::nonproc_tooltip_text(unprocessed_count, unread_count));
+      m_item_current_all->setToolTip(0, query_lvitem::current_tooltip_text(unprocessed_count, unread_count));
     }
     break;
 
@@ -582,9 +591,9 @@ query_listview::add_current_tag(uint tag_id)
     return;
   tags_definition_list tag_list;
   tag_list.fetch();
-  tag_node root;
-  root.get_child_tags(tag_list);
-  const tag_node* node = root.find(tag_id);
+  tag_node root_tag;
+  root_tag.get_child_tags(tag_list);
+  const tag_node* node = root_tag.find(tag_id);
   query_tag_lvitem* q = new query_tag_lvitem(m_item_current_tags, query_lvitem::current_tagged, QString::null, tag_id);
   q->set_title(node->hierarchy());
   m_item_current_tags->sortChildren(0, Qt::AscendingOrder);
@@ -654,7 +663,7 @@ void
 query_listview::update_status_counters()
 {
   display_counter(query_lvitem::new_all);
-  display_counter(query_lvitem::nonproc_all);
+  display_counter(query_lvitem::current_all);
   display_counter(query_lvitem::new_not_tagged);
 }
 
@@ -829,12 +838,12 @@ query_listview::refresh()
 
   tags_definition_list tag_list;
   tag_list.fetch();
-  tag_node root;
-  root.get_child_tags(tag_list);
-  create_branch_current(&root);
+  tag_node root_tag;
+  root_tag.get_child_tags(tag_list);
+  create_branch_current(&root_tag);
 
   display_counter(query_lvitem::new_all);
-  display_counter(query_lvitem::nonproc_all);
+  display_counter(query_lvitem::current_all);
   display_counter(query_lvitem::new_not_tagged);
 }
 
@@ -863,7 +872,7 @@ query_lvitem::~query_lvitem()
 /* Text for the tooltips for leafs inside the 'Current messages' branch */
 //static
 QString
-query_lvitem::nonproc_tooltip_text(int nb, int unread)
+query_lvitem::current_tooltip_text(int nb, int unread)
 {
   QString s;
   if (unread==0) {
@@ -921,11 +930,11 @@ query_lvitem::set_title(const QString t, const qs_mail_map* status_map/*=NULL*/)
     if (unread==0) {
       // no unread
       title = QString("%1 (%2)").arg(t).arg(nb);
-      setToolTip(0, nonproc_tooltip_text(nb, unread));
+      setToolTip(0, current_tooltip_text(nb, unread));
     }
     else {
       title = QString("%1 (%2<%3)").arg(t).arg(nb).arg(unread);
-      setToolTip(0, nonproc_tooltip_text(nb, unread));
+      setToolTip(0, current_tooltip_text(nb, unread));
     }
     setText(0, title);
     QFont f = font(0);

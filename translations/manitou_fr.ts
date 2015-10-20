@@ -994,6 +994,10 @@
         <source>Unable to open URL</source>
         <translation>Impossible d&apos;ouvrir l&apos;adresse (URL)</translation>
     </message>
+    <message>
+        <source>Unable to parse URL</source>
+        <translation>Impossible d&apos;interpréter l&apos;URL</translation>
+    </message>
 </context>
 <context>
     <name>double_file_input</name>
@@ -3957,7 +3961,7 @@ Voulez-vous le mettre à jour malgré cela?</translation>
     </message>
     <message>
         <source>Not tagged</source>
-        <translation>Non étiquetté</translation>
+        <translation>Non étiquettés</translation>
     </message>
     <message>
         <source>Current messages</source>
@@ -3974,10 +3978,6 @@ Voulez-vous le mettre à jour malgré cela?</translation>
     <message>
         <source>Trashcan</source>
         <translation>Corbeille</translation>
-    </message>
-    <message>
-        <source>Archived tagged mail</source>
-        <translation>Messages archivés étiquettés</translation>
     </message>
     <message>
         <source>Sent mail</source>
@@ -4022,6 +4022,10 @@ Voulez-vous le mettre à jour malgré cela?</translation>
     <message>
         <source>All (%1&lt;%2)</source>
         <translation>Tout (%1&lt;%2)</translation>
+    </message>
+    <message>
+        <source>Archived messages</source>
+        <translation>Messages archivés</translation>
     </message>
 </context>
 <context>

@@ -2913,10 +2913,10 @@ msg_list_window::quick_query_selection(QTreeWidgetItem* qt_item, int column)
       sel_filter(f);
     }
     break;
-  case query_lvitem::nonproc_all:
+  case query_lvitem::current_all:
     non_processed_messages();
     break;
-  case query_lvitem::nonproc_not_tagged:
+  case query_lvitem::current_not_tagged:
     {
       msgs_filter f;
       f.m_status_unset = mail_msg::statusArchived|mail_msg::statusTrashed;
@@ -2937,6 +2937,15 @@ msg_list_window::quick_query_selection(QTreeWidgetItem* qt_item, int column)
       query_tag_lvitem* ti = dynamic_cast<query_tag_lvitem*>(item);
       if (ti && ti->m_tag_id)
 	sel_tag_status(ti->m_tag_id, mail_msg::statusArchived, 0);
+    }
+    break;
+  case query_lvitem::archived_untagged:
+    {
+      msgs_filter f;
+      f.m_status_unset = mail_msg::statusTrashed;
+      f.m_status_set = mail_msg::statusArchived;
+      f.m_tag_name = ("(No tag set)");
+      sel_filter(f);
     }
     break;
   case query_lvitem::current_tagged:
