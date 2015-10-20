@@ -18,7 +18,7 @@
 */
 
 #include <string>
-#include <iostream>
+#include <sstream>
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -537,9 +537,14 @@ sql_stream&
 sql_stream::operator>>(float& f)
 {
   check_eof();
-  char* endptr;
-  f = strtof(PQgetvalue(m_pgRes, m_rowNumber, m_colNumber), &endptr);
   m_val_null = PQgetisnull(m_pgRes, m_rowNumber, m_colNumber);
+  if (!m_val_null) {
+    std::istringstream istr(PQgetvalue(m_pgRes, m_rowNumber, m_colNumber));
+    istr.imbue(std::locale("C"));
+    istr >> f;
+  }
+  else
+    f=0;
   next_result();
   return *this;
 }
@@ -548,9 +553,14 @@ sql_stream&
 sql_stream::operator>>(double& f)
 {
   check_eof();
-  char* endptr;
-  f = strtod(PQgetvalue(m_pgRes, m_rowNumber, m_colNumber), &endptr);
   m_val_null = PQgetisnull(m_pgRes, m_rowNumber, m_colNumber);
+  if (!m_val_null) {
+    std::istringstream istr(PQgetvalue(m_pgRes, m_rowNumber, m_colNumber));
+    istr.imbue(std::locale("C"));
+    istr >> f;
+  }
+  else
+    f=0;
   next_result();
   return *this;
 }
