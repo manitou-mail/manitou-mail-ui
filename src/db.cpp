@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2014 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -52,9 +52,15 @@ void DBEXCPT(PGconn* c)
 void DBEXCPT(db_excpt& p)
 {
   //  std::cerr << p.query() << ":" << p.errmsg() << std::endl;
-  QString err=p.query();
-  err+=":\n";
-  err+=p.errmsg();
+  QString err = p.query();
+  if (err.isEmpty()) {
+    if (p.errcode() == QString::fromAscii(db_excpt::client_assertion)) {
+      err = "Client assertion";
+    }
+  }
+  if (!err.isEmpty())
+    err.append(":\n");
+  err.append(p.errmsg());
   QMessageBox::warning(NULL, QObject::tr("Database error"), err);
 }
 
@@ -75,6 +81,17 @@ db_excpt::db_excpt(const QString query, db_cnx& d)
   if (pg_msg!=NULL)
     m_err_msg = QString::fromUtf8(pg_msg);
 }
+
+//static
+const char* db_excpt::client_assertion="UU001";
+
+void
+db_excpt::replace(const QString substring, const QString replacement)
+{
+  m_query.replace(substring, replacement);
+  m_err_msg.replace(substring, replacement);
+}
+
 
 int
 ConnectDb(const char* cnx_string, QString* errstr)
@@ -400,7 +417,9 @@ pgConnection::escape_identifier(const QString identifier)
 {
   QByteArray arr = identifier.toUtf8();
   char* quoted = PQescapeIdentifier(m_pgConn, arr.constData(), (size_t)arr.size());
-  return QString::fromUtf8(quoted);
+  QString s = QString::fromUtf8(quoted);
+  PQfreemem(quoted);
+  return s;
 }
 
 #if 0
@@ -525,6 +544,20 @@ db_cnx::ping()
   return m_cnx->ping();
 }
 
+bool
+db_cnx::table_exists(const QString tablename)
+{
+  try {
+    sql_stream s("SELECT 1 from information_schema.tables where table_name=:n and table_schema=current_schema()", *this);
+    s << tablename;
+    return !s.eos();
+  }
+  catch(db_excpt& p) {
+    DBEXCPT(p);
+  }
+  return false;
+}
+
 QString
 db_cnx::escape_string_literal(const QString str)
 {
@@ -580,6 +613,17 @@ pg_notifier::process_notification()
       PQfreemem(n);
     }
   }
+}
+
+db_ctxt::db_ctxt(bool pexc) : propagate_exceptions(pexc)
+{
+  m_db = new db_cnx;
+}
+
+db_ctxt::~db_ctxt()
+{
+  if (m_db)
+    delete m_db;
 }
 
 #if 0

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2014 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -177,6 +177,7 @@ public:
   void enable_user_alerts(bool); // return previous state
 
   bool ping();
+  bool table_exists(const QString);
   void handle_exception(db_excpt& e);
 
   static const QString& dbname();
@@ -223,9 +224,12 @@ public:
   QString query() const { return m_query; }
   QString errmsg() const { return m_err_msg; }
   QString errcode() const { return m_err_code; }
+  // replace a substring in an error message, typically to hide a password
+  void replace(const QString substring, const QString replacement);
   bool unique_constraint_violation() const {
     return m_err_code=="23505";
   }
+  static const char* client_assertion;
 private:
   QString m_query;
   QString m_err_msg;
@@ -233,5 +237,14 @@ private:
 };
 
 void DBEXCPT(db_excpt& p);	// db.cpp
+
+class db_ctxt
+{
+public:
+  db_ctxt(bool pexc=false);
+  ~db_ctxt();
+  db_cnx* m_db;
+  bool propagate_exceptions;
+};
 
 #endif // INC_DATABASE_H
