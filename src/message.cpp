@@ -693,7 +693,11 @@ mail_msg::mail_id_to_sql_array(const std::set<mail_msg*>& s, QString& dest)
   std::set<mail_msg*>::iterator it = s.begin();
   dest.truncate(0);
   if (it==s.end())
+#if defined(DB_MAIL_ID_32)
     dest= "'{}'::int[]";
+#elif defined(DB_MAIL_ID_64)
+    dest= "'{}'::bigint[]";
+#endif
   else {
     dest.append("'{");
     for (; it!=s.end(); ++it) {
@@ -701,7 +705,11 @@ mail_msg::mail_id_to_sql_array(const std::set<mail_msg*>& s, QString& dest)
 	dest.append(',');
       dest.append(QString("%1").arg((*it)->get_id()));
     }
+#if defined(DB_MAIL_ID_32)
     dest.append("}'::int[]");
+#elif defined(DB_MAIL_ID_64)
+    dest.append("}'::bigint[]");
+#endif
   }
 }
 
