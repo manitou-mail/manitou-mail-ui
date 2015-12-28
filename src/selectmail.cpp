@@ -123,7 +123,7 @@ void
 msgs_filter::postprocess_fetch(fetch_thread& thread)
 {
   m_has_more_results = m_max_results>0 && (thread.m_tuples_count > m_max_results);
-  DBG_PRINTF(6,"postprocess_fetch: m_has_more_results=%d", (int)m_has_more_results);
+  DBG_PRINTF(6,"postprocess_fetch: m_has_more_results=%d", m_has_more_results==true);
   m_boundary = thread.m_boundary;
   if (m_order>0) {
     m_mail_id_bound = thread.m_max_mail_id;
@@ -132,7 +132,6 @@ msgs_filter::postprocess_fetch(fetch_thread& thread)
   else {
     m_mail_id_bound = thread.m_min_mail_id;
     m_date_bound = thread.m_min_msg_date;
-    m_boundary = thread.m_boundary;
   }
 }
 
@@ -347,11 +346,15 @@ msgs_filter::build_query(sql_query& q, bool fetch_more/*=false*/)
     q.add_table(main_table);
 
     // bounds. m_mail_id_bound and m_date_bound should be either both set or both unset
-#if 0
-    if (!m_boundary.isEmpty() && !m_date_bound.isEmpty() && m_order<0) {
-      q.add_clause(QString("msg_date<=to_date('%1','YYYYMMDDHH24MISS') AND to_char(msg_date,'YYYYMMDDHH24MISS')||m.mail_id::text<'%2'").arg(m_date_bound).arg(m_boundary));
+
+    if (!m_boundary.isEmpty() && !m_date_bound.isEmpty()) {
+      if (m_order<0) {
+	q.add_clause(QString("msg_date<=to_date('%1','YYYYMMDDHH24MISS') AND to_char(msg_date,'YYYYMMDDHH24MISS')||m.mail_id::text<'%2'").arg(m_date_bound).arg(m_boundary));
+      }
+      else if (m_order>0) {
+	q.add_clause(QString("msg_date>=to_date('%1','YYYYMMDDHH24MISS') AND to_char(msg_date,'YYYYMMDDHH24MISS')||m.mail_id::text>'%2'").arg(m_date_bound).arg(m_boundary));
+      }
     }
-#endif
 
     if (!m_sql_stmt.isEmpty()) {
       q.add_clause(QString("m.mail_id in (") + m_sql_stmt + QString(")"));
