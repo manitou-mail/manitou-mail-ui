@@ -2198,16 +2198,16 @@ msg_list_window::fetch_more()
   enable_interaction(false);
   statusBar()->showMessage(tr("Querying database..."));
 
-  m_filter->m_fetch_results=NULL;
+  m_filter->m_fetch_results = NULL;
   int r = m_filter->asynchronous_fetch(&m_thread, true);
-  DBG_PRINTF(8, "after async_fetch m_filter->results as %d elements", m_filter->m_list_msgs.size());
-  if (r==1) {
+  DBG_PRINTF(8, "after async_fetch m_filter->results has %d elements", m_filter->m_list_msgs.size());
+  if (r == 1) {
     m_waiting_for_results = true;
   }
-  else if (r==0) {
+  else if (r == 0) {
     QMessageBox::information(this, APP_NAME, tr("Fetch error"));
   }
-  else if (r==2) {
+  else if (r == 2) {
     QMessageBox::information(this, APP_NAME, tr("No results"));
   }
 }
@@ -3052,7 +3052,8 @@ msg_list_window::timer_func()
     m_waiting_for_results = false;
 
 
-    if (m_loading_filter && !m_loading_filter->m_has_progress_bar) {
+    if (!m_loading_filter ||
+	(m_loading_filter && !m_loading_filter->m_has_progress_bar)) {
       // Only if no progress bar. Otherwise uninstall_progressbar() will handle this.
       enable_interaction(true);
     }
@@ -3062,7 +3063,7 @@ msg_list_window::timer_func()
       m_filter->postprocess_fetch(m_thread);
       DBG_PRINTF(8, "fetch_more -> make_list");
       m_filter->make_list(m_qlist);
-      DBG_PRINTF(8, "after async_fetch m_filter->results as %d elements", m_filter->m_list_msgs.size());
+      DBG_PRINTF(8, "after async_fetch m_filter->results has %d elements", m_filter->m_list_msgs.size());
       set_title();
     }
     else if (m_loading_filter && m_loading_filter->m_fetch_results) {
