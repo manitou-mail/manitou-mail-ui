@@ -368,13 +368,13 @@ input_addresses_widget::show_prio_contacts()
 QString
 input_addresses_widget::format_multi_lines(const QString addresses)
 {
-  std::list<QString> emails_list;
-  std::list<QString> names_list;
+  QList<QString> emails_list;
+  QList<QString> names_list;
   QByteArray ba = addresses.toLatin1(); // TODO: replace this when ExtractAddresses takes a QString instead of char*
   mail_address::ExtractAddresses(ba.constData(), emails_list, names_list);
   QString result;
 
-  std::list<QString>::const_iterator iter1,iter2;
+  QList<QString>::const_iterator iter1,iter2;
   for (iter1 = emails_list.begin(), iter2 = names_list.begin();
        iter1!=emails_list.end() && iter2!=names_list.end();
        ++iter1, ++iter2)

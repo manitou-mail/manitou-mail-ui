@@ -522,14 +522,14 @@ mailing_wizard_page_parse_data::recipient_list()
 bool
 mailing_wizard_page_parse_data::parse_line(const QString ql, QStringList& recipients)
 {
-  std::list<QString> addresses;
-  std::list<QString> comments;
+  QList<QString> addresses;
+  QList<QString> comments;
   /* extract the addresses (multiple addresses separated by commas are accepted)
      without much syntax checking */
   int r=mail_address::ExtractAddresses(ql, addresses, comments);
   if (r==0) { // success
     /* do basic syntax checking on each address */
-    for (std::list<QString>::iterator it = addresses.begin(); it!=addresses.end(); ++it) {
+    for (QList<QString>::iterator it = addresses.begin(); it!=addresses.end(); ++it) {
       if (!mail_address::basic_syntax_check(*it)) {
 	r=1;
 	break;

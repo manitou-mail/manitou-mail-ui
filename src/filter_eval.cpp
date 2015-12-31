@@ -327,13 +327,12 @@ filter_evaluator::func_list_header_addresses(const QString field,
   filter_eval_value v = func_header(v1, ctxt);
 
   if (v.vtype == filter_eval_value::type_string && !v.val.toString().isEmpty()) {
-    std::list<QString> emails;
-    std::list<QString> names;
-    int r = mail_address::ExtractAddresses(v.val.toString().toLatin1().constData(),
+    QList<QString> emails;
+    QList<QString> names;
+    int r = mail_address::ExtractAddresses(v.val.toString(),
 					   emails, names);
     if (r==0) { // success
-      QStringList l = QStringList::fromStdList(emails);
-      res.val = l.join(",");
+      res.val = emails.join(",");
     }
   }
 

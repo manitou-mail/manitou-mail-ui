@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -30,8 +30,7 @@ public:
   mail_address(): m_invalid(0), m_id(0) {}
   ~mail_address() {}
 
-  static int ExtractAddresses(const char* addr,std::list<QString>&,std::list<QString>&);
-  static int ExtractAddresses(const QString& qs_addr,std::list<QString>&,std::list<QString>&);
+  static int ExtractAddresses(const QString& addr,QList<QString>&, QList<QString>&);
 
   static bool basic_syntax_check(const QString email);
 

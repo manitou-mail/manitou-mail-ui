@@ -249,12 +249,12 @@ mail_item_model::create_row(mail_msg* msg, QList<QStandardItem*>& items)
   items.append(idate);
 
   QStandardItem* irecipient = new QStandardItem();
-  std::list<QString> emails;
-  std::list<QString> names;
+  QList<QString> emails;
+  QList<QString> names;
   QString recipients;
   mail_address::ExtractAddresses(msg->recipients(), emails, names);
-  std::list<QString>::const_iterator iter1 = emails.begin();
-  std::list<QString>::const_iterator iter2 = names.begin();
+  QList<QString>::const_iterator iter1 = emails.begin();
+  QList<QString>::const_iterator iter2 = names.begin();
   for (; iter1!=emails.end() && iter2!=names.end(); ++iter1,++iter2) {
     if (!recipients.isEmpty())
       recipients.append(", ");

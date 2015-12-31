@@ -105,12 +105,12 @@ mail_header::store_addresses_list(const QString& addr_list, int addr_type)
 {
   db_cnx db;
   sql_stream s("INSERT INTO mail_addresses(mail_id,addr_id,addr_type,addr_pos) VALUES(:p1,:p2,:p3,:p4)", db);
-  std::list<QString> emails;
-  std::list<QString> names;
-  mail_address::ExtractAddresses(addr_list.toLatin1().constData(), emails, names);
+  QList<QString> emails;
+  QList<QString> names;
+  mail_address::ExtractAddresses(addr_list, emails, names);
   bool found;
-  std::list<QString>::iterator it1 = emails.begin();
-  std::list<QString>::iterator it2 = names.begin();
+  QList<QString>::iterator it1 = emails.begin();
+  QList<QString>::iterator it2 = names.begin();
   for (int addr_pos = 0; it1 != emails.end(); addr_pos++) {
     mail_address a;
     QString s_addr=(*it1).toLower();
@@ -139,11 +139,11 @@ QString
 mail_header::recipients_list()
 {
   QString result;
-  std::list<QString> emails;
-  std::list<QString> names;
-  mail_address::ExtractAddresses(m_to.toLatin1().constData(), emails, names);
-  std::list<QString>::iterator it1 = emails.begin();
-  std::list<QString>::iterator it2 = names.begin();
+  QList<QString> emails;
+  QList<QString> names;
+  mail_address::ExtractAddresses(m_to, emails, names);
+  QList<QString>::iterator it1 = emails.begin();
+  QList<QString>::iterator it2 = names.begin();
   for (; it1 != emails.end() && it2!=names.end(); ) {
     mail_address a;
     a.set((*it1).toLower());
