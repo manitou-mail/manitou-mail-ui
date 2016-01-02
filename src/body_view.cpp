@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -30,6 +30,7 @@
 #include <QTextEdit>
 #include <QWebPage>
 #include <QWebFrame>
+#include <QUrlQuery>
 #include <QTimer>
 
 body_view::body_view(QWidget* parent) : QWebView(parent)
@@ -427,27 +428,28 @@ network_manager::createRequest(Operation op, const QNetworkRequest& req, QIODevi
     return empty_network_reply(op, req);
   }
   else if (url.scheme()=="manitou" && (url.authority()=="xface" || url.authority()=="face")) {
-#if QT_VERSION<0x050000 // later
-    if (url.hasQueryItem("id") && url.hasQueryItem("o")) {
-      QString headers = m_pmsg->get_headers();
-      bool id_ok, o_ok;
-      mail_id_t id = mail_msg::id_from_string(url.queryItemValue("id"), &id_ok);
-      int offset = url.queryItemValue("o").toInt(&o_ok);
-      if (id_ok && o_ok && id == m_pmsg->get_id()) {
-	int lf_pos = headers.indexOf('\n', offset);
-	QString ascii_line;
-	if (lf_pos>0) {
-	  ascii_line = headers.mid(offset, lf_pos-offset);
+    if (url.hasQuery()) {
+      QUrlQuery qq(url);
+      if (qq.hasQueryItem("id") && qq.hasQueryItem("o")) {
+	QString headers = m_pmsg->get_headers();
+	bool id_ok, o_ok;
+	mail_id_t id = mail_msg::id_from_string(qq.queryItemValue("id"), &id_ok);
+	int offset = qq.queryItemValue("o").toInt(&o_ok);
+	if (id_ok && o_ok && id == m_pmsg->get_id()) {
+	  int lf_pos = headers.indexOf('\n', offset);
+	  QString ascii_line;
+	  if (lf_pos>0) {
+	    ascii_line = headers.mid(offset, lf_pos-offset);
+	  }
+	  else {
+	    ascii_line = headers.mid(offset);
+	  }
+	  ascii_line.replace(" ", "");
+	  int type = url.authority()=="face" ? 1:2;
+	  return new internal_img_network_reply(req, ascii_line, type, this);
 	}
-	else {
-	  ascii_line = headers.mid(offset);
-	}
-	ascii_line.replace(" ", "");
-	int type = url.authority()=="face" ? 1:2;
-	return new internal_img_network_reply(req, ascii_line, type, this);
       }
     }
-#endif
     return empty_network_reply(op, req);
   }
   else if (req.url().scheme()=="style") { // internal scheme for styling contents
