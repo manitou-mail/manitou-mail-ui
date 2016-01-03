@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -192,7 +192,6 @@ public slots:
   // Display menu
   void toggle_show_tags(bool);
   void toggle_threaded(bool);
-  void toggle_wrap_lines(bool);
   void toggle_fetch_on_demand(bool);
   void toggle_hide_quoted(bool);
   void toggle_show_filters_log(bool);

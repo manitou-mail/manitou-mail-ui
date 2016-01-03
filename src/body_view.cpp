@@ -152,24 +152,6 @@ body_view::copy()
   triggerPageAction(QWebPage::Copy);
 }
 
-void
-body_view::set_wrap(bool on)
-{
-  Q_UNUSED(on);
-  // for text parts, we'll probably need to implement wrapmode by HTML-styling the contents
-#ifndef TODO_WEBKIT
-  if (on) {
-    setWordWrapMode(QTextOption::WordWrap);
-    setLineWrapMode(QTextEdit::WidgetWidth);
-  }
-  else {
-    setLineWrapMode(QTextEdit::NoWrap);
-    setWordWrapMode(QTextOption::NoWrap);
-  }
-#endif
-}
-
-
 //static
 void
 body_view::rich_to_plain(QString& s)

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -249,12 +249,6 @@ message_view::page_down()
   frame->setScrollPosition(pos);
 }
 
-void
-message_view::set_wrap(bool b)
-{
-  Q_UNUSED(b);
-}
-
 /* Replace the whole display by the "fetch on demand" href link or
    toggle back to normal display */
 void
@@ -376,8 +370,6 @@ message_view::display_body(const display_prefs& prefs, int preferred_format)
     .arg(disp.sprint_headers(prefs.m_show_headers_level, m_pmsg))
     .arg(disp.sprint_additional_headers(prefs, m_pmsg))
     .arg(QString("<div id=\"manitou-commands\"></div>"));
-
-  set_wrap(prefs.m_wrap_lines);
 
   m_has_text_part = !body_text.isEmpty();
   m_has_html_part = (html_attachment!=NULL || !body_html.isEmpty());

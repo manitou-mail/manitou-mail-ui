@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -472,10 +472,6 @@ msg_list_window::init_menu()
   m_menu_actions[me_Display_Threaded]->setCheckable(true);
   m_menu_actions[me_Display_Threaded]->setChecked(display_vars.m_threaded);
 
-  m_menu_actions[me_Display_WrapLines] = m_pMenuDisplay->addAction(tr("Wrap lines"), this, SLOT(toggle_wrap_lines(bool)));
-  m_menu_actions[me_Display_WrapLines]->setCheckable(true);
-  m_menu_actions[me_Display_WrapLines]->setChecked(display_vars.m_wrap_lines);
-
   m_menu_actions[me_Display_Hide_Quoted] = m_pMenuDisplay->addAction(tr("Hide quoted text"), this, SLOT(toggle_hide_quoted(bool)), Qt::CTRL+Qt::Key_H);
   m_menu_actions[me_Display_Hide_Quoted]->setCheckable(true);
   m_menu_actions[me_Display_Hide_Quoted]->setChecked(display_vars.m_hide_quoted);
@@ -779,7 +775,6 @@ msg_list_window::msg_list_window (const msgs_filter* filter, display_prefs* dpre
     display_vars = *dprefs;
 /*
     display_vars.m_threaded = dprefs->m_threaded;
-    display_vars.m_wrap_lines = dprefs->m_wrap_lines;
     display_vars.m_show_tags = dprefs->m_show_tags;
     display_vars.m_hide_quoted = dprefs->m_hide_quoted;
     display_vars.m_clickable_urls = dprefs->m_clickable_urls;
@@ -873,15 +868,6 @@ void
 msg_list_window::edit_copy()
 {
   m_msgview->copy();
-}
-
-void
-msg_list_window::toggle_wrap_lines(bool wrap)
-{
-  display_vars.m_wrap_lines = wrap; // !display_vars.m_wrap_lines;
-//  m_pMenuDisplay->setItemChecked(id, display_vars.m_wrap_lines);
-  if (!m_fetch_on_demand)
-    display_body();
 }
 
 void

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -74,7 +74,6 @@ public:
   mail_msg* mail_item() {
     return m_pmsg;
   }
-  void set_wrap(bool on);
   static void rich_to_plain(QString&);
   void display(const QString& html);
   void redisplay();
