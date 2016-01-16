@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2014 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -370,8 +370,7 @@ input_addresses_widget::format_multi_lines(const QString addresses)
 {
   QList<QString> emails_list;
   QList<QString> names_list;
-  QByteArray ba = addresses.toLatin1(); // TODO: replace this when ExtractAddresses takes a QString instead of char*
-  mail_address::ExtractAddresses(ba.constData(), emails_list, names_list);
+  mail_address::ExtractAddresses(addresses, emails_list, names_list);
   QString result;
 
   QList<QString>::const_iterator iter1,iter2;

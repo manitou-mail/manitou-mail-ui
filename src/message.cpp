@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2014 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -1072,7 +1072,6 @@ mail_msg::setup_reply(const QString& quoted_text, int whom_to, body_format forma
 	expurged_cc += addr.email_and_name();
       }
     }
-    DBG_PRINTF(5,"expurged_cc=%s\n", expurged_cc.toLatin1().constData());
     replyHeader.m_cc = expurged_cc;
   }
   QString us = lookup_dest_identity();
