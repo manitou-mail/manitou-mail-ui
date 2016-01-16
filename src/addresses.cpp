@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -135,9 +135,9 @@ mail_address::ExtractAddresses(const QString& line,
       ch = line.at(idx++);
     } while (ch != ' ' && ch != '\t' && ch != ',' && ch != '\n');
 
-    if (idx == len || ch == ',') {
-      // email alone
-      addrs.append(line.mid(start, idx-start-1));
+    if (idx == len) {
+      // email alone and eol
+      addrs.append(line.mid(start, idx-start));
       names.append(QString(""));
     }
     else if (ch == ',' || ch == '\n') {
