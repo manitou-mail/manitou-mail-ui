@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -181,10 +181,9 @@ private:
      ... LIMIT ... */
   QString m_user_query;
 
-  /* used to fetch another set of results that are older/newer (depending on m_order) */
+  /* used to fetch another batch of results that are older/newer (depending on m_order) */
   QString m_date_bound;
   int m_mail_id_bound;
-  QString m_boundary;
 
   /* ordering of msg_date (+1=ASC, -1=DESC) column for the fetch */
   int m_order;

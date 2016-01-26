@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -50,7 +50,6 @@ public:
   mail_id_t m_min_mail_id;
   QString m_max_msg_date;
   QString m_min_msg_date;
-  QString m_boundary;
 
   //  progressive_wordsearch m_psearch;
   bool m_fetch_more;

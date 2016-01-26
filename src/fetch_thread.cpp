@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -44,26 +44,33 @@ fetch_thread::store_results(sql_stream& s, int max_nb)
 
     date_stamp = r.m_date.isEmpty() ? QString("00000000000000%1").arg(r.m_id) :
       QString("%1%2").arg(r.m_date).arg(r.m_id);
-    if (m_boundary.isEmpty() || m_boundary < date_stamp)
-      m_boundary = date_stamp;
 
-    if (m_min_msg_date.isEmpty() && !r.m_date.isEmpty())
-      m_min_msg_date=r.m_date;
-    else if (r.m_date < m_min_msg_date)
-      m_min_msg_date=r.m_date;
+    /* Find the min/max of (msg_date,mail_id) */
+    if (m_min_msg_date.isEmpty()) {
+      m_min_msg_date = r.m_date;
+      m_min_mail_id = r.m_id;
+    }
+    else if (r.m_date < m_min_msg_date) {
+      m_min_msg_date = r.m_date;
+      m_min_mail_id = r.m_id;
+    }
+    else if (r.m_date == m_min_msg_date) {
+      if (r.m_id < m_min_mail_id)
+	m_min_mail_id = r.m_id;
+    }
 
-    if (m_max_msg_date.isEmpty() && !r.m_date.isEmpty())
-      m_max_msg_date=r.m_date;
-    else if (r.m_date > m_max_msg_date)
-      m_max_msg_date=r.m_date;
-
-    if (m_min_mail_id==0)
-      m_min_mail_id=r.m_id;
-    else if (r.m_id < m_min_mail_id)
-      m_min_mail_id=r.m_id;
-
-    if (r.m_id > m_max_mail_id)
-      m_max_mail_id=r.m_id;
+    if (m_max_msg_date.isEmpty()) {
+      m_max_msg_date = r.m_date;
+      m_max_mail_id = r.m_id;
+    }
+    else if (r.m_date > m_max_msg_date) {
+      m_max_msg_date = r.m_date;
+      m_max_mail_id = r.m_id;
+    }
+    else if (r.m_date == m_max_msg_date) {
+      if (r.m_id > m_max_mail_id)
+	m_max_mail_id = r.m_id;
+    }
 
     i++;
   }
@@ -111,7 +118,6 @@ fetch_thread::run()
   m_min_mail_id = m_max_mail_id = 0;
   m_max_msg_date = QString::null;
   m_min_msg_date = QString::null;
-  m_boundary = QString::null;
 
   // install a notice receiver to handle progress report for certain queries
   // (wordsearch)

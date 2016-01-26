@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -123,8 +123,7 @@ void
 msgs_filter::postprocess_fetch(fetch_thread& thread)
 {
   m_has_more_results = m_max_results>0 && (thread.m_tuples_count > m_max_results);
-  DBG_PRINTF(6,"postprocess_fetch: m_has_more_results=%d", m_has_more_results==true);
-  m_boundary = thread.m_boundary;
+
   if (m_order>0) {
     m_mail_id_bound = thread.m_max_mail_id;
     m_date_bound = thread.m_max_msg_date;
@@ -347,12 +346,12 @@ msgs_filter::build_query(sql_query& q, bool fetch_more/*=false*/)
 
     // bounds. m_mail_id_bound and m_date_bound should be either both set or both unset
 
-    if (!m_boundary.isEmpty() && !m_date_bound.isEmpty()) {
-      if (m_order<0) {
-	q.add_clause(QString("msg_date<=to_date('%1','YYYYMMDDHH24MISS') AND to_char(msg_date,'YYYYMMDDHH24MISS')||m.mail_id::text<'%2'").arg(m_date_bound).arg(m_boundary));
+    if (!m_date_bound.isEmpty()) {
+      if (m_order < 0) {
+	q.add_clause(QString("(m.msg_date,m.mail_id) < (to_timestamp('%1','YYYYMMDDHH24MISS'),%2)").arg(m_date_bound).arg(m_mail_id_bound));
       }
-      else if (m_order>0) {
-	q.add_clause(QString("msg_date>=to_date('%1','YYYYMMDDHH24MISS') AND to_char(msg_date,'YYYYMMDDHH24MISS')||m.mail_id::text>'%2'").arg(m_date_bound).arg(m_boundary));
+      else if (m_order > 0) {
+	q.add_clause(QString("(m.msg_date,m.mail_id) > (to_timestamp('%1','YYYYMMDDHH24MISS'),%2)").arg(m_date_bound).arg(m_mail_id_bound));
       }
     }
 
@@ -506,16 +505,10 @@ msgs_filter::build_query(sql_query& q, bool fetch_more/*=false*/)
     }
 
     {
-      QString sFinal="ORDER BY msg_date";
-      if (m_order<0)
-	sFinal+=" DESC";
-      sFinal+=",mail_id";
-      if (m_order<0)
-	sFinal+=" DESC";
+      QString sFinal = QString("ORDER BY (m.msg_date,m.mail_id) %1").
+	arg(m_order<0 ? "DESC" : "ASC");
       if (m_max_results>0) {
-	QString s;
-	s.sprintf(" LIMIT %u", m_max_results+1);
-	sFinal+=s;
+	sFinal.append(QString(" LIMIT %1").arg(m_max_results+1));
       }
       q.add_final(sFinal);
     }
@@ -525,7 +518,7 @@ msgs_filter::build_query(sql_query& q, bool fetch_more/*=false*/)
     if (m_sql_stmt.isEmpty())
       m_user_query = q.subquery("m.mail_id");
     else
-      m_user_query=m_sql_stmt;
+      m_user_query = m_sql_stmt;
   }
   catch(db_excpt& p) {
     DBEXCPT(p);
@@ -564,6 +557,7 @@ msgs_filter::asynchronous_fetch(fetch_thread* t, bool fetch_more/*=false*/)
       }
     }
     t->m_query = q.get();
+    DBG_PRINTF(4, "m_query=%s\n", t->m_query.toLocal8Bit().constData());
     m_start_time = QTime::currentTime();
     t->start();
   }
