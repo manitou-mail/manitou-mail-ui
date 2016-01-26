@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2014 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -415,7 +415,7 @@ filter_edit::move_filter_item(int direction)
 
   int index = lv_expr->indexOfTopLevelItem(item);
   int new_index;
-  DBG_PRINTF(5, "indexOfTopLevelItem=%d", index);
+
   switch(direction) {
   case 1:
     new_index = index-1;
@@ -443,7 +443,6 @@ filter_edit::move_filter_item(int direction)
      current UI limits 'new_index' to be near 'index' or at the top or
      bottom of the list. */
 
-  DBG_PRINTF(5, "new_index=%d", new_index);
   lv_expr->setCurrentItem(NULL);
 
   item = dynamic_cast<expr_lvitem*>(lv_expr->takeTopLevelItem(index));
@@ -469,8 +468,6 @@ filter_edit::move_filter_item(int direction)
   item->m_expr->m_dirty = true;
 
   lv_expr->setSortingEnabled(false);
-  DBG_PRINTF(5, "before insert at %d: lastindex=%d", new_index,
-	     lv_expr->topLevelItemCount()-1);
   lv_expr->insertTopLevelItem(new_index, item);
   renumber_items();
   lv_expr->setSortingEnabled(true);
@@ -505,7 +502,6 @@ void
 filter_edit::direction_changed(int id)
 {
   Q_UNUSED(id);
-  DBG_PRINTF(4, "direction_changed");
   if (m_current_expr) {
     m_current_expr->m_dirty=true;
     dlg_fields_to_filter_expr(m_current_expr);
@@ -736,13 +732,18 @@ filter_edit::test_expr()
     return;
   m_test_msgs_filter = new msgs_filter();
   msgs_filter* f = m_test_msgs_filter;
+
+  /* Messages to test are fetched by batches of 1000, from newer to
+     older */
   f->m_max_results = 1000;
   f->set_date_order(-1);
   f->m_include_trash = true;
+
   m_fthread = new fetch_thread();
   m_nb_filter_test_match = 0;
+  m_nb_filter_tested_msgs = 0;
   int r = f->asynchronous_fetch(m_fthread);
-  DBG_PRINTF(3, "asynchronous_fetch return: %d", r);
+
   if (r==1) {
     if (m_test_window_results==NULL) {
       m_test_window_results = new filter_results_window;
@@ -784,6 +785,7 @@ filter_edit::timer_done()
       std::list<mail_result>::iterator it;
       for (it=m_fthread->m_results->begin(); it!=m_fthread->m_results->end(); ++it) {
 	filter_evaluator filter_eval;
+	m_nb_filter_tested_msgs++;
 	filter_eval_result res = filter_eval.evaluate(*m_current_expr, m_expr_list, it->m_id);
 	if (res.result) {
 	  m_nb_filter_test_match++;
@@ -812,7 +814,7 @@ filter_edit::timer_done()
       finished=true;
       if (m_test_window_results) {
 	m_test_window_results->hide_progressbar();
-	m_test_window_results->show_status_message(tr("%1 match(es) found. Filter test finished.").arg(m_nb_filter_test_match));
+	m_test_window_results->show_status_message(tr("%1 match(es) found in %2 message(s). Filter test completed.").arg(m_nb_filter_test_match).arg(m_nb_filter_tested_msgs));
       }
     }
     else {
@@ -854,7 +856,6 @@ void
 filter_edit::delete_expr()
 {
   if (!m_current_expr) {
-    DBG_PRINTF(6, "no current expr");
     return;
   }
   int r=QMessageBox::warning(this, tr("Please confirm"), tr("Delete filter?"), tr("OK"), tr("Cancel"), QString::null);
@@ -954,15 +955,12 @@ filter_edit::display_actions()
   for (iter=e->m_actions.begin(); iter!=e->m_actions.end(); ++iter) {
     after = new action_lvitem(lv_actions, after);
     CHECK_PTR(after);
-//    DBG_PRINTF(6, "add action %s:%s\n", iter->m_str_atype.latin1(),
-//	       iter->m_action_string.latin1());
     after->m_act_ptr = &(*iter);
     after->setText(0, iter->ui_text());
   }
   create_null_action();
   if (lv_actions->topLevelItem(0)) {
     // pre-select the first element
-    DBG_PRINTF(6, "setSelected(0x%p)", lv_actions->topLevelItem(0));
     lv_actions->setCurrentItem(lv_actions->topLevelItem(0));
     m_current_action=static_cast<action_lvitem*>(lv_actions->topLevelItem(0));
   }
@@ -1105,7 +1103,6 @@ filter_edit::expr_update()
     filter_expr new_expr;
     m_expr_list.push_back(new_expr);
     item->m_expr = &(m_expr_list.back());
-    DBG_PRINTF(6, "creating new expr");
     item->m_expr->m_new=true;
     item->m_expr->m_expr_id=0;
     m_current_expr = item->m_expr;
@@ -1215,15 +1212,6 @@ filter_edit::edit_action()
 void
 filter_edit::help()
 {
-#if 0 // DEBUG
-  filter_expr* e=m_current_expr;
-  QList<filter_action>::iterator iter;
-  DBG_PRINTF(6, "current actions (m_current_action=0x%p", m_current_action);
-  for (iter=e->m_actions.begin(); iter!=e->m_actions.end(); ++iter) {
-    DBG_PRINTF(6,"\tm_str_atype=%s, m_action_string=%s",
-	       iter->m_str_atype.latin1(), iter->m_action_string.latin1());
-  }
-#endif
   helper::show_help("filters");
 }
 
@@ -1279,7 +1267,6 @@ focus_line_edit::setText(const QString& t)
 void
 focus_line_edit::focusOutEvent(QFocusEvent * e)
 {
-  DBG_PRINTF(6, "focusOutEvent()");
   validate();
   QLineEdit::focusOutEvent(e);
 }
@@ -1310,7 +1297,6 @@ action_listview::move_filter_action(int direction, filter_expr* filter)
 
   int index = indexOfTopLevelItem(item);
   int new_index;
-  DBG_PRINTF(5, "indexOfTopLevelItem=%d", index);
   switch(direction) {
   case -1:
     new_index = index-1;
@@ -1330,8 +1316,6 @@ action_listview::move_filter_action(int direction, filter_expr* filter)
      relationship between 'index' and 'new_index', even though the
      current UI limits 'new_index' to be near 'index' or at the top or
      bottom of the list. */
-
-  DBG_PRINTF(5, "new_index=%d", new_index);
 
   item = dynamic_cast<action_lvitem*>(takeTopLevelItem(index));
   insertTopLevelItem(new_index, item);

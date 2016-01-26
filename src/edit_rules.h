@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2014 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -200,6 +200,7 @@ private:
   bool m_filter_run_stopped;
   filter_results_window* m_test_window_results;
   int m_nb_filter_test_match;
+  int m_nb_filter_tested_msgs;
 
   // expr
   std::list<unsigned int> m_sel_list;
