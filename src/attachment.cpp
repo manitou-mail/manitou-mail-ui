@@ -492,6 +492,20 @@ attachment::free_data()
   }
 }
 
+QString
+attachment::human_readable_size()
+{
+  int s = size();
+  const int factor = 1000;
+  if (s < factor)
+    return QString("%1 bytes").arg(s);
+  /* display 1 number after the decimal dot */
+  else if (s < factor*factor)
+    return QString("%L1 kB").arg(s/(double)factor, 0, 'f', 1);
+  else
+    return QString("%L1 MB").arg(s/((double)factor*factor), 0, 'f', 1);
+}
+
 bool
 attachment::store(mail_id_t mail_id, ui_feedback* ui)
 {

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -67,7 +67,12 @@ public:
   bool import_file_content(ui_feedback* ui=NULL);
 
   static QString guess_mime_type(const QString);
+
   uint size() { fetch(); return m_size; }
+
+  /* rounded size with kB,Mb units */
+  QString human_readable_size();
+
   const QString filename() { fetch(); return m_filename; }
   static QString extension(const QString);
   QString mime_type() { fetch(); return m_mime_type; }

@@ -47,7 +47,7 @@ attch_lvitem::fill_columns()
   if (m_pAttachment && m_type==0) {
     setText(0, m_pAttachment->mime_type());
     setText(1, m_pAttachment->filename());
-    sSize.sprintf("%d", m_pAttachment->size());
+    sSize = m_pAttachment->human_readable_size();
   }
   else if (m_type==1) {
     setText(0, "(private note)");
