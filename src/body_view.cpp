@@ -24,7 +24,6 @@
 #include "db.h"
 #include "xface/xface.h"
 
-#include <QDebug>
 #include <QKeyEvent>
 #include <QPainter>
 #include <QTextEdit>
@@ -121,10 +120,10 @@ body_view::set_font(const QFont& font)
     s.append("font-family:\"" + font.family() + "\";");
   }
   if (font.pointSize()>1) {
-    s.append(QString("font-size:%1 pt;").arg(font.pointSize()));
+    s.append(QString("font-size:%1pt;").arg(font.pointSize()));
   }
   else if (font.pixelSize()>1) {
-    s.append(QString("font-size:%1 px;").arg(font.pixelSize()));
+    s.append(QString("font-size:%1px;").arg(font.pixelSize()));
   }
   if (font.bold()) {
     s.append("font-weight: bold;");

@@ -20,7 +20,6 @@
 #ifndef INC_MESSAGE_VIEW_H
 #define INC_MESSAGE_VIEW_H
 
-#include <QWebView>
 #include <QString>
 #include <QMap>
 #include <QUrl>
