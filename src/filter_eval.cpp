@@ -1,4 +1,4 @@
-/* Copyright (C) 2011 Daniel Verite
+/* Copyright (C) 2011-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -19,7 +19,6 @@
 
 #include <QString>
 #include <QVariant>
-#include <QDebug>
 #include <QCoreApplication>
 #include <QStringList>
 
@@ -327,7 +326,7 @@ filter_evaluator::func_list_header_addresses(const QString field,
   filter_eval_value v = func_header(v1, ctxt);
 
   if (v.vtype == filter_eval_value::type_string && !v.val.toString().isEmpty()) {
-    QList<QString> emails;
+    QStringList emails;
     QList<QString> names;
     int r = mail_address::ExtractAddresses(v.val.toString(),
 					   emails, names);
