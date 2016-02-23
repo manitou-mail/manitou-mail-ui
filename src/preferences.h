@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -43,12 +43,12 @@ public:
 protected slots:
   virtual void done(int);
   void help();
-  void page_changed(QWidget*);
+  void page_changed(int);
   void ident_changed(int);
 private slots:
   void new_identity();
   void delete_identity();
-  void email_lost_focus();
+  void email_edited();
 #if 0
   void other_conf(const QString&);
 #endif
@@ -93,8 +93,7 @@ private:
   bool update_identities_db();
   void add_new_identity();
 
-  // viewers stuff
-  void load_viewers();
+  // MIME viewers stuff
   bool update_viewers_db();
   bool m_viewers_updated;
 };
