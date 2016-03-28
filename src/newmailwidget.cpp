@@ -995,8 +995,8 @@ new_mail_widget::check_addresses(const QString addresses,
 
   if (unparsable)
     *unparsable=false;
-  std::list<QString> emails_list;
-  std::list<QString> names_list;
+  QList<QString> emails_list;
+  QList<QString> names_list;
   int err = mail_address::ExtractAddresses(addresses, emails_list, names_list);
   QString result;
 
@@ -1007,7 +1007,7 @@ new_mail_widget::check_addresses(const QString addresses,
 
   bool do_basic_check=(get_config().get_string("composer/address_check")=="basic");
 
-  std::list<QString>::const_iterator iter1,iter2;
+  QList<QString>::const_iterator iter1,iter2;
   for (iter1 = emails_list.begin(), iter2 = names_list.begin();
        iter1!=emails_list.end() && iter2!=names_list.end();
        ++iter1, ++iter2)

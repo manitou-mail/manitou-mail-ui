@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2013 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -108,7 +108,6 @@ mime_msg_viewer::format_body(QString& output,
   int endline;
 
   mail_displayer disp;
-  disp.m_wrap_lines=false;
 
   do {
     endline = b.indexOf('\n', startline);

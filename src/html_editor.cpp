@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2014 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -41,6 +41,7 @@
 #include <QDesktopServices>
 #include <QDropEvent>
 #include <QWebSettings>
+#include <QMimeData>
 
 #include "icons.h"
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2014 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -217,7 +217,9 @@ input_addresses_widget::input_addresses_widget(const QString& addresses)
   m_addr_list->header()->resizeSection(1, date_width);
   m_addr_list->header()->resizeSection(0, m_addr_list->header()->length()-date_width);
 */
+#if QT_VERSION<0x050000
   m_addr_list->header()->setResizeMode(QHeaderView::ResizeToContents);
+#endif
   connect(m_addr_list, SIGNAL(itemActivated(QTreeWidgetItem*,int)),
 	  this, SLOT(addr_selected(QTreeWidgetItem*,int)));
 
@@ -366,13 +368,12 @@ input_addresses_widget::show_prio_contacts()
 QString
 input_addresses_widget::format_multi_lines(const QString addresses)
 {
-  std::list<QString> emails_list;
-  std::list<QString> names_list;
-  QByteArray ba = addresses.toLatin1(); // TODO: replace this when ExtractAddresses takes a QString instead of char*
-  mail_address::ExtractAddresses(ba.constData(), emails_list, names_list);
+  QList<QString> emails_list;
+  QList<QString> names_list;
+  mail_address::ExtractAddresses(addresses, emails_list, names_list);
   QString result;
 
-  std::list<QString>::const_iterator iter1,iter2;
+  QList<QString>::const_iterator iter1,iter2;
   for (iter1 = emails_list.begin(), iter2 = names_list.begin();
        iter1!=emails_list.end() && iter2!=names_list.end();
        ++iter1, ++iter2)

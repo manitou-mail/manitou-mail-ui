@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2013 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -19,8 +19,6 @@
 
 #ifndef INC_MAIN_H
 #define INC_MAIN_H
-
-#define TODO_WEBKIT
 
 #ifdef _MSC_VER
 #pragma warning (disable:4786)

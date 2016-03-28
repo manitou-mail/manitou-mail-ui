@@ -249,12 +249,12 @@ mail_item_model::create_row(mail_msg* msg, QList<QStandardItem*>& items)
   items.append(idate);
 
   QStandardItem* irecipient = new QStandardItem();
-  std::list<QString> emails;
-  std::list<QString> names;
+  QList<QString> emails;
+  QList<QString> names;
   QString recipients;
   mail_address::ExtractAddresses(msg->recipients(), emails, names);
-  std::list<QString>::const_iterator iter1 = emails.begin();
-  std::list<QString>::const_iterator iter2 = names.begin();
+  QList<QString>::const_iterator iter1 = emails.begin();
+  QList<QString>::const_iterator iter2 = names.begin();
   for (; iter1!=emails.end() && iter2!=names.end(); ++iter1,++iter2) {
     if (!recipients.isEmpty())
       recipients.append(", ");
@@ -515,6 +515,10 @@ mail_listview::mail_listview(QWidget* parent): QTreeView(parent)
   setSelectionMode(QAbstractItemView::ExtendedSelection);
   setSelectionBehavior(QAbstractItemView::SelectRows);
   setUniformRowHeights(true);
+  // Qt5: lines too close to each other as in the default QTreeView style
+  // don't feel good for the list of messages, hence this hard-wired
+  // 3px margin
+  this->setStyleSheet("QTreeView::item { margin-bottom: 3px; }");
   mail_item_model* model = new mail_item_model(this);
   this->setModel(model);
   model->set_date_format(get_config().get_date_format_code());
@@ -1009,7 +1013,7 @@ mail_listview::init_columns()
 {
   DBG_PRINTF(4, "init_columns");
   model()->init();
-  setAllColumnsShowFocus(TRUE);
+  setAllColumnsShowFocus(true);
   static const int default_sizes[] = {280,170,32,32,24,24,115,170};
   QString s;
   const int ncols = (int)(sizeof(default_sizes)/sizeof(default_sizes[0]));

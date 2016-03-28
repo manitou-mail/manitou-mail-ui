@@ -105,12 +105,12 @@ mail_header::store_addresses_list(const QString& addr_list, int addr_type)
 {
   db_cnx db;
   sql_stream s("INSERT INTO mail_addresses(mail_id,addr_id,addr_type,addr_pos) VALUES(:p1,:p2,:p3,:p4)", db);
-  std::list<QString> emails;
-  std::list<QString> names;
-  mail_address::ExtractAddresses(addr_list.toLatin1().constData(), emails, names);
+  QList<QString> emails;
+  QList<QString> names;
+  mail_address::ExtractAddresses(addr_list, emails, names);
   bool found;
-  std::list<QString>::iterator it1 = emails.begin();
-  std::list<QString>::iterator it2 = names.begin();
+  QList<QString>::iterator it1 = emails.begin();
+  QList<QString>::iterator it2 = names.begin();
   for (int addr_pos = 0; it1 != emails.end(); addr_pos++) {
     mail_address a;
     QString s_addr=(*it1).toLower();
@@ -139,11 +139,11 @@ QString
 mail_header::recipients_list()
 {
   QString result;
-  std::list<QString> emails;
-  std::list<QString> names;
-  mail_address::ExtractAddresses(m_to.toLatin1().constData(), emails, names);
-  std::list<QString>::iterator it1 = emails.begin();
-  std::list<QString>::iterator it2 = names.begin();
+  QList<QString> emails;
+  QList<QString> names;
+  mail_address::ExtractAddresses(m_to, emails, names);
+  QList<QString>::iterator it1 = emails.begin();
+  QList<QString>::iterator it2 = names.begin();
   for (; it1 != emails.end() && it2!=names.end(); ) {
     mail_address a;
     a.set((*it1).toLower());
@@ -217,11 +217,11 @@ append_decoded_qp(const QString& s, char* buf)
 {
   int jb=0;
   for (int j=0; j<s.length(); j++) {
-    char c=s.at(j).toAscii();
+    char c=s.at(j).toLatin1();
     if (c=='=') {
       if (j<s.length()-2) {
 	try {
-	  char c1=to_hex(s.at(j+1).toAscii(), s.at(j+2).toAscii());
+	  char c1=to_hex(s.at(j+1).toLatin1(), s.at(j+2).toLatin1());
 	  buf[jb++]=c1;
 	  j+=2;
 	  continue;
@@ -347,7 +347,7 @@ mail_header::decode_line(QString& s)
     //printf("\tcodecname=%s\n", (*it).latin1());
     QTextCodec* codec=QTextCodec::codecForName((*it).toLatin1());
     ++it;
-    char enctype=(*it).at(0).toUpper().toAscii();
+    char enctype=(*it).at(0).toUpper().toLatin1();
     ++it;
     int bufsz=(*it).length();
 #ifdef __GNUG__
@@ -399,11 +399,11 @@ mail_header::decode_rfc822(const QString src, QString& dest)
   QString curline;
   int len=src.length();
   for (int i=0; i<len; i++) {
-    char c=src.at(i).toAscii();
+    char c=src.at(i).toLatin1();
     switch(c) {
     case '\n':
       if (i+1<len) {
-	char c1=src.at(i+1).toAscii();
+	char c1=src.at(i+1).toLatin1();
 	if (c1!=' ' && c1!='\t') {
 	  curline.append(c);
 	}
@@ -411,7 +411,7 @@ mail_header::decode_rfc822(const QString src, QString& dest)
 	  curline.append(' ');
 	  i++;
 	  while (i<len && (c1==' ' || c1=='\t')) {
-	    c1=src.at(i).toAscii();
+	    c1=src.at(i).toLatin1();
 	    i++;
 	  }
 	  if (i<len) {

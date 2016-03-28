@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -171,17 +171,6 @@ mail_displayer::expand_body_line(const QString& line,
 	cur_url = std::pair<int,int>(-1,-1);
     }
     last_src_char=c;
-    // wrap the line
-#if 0				// now performed by QTextBrowser
-    const int max_column = 78;
-    if (m_wrap_lines && (col > max_column)) {
-      if (last_space) {
-	exp_s.replace(last_space, space_encode_chars, "<br>");
-	last_space=0;
-	col = word_cols;
-      }
-    }
-#endif
   }
   return exp_s;
 }
@@ -449,7 +438,6 @@ display_prefs::init()
   m_show_headers_level = 1;
   m_show_tags = get_config().get_bool("show_tags");
   m_threaded = get_config().get_bool("display_threads");
-  m_wrap_lines = true;
   m_hide_quoted = 0;
   m_clickable_urls=get_config().get_bool("body_clickable_urls", true);
   m_show_filters_trace = get_config().get_bool("display/filters_trace");

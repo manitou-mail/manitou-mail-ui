@@ -115,25 +115,25 @@ dnl Memo: AC_ARG_WITH(package, help-string, [if-given], [if-not-given])
   fi
 
   # Find qmake.
-  AC_PATH_PROGS([QMAKE], [qmake-qt4 qmake], [missing], [$QT_DIR:$QT_PATH:$PATH:$tmp_qt_paths])
+  AC_PATH_PROGS([QMAKE], [qmake], [missing], [$QT_DIR:$QT_PATH:$PATH:$tmp_qt_paths])
   if test x"$QMAKE" = xmissing; then
     AC_MSG_ERROR([Cannot find qmake in your PATH. Try using --with-qt.])
   fi
 
   # Find moc (Meta Object Compiler).
-  AC_PATH_PROGS([MOC], [moc-qt4 moc], [missing], [$QT_PATH:$PATH:$tmp_qt_paths])
+  AC_PATH_PROGS([MOC], [moc], [missing], [$QT_PATH:$PATH:$tmp_qt_paths])
   if test x"$MOC" = xmissing; then
     AC_MSG_ERROR([Cannot find moc (Meta Object Compiler) in your PATH. Try using --with-qt.])
   fi
 
   # Find uic (User Interface Compiler).
-  AC_PATH_PROGS([UIC], [uic-qt4 uic], [missing], [$QT_PATH:$PATH:$tmp_qt_paths])
+  AC_PATH_PROGS([UIC], [uic uic], [missing], [$QT_PATH:$PATH:$tmp_qt_paths])
   if test x"$UIC" = xmissing; then
     AC_MSG_ERROR([Cannot find uic (User Interface Compiler) in your PATH. Try using --with-qt.])
   fi
 
   # Find lrelease (Qt Linguist Release tool)
-  AC_PATH_PROGS([LRELEASE], [lrelease-qt4 lrelease], [missing], [$QT_PATH:$PATH:$tmp_qt_paths])
+  AC_PATH_PROGS([LRELEASE], [lrelease lrelease], [missing], [$QT_PATH:$PATH:$tmp_qt_paths])
   if test x"$LRELEASE" = xmissing; then
     AC_MSG_ERROR([Cannot find lrelease (Qt Linguist Release tool) in your PATH. Try using --with-qt.])
   fi

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -57,7 +57,7 @@ filter_action::ui_text() const
     QStringList display_status;
     QStringList l=m_action_arg.split('+', QString::KeepEmptyParts);
     for (QStringList::Iterator it=l.begin(); it!=l.end(); ++it) {
-      char c=(*it).at(0).toAscii();
+      char c=(*it).at(0).toLatin1();
       switch(c) {
       case 'R':
 	display_status.append(QObject::tr("Read"));

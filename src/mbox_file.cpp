@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2015 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -57,7 +57,7 @@ mbox_file::check_format(const QString filename)
   bool format_ok=false;
   QFile f(filename);
   if (!f.open(QIODevice::ReadOnly)) {
-    QString errmsg = QIODevice::tr(f.errorString().toAscii().constData());
+    QString errmsg = QIODevice::tr(f.errorString().toLatin1().constData());
     QMessageBox::critical(NULL, QObject::tr("Open error"), QObject::tr("Can't open file '%2': %1").arg(errmsg).arg(filename));
     return false;
   }
@@ -157,7 +157,7 @@ mbox_file::database_import(int import_id)
 
     QFile f(m_filename);
     if (!f.open(QIODevice::ReadOnly)) {
-      QString errmsg = QIODevice::tr(f.errorString().toAscii().constData());
+      QString errmsg = QIODevice::tr(f.errorString().toLatin1().constData());
       QMessageBox::critical(NULL, QObject::tr("Open error"), QObject::tr("Can't open file '%2': %1").arg(errmsg).arg(m_filename));
       return false;
     }
@@ -256,8 +256,8 @@ void
 mbox_file::import_message(int import_id, int mail_number, const QByteArray& bytes,
 			  PGconn* pgconn)
 {
-  QByteArray p1=QString("%1").arg(import_id).toAscii();
-  QByteArray p2=QString("%1").arg(mail_number).toAscii();
+  QByteArray p1=QString("%1").arg(import_id).toLatin1();
+  QByteArray p2=QString("%1").arg(mail_number).toLatin1();
   const char* param_values[3] = {p1.constData(), p2.constData(), bytes.constData()};
   int param_lengths[3] = {0,0, bytes.length()};
   int param_formats[3]={0,0,1};

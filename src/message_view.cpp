@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -100,6 +100,7 @@ void
 message_view::link_clicked(const QUrl& url)
 {
   if (url.scheme()=="mailto") {
+#if QT_VERSION<0x050000 // later
     // TODO: use more headers, particularly "body"
     mail_header header;
     if (!url.path().isEmpty())
@@ -108,6 +109,7 @@ message_view::link_clicked(const QUrl& url)
       header.m_subject=url.queryItemValue("subject");
     }
     gl_pApplication->start_new_mail(header);
+#endif
   }
   else if (url.scheme().isEmpty()) {
     const QString cmd=url.toString();
@@ -247,12 +249,6 @@ message_view::page_down()
   frame->setScrollPosition(pos);
 }
 
-void
-message_view::set_wrap(bool b)
-{
-  Q_UNUSED(b);
-}
-
 /* Replace the whole display by the "fetch on demand" href link or
    toggle back to normal display */
 void
@@ -374,8 +370,6 @@ message_view::display_body(const display_prefs& prefs, int preferred_format)
     .arg(disp.sprint_headers(prefs.m_show_headers_level, m_pmsg))
     .arg(disp.sprint_additional_headers(prefs, m_pmsg))
     .arg(QString("<div id=\"manitou-commands\"></div>"));
-
-  set_wrap(prefs.m_wrap_lines);
 
   m_has_text_part = !body_text.isEmpty();
   m_has_html_part = (html_attachment!=NULL || !body_html.isEmpty());

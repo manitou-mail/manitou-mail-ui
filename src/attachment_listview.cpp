@@ -35,6 +35,7 @@
 #include <QPushButton>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QMimeData>
 
 // *************** //
 //  attch_lvitem

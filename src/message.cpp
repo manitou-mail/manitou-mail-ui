@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2014 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -365,10 +365,10 @@ mail_msg::lookup_dest_identity()
     if (!cc.isEmpty()) {
       to += QString(",") + cc;
     }
-    std::list<QString> emails_list;
-    std::list<QString> names_list;
+    QList<QString> emails_list;
+    QList<QString> names_list;
     mail_address::ExtractAddresses(to, emails_list, names_list);
-    std::list<QString>::const_iterator iter1;
+    QList<QString>::const_iterator iter1;
     for (iter1 = emails_list.begin(); iter1!=emails_list.end(); ++iter1) {
       identities::const_iterator iit = m_ids.find(*iter1);
       if (iit != m_ids.end()) {
@@ -1058,13 +1058,12 @@ mail_msg::setup_reply(const QString& quoted_text, int whom_to, body_format forma
     }
 
     // Break down the Cc fields into email+names components
-    std::list<QString> emails_list;
-    std::list<QString> names_list;
-    mail_address::ExtractAddresses(replyHeader.m_cc.toLatin1().constData(),
-				   emails_list, names_list);
+    QList<QString> emails_list;
+    QList<QString> names_list;
+    mail_address::ExtractAddresses(replyHeader.m_cc, emails_list, names_list);
 
     // Reassemble the list of addresses, skipping those that belong to us
-    std::list<QString>::const_iterator iter1,iter2;
+    QList<QString>::const_iterator iter1,iter2;
     QString expurged_cc;
     identities our_identities;
     our_identities.fetch();
@@ -1081,7 +1080,6 @@ mail_msg::setup_reply(const QString& quoted_text, int whom_to, body_format forma
 	expurged_cc += addr.email_and_name();
       }
     }
-    DBG_PRINTF(5,"expurged_cc=%s\n", expurged_cc.toLatin1().constData());
     replyHeader.m_cc = expurged_cc;
   }
   QString us = lookup_dest_identity();
@@ -1092,9 +1090,9 @@ mail_msg::setup_reply(const QString& quoted_text, int whom_to, body_format forma
 
   if (!sFrom.isEmpty()) {
     // extract the sender's name from the headers
-    std::list<QString> addrs;
-    std::list<QString> names;
-    int r=mail_address::ExtractAddresses(sFrom.toLatin1().constData(), addrs, names);
+    QList<QString> addrs;
+    QList<QString> names;
+    int r=mail_address::ExtractAddresses(sFrom, addrs, names);
     if (!r && names.size()>0)
       sender_name=names.front();
   }

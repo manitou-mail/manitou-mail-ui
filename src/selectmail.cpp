@@ -1288,7 +1288,7 @@ select_status_box::select_status_box(bool either, QWidget* parent):
     else
       grid->addWidget(b3, i, 3);
     QButtonGroup* g=new QButtonGroup;
-    g->setExclusive(TRUE);
+    g->setExclusive(true);
     g->addButton(b1, button_id++);
     g->addButton(b2, button_id++);
     g->addButton(b3, button_id++);

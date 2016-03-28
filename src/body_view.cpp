@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -24,12 +24,12 @@
 #include "db.h"
 #include "xface/xface.h"
 
-#include <QDebug>
 #include <QKeyEvent>
 #include <QPainter>
 #include <QTextEdit>
 #include <QWebPage>
 #include <QWebFrame>
+#include <QUrlQuery>
 #include <QTimer>
 
 body_view::body_view(QWidget* parent) : QWebView(parent)
@@ -107,7 +107,7 @@ body_view::set_body_style()
   force_style_sheet();
 #else
   QString style = default_style + body_style + header_style;
-  QByteArray b = style.toAscii().toBase64();
+  QByteArray b = style.toLatin1().toBase64();
   page()->settings()->setUserStyleSheetUrl(QUrl(QString("data:text/css;charset=utf-8;base64,")+QString(b)));  
 #endif
 }
@@ -120,10 +120,10 @@ body_view::set_font(const QFont& font)
     s.append("font-family:\"" + font.family() + "\";");
   }
   if (font.pointSize()>1) {
-    s.append(QString("font-size:%1 pt;").arg(font.pointSize()));
+    s.append(QString("font-size:%1pt;").arg(font.pointSize()));
   }
   else if (font.pixelSize()>1) {
-    s.append(QString("font-size:%1 px;").arg(font.pixelSize()));
+    s.append(QString("font-size:%1px;").arg(font.pixelSize()));
   }
   if (font.bold()) {
     s.append("font-weight: bold;");
@@ -150,24 +150,6 @@ body_view::copy()
 {
   triggerPageAction(QWebPage::Copy);
 }
-
-void
-body_view::set_wrap(bool on)
-{
-  Q_UNUSED(on);
-  // for text parts, we'll probably need to implement wrapmode by HTML-styling the contents
-#ifndef TODO_WEBKIT
-  if (on) {
-    setWordWrapMode(QTextOption::WordWrap);
-    setLineWrapMode(QTextEdit::WidgetWidth);
-  }
-  else {
-    setLineWrapMode(QTextEdit::NoWrap);
-    setWordWrapMode(QTextOption::NoWrap);
-  }
-#endif
-}
-
 
 //static
 void
@@ -292,13 +274,13 @@ internal_img_network_reply::internal_img_network_reply(const QNetworkRequest& re
   position=0;
   setRequest(req);
   if (type==1) { // Face
-    m_buffer = QByteArray::fromBase64(encoded_img.toAscii().constData());
+    m_buffer = QByteArray::fromBase64(encoded_img.toLatin1().constData());
   }
   else { // X-Face
     QImage qi;
     QString s;
-    xface_to_xpm(encoded_img.toAscii().constData(), s);
-    if (qi.loadFromData((const uchar*)s.toAscii().constData(), s.length(), "XPM")) {
+    xface_to_xpm(encoded_img.toLatin1().constData(), s);
+    if (qi.loadFromData((const uchar*)s.toLatin1().constData(), s.length(), "XPM")) {
       QBuffer b(&m_buffer);
       qi.save(&b, "PNG");
     }
@@ -427,23 +409,26 @@ network_manager::createRequest(Operation op, const QNetworkRequest& req, QIODevi
     return empty_network_reply(op, req);
   }
   else if (url.scheme()=="manitou" && (url.authority()=="xface" || url.authority()=="face")) {
-    if (url.hasQueryItem("id") && url.hasQueryItem("o")) {
-      QString headers = m_pmsg->get_headers();
-      bool id_ok, o_ok;
-      mail_id_t id = mail_msg::id_from_string(url.queryItemValue("id"), &id_ok);
-      int offset = url.queryItemValue("o").toInt(&o_ok);
-      if (id_ok && o_ok && id == m_pmsg->get_id()) {
-	int lf_pos = headers.indexOf('\n', offset);
-	QString ascii_line;
-	if (lf_pos>0) {
-	  ascii_line = headers.mid(offset, lf_pos-offset);
+    if (url.hasQuery()) {
+      QUrlQuery qq(url);
+      if (qq.hasQueryItem("id") && qq.hasQueryItem("o")) {
+	QString headers = m_pmsg->get_headers();
+	bool id_ok, o_ok;
+	mail_id_t id = mail_msg::id_from_string(qq.queryItemValue("id"), &id_ok);
+	int offset = qq.queryItemValue("o").toInt(&o_ok);
+	if (id_ok && o_ok && id == m_pmsg->get_id()) {
+	  int lf_pos = headers.indexOf('\n', offset);
+	  QString ascii_line;
+	  if (lf_pos>0) {
+	    ascii_line = headers.mid(offset, lf_pos-offset);
+	  }
+	  else {
+	    ascii_line = headers.mid(offset);
+	  }
+	  ascii_line.replace(" ", "");
+	  int type = url.authority()=="face" ? 1:2;
+	  return new internal_img_network_reply(req, ascii_line, type, this);
 	}
-	else {
-	  ascii_line = headers.mid(offset);
-	}
-	ascii_line.replace(" ", "");
-	int type = url.authority()=="face" ? 1:2;
-	return new internal_img_network_reply(req, ascii_line, type, this);
       }
     }
     return empty_network_reply(op, req);

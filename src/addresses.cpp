@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -24,19 +24,10 @@
 
 //static
 QString
-mail_address::part_string (const char* start, int len)
-{
-  QString s(start);
-  s.truncate(len);
-  return s;
-}
-
-//static
-QString
 mail_address::parse_extract_email(const QString line)
 {
-  std::list<QString> emails;
-  std::list<QString> names;
+  QList<QString> emails;
+  QList<QString> names;
   ExtractAddresses(line, emails, names);
   if (emails.size()==1)
     return emails.front();
@@ -44,195 +35,170 @@ mail_address::parse_extract_email(const QString line)
     return QString::null;
 }
 
-int
-mail_address::ExtractAddresses(const QString& addr,
-			       std::list<QString>& result,
-			       std::list<QString>& result1)
-{
-  QByteArray qba = addr.toLatin1();
-  return ExtractAddresses(qba.constData(), result, result1);
-}
-
 /*
   Hand made parser
   Currently recognizes:
 
-  foo@here.org
-  foo@here.org (Foo J. Bar)
-  <foo@here.org>
-  Foo Bar <foo@here.org>
-  'Foo Bar' <foo@here.org>
-  "Foo Bar" <foo@here.org>
+  foo@example.org
+  foo@example.org (Foo J. Bar)
+  <foo@example.org>
+  Foo Bar <foo@example.org>
+  'Foo Bar' <foo@example.org>
+  "Foo Bar" <foo@example.org>
 */
 
 /*static*/
 int
-mail_address::ExtractAddresses(const char* addr,
-			       std::list<QString>& result,
-			       std::list<QString>& result1)
+mail_address::ExtractAddresses(const QString& line,
+			       QList<QString>& addrs,
+			       QList<QString>& names)
 {
-  if (!addr)	// happens if addr is the result of QString::null.latin1();
-    return 0;
+  int len = line.length();
+  int idx = 0;
+  QChar ch;
+  QChar enclose_char;
 
-  // result => emails
-  // result1 => names
-  const char* start_addr;
-  const char* start1_addr;
-  const char* end_addr;
-  const char* end1_addr;
-  int c;
-  char enclose_char=0;
+  int err = 0;
 
-  int err=0;
-  c=*addr++;
-  while (c) {
-    switch(c) {
-    case ' ':
-    case '\t':
-    case '\n':
-    case '\r':
-    case ',':
-      c=*addr++;
-      break;			// address separator
-    case '\0':
-      break;
-    case '<':
-      // <foo@here.org> expected
-      start_addr=addr;
-      c=*addr++;
-      while (c && c!=' ' && c!='\t' && c!='>')
-	c=*addr++;
-      switch(c) {
-      case '>':
-	result.push_back (part_string (start_addr, addr-start_addr-1));
-	result1.push_back(QString(""));
-	c=*addr++;
-	break;
+  while (idx < len) {
+    ch = line.at(idx);
+    bool done=true;
+    if (ch.unicode() < 128) {
+      switch(ch.toLatin1()) {
       default:
-	err=1;
-	return err;
-      }
-      break;
+	done=false;
+	break;
+      case ' ':
+      case '\t':
+      case '\n':
+      case '\r':
+      case ',':
+	idx++;
+	break;			// address separator
+      case '\0':
+	break;
+      case '<':
+	// <foo@example.org> expected
+	{
+	  int start = ++idx;
+	  QChar end_ch('>');
+	  do {
+	    if (idx >= len)
+	      return 1;		// err = 1;
+	    ch = line.at(idx++);
+	  } while (ch != end_ch);
+	  addrs.append(line.mid(start, idx-start-1));
+	  names.push_back(QString(""));
+	}
+	break;
     case '\'':
     case '"':
-      enclose_char=c;
-      start1_addr=addr;
-      c=*addr++;
-      while (c && c!=enclose_char)
-	c=*addr++;
-      if (!c) {
-	err=1;
-	return err;
+      // "Foo Bar" <foo@example.org>
+      {
+	enclose_char = ch;
+	int start = ++idx;
+	do {
+	  if (idx >= len)
+	    return 1;		// err = 1;
+	  ch = line.at(idx++);
+	} while (ch != enclose_char);
+	names.append(line.mid(start, idx-start-1));
+
+	do {
+	  if (idx >= len)
+	    return 1;		// err = 1;
+	  ch = line.at(idx++);
+	} while (ch != '<');
+
+	start = idx;
+	do {
+	  if (idx >= len)
+	    return 1;		// err = 1;
+	  ch = line.at(idx++);
+	} while (ch != '>');
+	addrs.append(line.mid(start, idx-start-1));
       }
-      result1.push_back (part_string (start1_addr,addr-start1_addr-1));
-      c=*addr++;
-      while (c==' ' || c=='\t')
-	c=*addr++;
-      if (!c) {			// empty address: \".*\"([ \t])*
-	result.push_back(QString(""));
-	break;
-      }
-      if (c!='<') {
-	//err=2;  // "foo bar" not followed by <foo@here.org>
-	//return err;
-	while ((c=*(++addr))!='<') {
-	  if (!c) {
-	    err=2;
-	    return err;
-	  }
-	}
-	addr++;
-      }
-      start_addr=addr;
-      c=*addr++;
-      while (c && c!='>')
-	c=*addr++;
-      if (!c) {
-	err=1;
-	return err;
-      }
-      result.push_back (part_string (start_addr, addr-start_addr-1));
-      c=*addr++;
       break;
-    default:
-      int enclose=0; //(c=='\'');
-      start_addr=addr-1;
-      start1_addr=addr-1;
-      c=*addr++;
-      while (c && (enclose || c!=' ') && c!='\t' && c!=',') // && c!='\'')
-	c=*addr++;
-      if (!c || c==',') {
-	// email alone
-	result.push_back(part_string (start_addr, addr-start_addr-1));
-	result1.push_back(QString(""));
+      }
+      if (done)
+	continue;		// the while loop
+    }
+
+    // this path is both for ch.unicode()>=128, or ch.unicode()<128
+    // and not dealt with by the switch() above
+
+    int start = idx, start1;
+
+    do {
+      if (idx >= len)
+	break;
+      ch = line.at(idx++);
+    } while (ch != ' ' && ch != '\t' && ch != ',' && ch != '\n');
+
+    if (idx == len) {
+      // email alone and eol
+      addrs.append(line.mid(start, idx-start));
+      names.append(QString(""));
+    }
+    else if (ch == ',' || ch == '\n') {
+      addrs.append(line.mid(start, idx-start-1));
+      names.append(QString(""));
+    }
+    else {
+      //  {Name firstname <email>} or {email (name firstname)}
+      // addr
+      int end_addr = idx;
+      // skip blanks
+      do {
+	if (idx >= len)
+	  return 1; // err=1
+	ch = line.at(idx++);
+      } while (ch == ' ' || ch == '\t');
+
+      if (ch == '<') {
+	QString name1 = line.mid(start);
+	name1.truncate(idx-start-1);
+	// strip trailing white spaces from the name
+	names.append(name1.trimmed());
+
+	start1 = idx;
+	do {
+	  if (idx >= len)
+	    return 1; // err=1
+	  ch = line.at(idx++);
+	} while (ch != '>');
+	addrs.append(line.mid(start1, idx-start1-1));
+      }
+      else if (ch == '(') {
+	start1 = idx; // points to char just after left parenthesis
+	do {
+	  if (idx >= len)
+	    return 1; // err=1
+	  ch = line.at(idx++);
+	} while (ch != ')');
+	addrs.append(line.mid(start, end_addr-start-1));
+	names.append(line.mid(start1, idx-start1-1));
       }
       else {
-	//  'Name firstname <email>' or 'email (name firstname)'
-	// addr
-	end_addr = addr;
-	c=*addr++;
-	while (c==' ' || c=='\t')
-	  c=*addr++;
-	switch(c) {
-	case '\0':
-	  err=1;
-	  return err;
-	case '<':
-	  {
-	    QString name1(start1_addr);
-	    name1.truncate(addr-start1_addr-1);
-	    // strip trailing white spaces from the name
-	    result1.push_back (name1.trimmed());
-	  }
-	  start_addr=addr;
-	  c=*addr++;
-	  while (c && c!='>')
-	    c=*addr++;
-	  if (!c) {
-	    err=1;
-	    return err;
-	  }
-	  result.push_back (part_string (start_addr, addr-start_addr-1));
-	  c=*addr++;
-	  break;
-	case '(':
-	  start1_addr=addr;
-	  c=*addr++;
-	  while (c && c!=')')
-	    c=*addr++;
-	  if (!c) {
-	    err=1;
-	    return err;
-	  }
-	  result.push_back(part_string(start_addr,end_addr-start_addr-1));
-	  result1.push_back(part_string (start1_addr, addr-start1_addr-1));
-	  c=*addr++;
-	  break;
-	default:	// Name firstname <email>
-	  c=*addr++;
-	  while (c && c!='<')
-	    c=*addr++;
-	  if (!c) {
-	    err=1;
-	    return err;
-	  }
-	  end1_addr=addr-1;
-	  start_addr=addr;
-	  c=*addr++;
-	  while (c && c!='>')
-	    c=*addr++;
-	  if (!c) {
-	    err=1;
-	    return err;
-	  }
-	  result.push_back(part_string(start_addr,addr-start_addr-1));
-	  result1.push_back(part_string(start1_addr, end1_addr-start1_addr-1));
-	  c=*addr++;
-	  break;
-	}
+	// Name firstname <email>
+	do {
+	  if (idx >= len)
+	    return 1; // err=1
+	  ch = line.at(idx++);
+	} while (ch != '<');
+
+	start1 = idx;		// start of email
+
+	do {
+	  if (idx >= len)
+	    return 1; // err=1
+	  ch = line.at(idx++);
+	} while (ch != '>');
+	names.append(line.mid(start, start1-start-1).trimmed());
+	addrs.append(line.mid(start1, idx-start1-1));
       }
-      break;
     }
+
   }
   return err;
 }
@@ -245,7 +211,6 @@ void  // static
 mail_address::join_address_lines(QString& line)
 {
   int pos=0;
-  int lastpos=-1;
   int len = line.length();
   QString d; // destination
 
@@ -261,7 +226,6 @@ mail_address::join_address_lines(QString& line)
 
   while (pos<len) {
     if (line.at(pos)=='\n' || line.at(pos)==',') {
-      lastpos=pos;
       while (pos<len && (line.at(pos)=='\n' ||line.at(pos)==','))
 	pos++;
       if (pos<len) {
@@ -764,7 +728,7 @@ mail_address::diff_update(const mail_address& to_update)
 
 /*
   Fetch <count> email addresses recently used in from or to recipients
-  if <count>=0, don't limit the number of rows fetched 
+  if <count>=0, don't limit the number of rows fetched
   <type>: 1=to, 2=from, 3=positive prio
   ignore addresses before <offset> if offset is given
 */

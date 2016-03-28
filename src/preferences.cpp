@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2013 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -700,7 +700,7 @@ prefs_dialog::ident_widget()
     m_widgets->w_email=new QLineEdit(w);
     grid->addWidget(l, row, 0);
     grid->addWidget(m_widgets->w_email, row, 1);
-    connect(m_widgets->w_email, SIGNAL(lostFocus()), this, SLOT(email_lost_focus()));
+    connect(m_widgets->w_email, SIGNAL(editingFinished()), this, SLOT(email_edited()));
 
   }
   row++;
@@ -805,7 +805,7 @@ prefs_dialog::prefs_dialog(QWidget* parent): QDialog(parent)
   m_tabw->addTab(m_fetching_page, tr("Fetching"));
 
 
-  connect(m_tabw, SIGNAL(currentChanged(QWidget*)), this, SLOT(page_changed(QWidget*)));
+  connect(m_tabw, SIGNAL(currentChanged(int)), this, SLOT(page_changed(int)));
 
   QHBoxLayout* hb = new QHBoxLayout;
   hb->setMargin(5);
@@ -871,19 +871,12 @@ prefs_dialog::help()
 }
 
 void
-prefs_dialog::page_changed(QWidget* tab)
+prefs_dialog::page_changed(int index)
 {
+  Q_UNUSED(index);
   QString topic = help_topic(m_tabw->currentWidget());
   if (!topic.isEmpty())
     helper::track(topic);
-  if (tab==m_mimetypes_page)
-    load_viewers();
-}
-
-void
-prefs_dialog::load_viewers()
-{
-
 }
 
 void
@@ -1291,7 +1284,7 @@ prefs_dialog::new_identity()
     return;
   }
 
-  email_lost_focus();
+  email_edited();
   widgets_to_ident();
 
   // if an empty identity is already available in the combobox
@@ -1315,7 +1308,7 @@ prefs_dialog::new_identity()
 }
 
 void
-prefs_dialog::email_lost_focus()
+prefs_dialog::email_edited()
 {
   if (m_widgets->w_email->text() != m_curr_ident->m_email_addr) {
     // change the identity in the combobox as soon as the user

@@ -54,7 +54,7 @@ void DBEXCPT(db_excpt& p)
   //  std::cerr << p.query() << ":" << p.errmsg() << std::endl;
   QString err = p.query();
   if (err.isEmpty()) {
-    if (p.errcode() == QString::fromAscii(db_excpt::client_assertion)) {
+    if (p.errcode() == QString::fromLocal8Bit(db_excpt::client_assertion)) {
       err = "Client assertion";
     }
   }

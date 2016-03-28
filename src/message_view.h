@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -20,7 +20,6 @@
 #ifndef INC_MESSAGE_VIEW_H
 #define INC_MESSAGE_VIEW_H
 
-#include <QWebView>
 #include <QString>
 #include <QMap>
 #include <QUrl>
@@ -48,7 +47,6 @@ public:
   void print();
   void copy();
   void set_mail_item (mail_msg*);
-  void set_wrap(bool);
   void set_show_on_demand(bool);
   void highlight_terms(const std::list<searched_text>&);
 
