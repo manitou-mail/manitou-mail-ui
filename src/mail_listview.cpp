@@ -515,6 +515,10 @@ mail_listview::mail_listview(QWidget* parent): QTreeView(parent)
   setSelectionMode(QAbstractItemView::ExtendedSelection);
   setSelectionBehavior(QAbstractItemView::SelectRows);
   setUniformRowHeights(true);
+  // Qt5: lines too close to each other as in the default QTreeView style
+  // don't feel good for the list of messages, hence this hard-wired
+  // 3px margin
+  this->setStyleSheet("QTreeView::item { margin-bottom: 3px; }");
   mail_item_model* model = new mail_item_model(this);
   this->setModel(model);
   model->set_date_format(get_config().get_date_format_code());
