@@ -95,11 +95,15 @@ msgs_filter::init()
 
   m_user_query=QString::null;
 
+  m_mail_id_bound = 0;
+  m_date_bound = QString::null;
+
   // results
-  m_fetched=false;
-  m_fetch_results=NULL;
-  m_date_bound=QString::null;
-  m_mail_id_bound=0;
+  m_fetched = false;
+  m_fetch_results = NULL;
+
+  m_results_date_bound = QString::null;
+  m_results_mail_id_bound = 0;
   m_has_more_results = false;
   
 }
@@ -125,12 +129,12 @@ msgs_filter::postprocess_fetch(fetch_thread& thread)
   m_has_more_results = m_max_results>0 && (thread.m_tuples_count > m_max_results);
 
   if (m_order>0) {
-    m_mail_id_bound = thread.m_max_mail_id;
-    m_date_bound = thread.m_max_msg_date;
+    m_results_mail_id_bound = thread.m_max_mail_id;
+    m_results_date_bound = thread.m_max_msg_date;
   }
   else {
-    m_mail_id_bound = thread.m_min_mail_id;
-    m_date_bound = thread.m_min_msg_date;
+    m_results_mail_id_bound = thread.m_min_mail_id;
+    m_results_date_bound = thread.m_min_msg_date;
   }
 }
 
@@ -299,9 +303,8 @@ msgs_filter::quote_like_arg(const QString& s)
   retrieved
 */
 int
-msgs_filter::build_query(sql_query& q, bool fetch_more/*=false*/)
+msgs_filter::build_query(sql_query& q)
 {
-  Q_UNUSED(fetch_more);
   db_cnx db;
   try {
     bool done_with_status=false;	// true when tests on status have been short-circuited
@@ -529,13 +532,21 @@ msgs_filter::build_query(sql_query& q, bool fetch_more/*=false*/)
 
 /*
   Return values: same as build_query()
+
+  'fetch_more' can be set on subsequent invocations to fetch more results
+  (think "next page") based on the lower/higher (msg_date,mail_id) previously
+  retrieved
 */
 int
 msgs_filter::asynchronous_fetch(fetch_thread* t, bool fetch_more/*=false*/)
 {
   m_fetched = true;
   sql_query q;
-  int r = build_query(q, fetch_more);
+  if (fetch_more) {
+    m_date_bound = m_results_date_bound;
+    m_mail_id_bound = m_results_mail_id_bound;
+  }
+  int r = build_query(q);
   if (r==1) {
     // start the query only if it might return results
     if (m_fetch_results)
@@ -575,9 +586,10 @@ msgs_filter::asynchronous_fetch(fetch_thread* t, bool fetch_more/*=false*/)
   'fetch_more' can be set on subsequent invocations to fetch more results
   (think "next page") based on the lower/higher (msg_date,mail_id) previously
   retrieved
+
 */
 int
-msgs_filter::fetch(mail_listview* qlv, bool fetch_more/*=false*/)
+msgs_filter::fetch(mail_listview* qlv, bool fetch_more)
 {
   DBG_PRINTF(8, "msgs_filter::fetch()");
   m_errmsg=QString::null;
@@ -585,7 +597,11 @@ msgs_filter::fetch(mail_listview* qlv, bool fetch_more/*=false*/)
   int r=1;
   try {
     sql_query q;
-    r=build_query(q, fetch_more);
+    if (fetch_more) {
+      m_date_bound = m_results_date_bound;
+      m_mail_id_bound = m_results_mail_id_bound;
+    }
+    r=build_query(q);
     if (r==1) {
       db_cnx db;
       QString s=q.get();

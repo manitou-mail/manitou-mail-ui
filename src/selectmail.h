@@ -146,7 +146,7 @@ public:
   bool m_fetched;
 
   std::list<mail_result>* m_fetch_results;
-  int build_query (sql_query&, bool fetch_more=false);
+  int build_query (sql_query&);
   //  mail_msg* in_list(mail_id_t id);
   static int load_result_list(PGresult* res, std::list<mail_result>* l, int max_nb=-1);
 
@@ -182,8 +182,12 @@ private:
   QString m_user_query;
 
   /* used to fetch another batch of results that are older/newer (depending on m_order) */
+  /* conditions */
   QString m_date_bound;
   int m_mail_id_bound;
+  /* gathered from previous fetch */
+  QString m_results_date_bound;
+  int m_results_mail_id_bound;
 
   /* ordering of msg_date (+1=ASC, -1=DESC) column for the fetch */
   int m_order;
