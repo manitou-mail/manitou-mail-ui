@@ -187,7 +187,7 @@ manitou_application::setup_desktop_tray_icon()
 {
   m_tray_icon=NULL;
 
-#if defined(Q_WS_X11) || defined(Q_WS_MAC)
+#if defined(Q_OS_LINUX) || defined(Q_OS_OSX)
   if (get_config().get_string("display/notifications/new_mail")=="system") {
     if (QSystemTrayIcon::isSystemTrayAvailable()) {
       QIcon icon(UI_ICON("manitou-logo.png"));
