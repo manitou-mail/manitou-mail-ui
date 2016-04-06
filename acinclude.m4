@@ -255,7 +255,7 @@ m4_ifval([$3],
   : ${MAKE=make}
 
   if $MAKE >&AS_MESSAGE_LOG_FD 2>&1; then
-    at_cv_qt_build='ok, looks like Qt 4'
+    at_cv_qt_build='ok, looks like Qt 4/5'
   else
     echo "$as_me:$LINENO: Build failed, trying to #include <qobject.h> \
 instead" >&AS_MESSAGE_LOG_FD
@@ -273,7 +273,7 @@ instead" >&AS_MESSAGE_LOG_FD
 
       sed 's/<qobject.h>/<QObject>/' conftest.h > tmp.h && mv tmp.h conftest.h
       if $MAKE >&AS_MESSAGE_LOG_FD 2>&1; then
-        at_cv_qt_build='ok, looks like Qt 4, release mode forced'
+        at_cv_qt_build='ok, looks like Qt 4/5, release mode forced'
       else
         echo "$as_me:$LINENO: Build failed, trying to #include <qobject.h> \
 instead" >&AS_MESSAGE_LOG_FD
