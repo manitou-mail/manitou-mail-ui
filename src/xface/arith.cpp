@@ -28,7 +28,7 @@ xface::RevPush(Prob *p)
 void
 xface::BigPush(Prob *p)
 {
-    WORD tmp;
+    XFACE_WORD tmp;
 
     BigDiv(p->p_range, &tmp);
     BigMul(0);
@@ -39,7 +39,7 @@ xface::BigPush(Prob *p)
 int
 xface::BigPop(Prob *p)
 {
-  WORD tmp;
+  XFACE_WORD tmp;
     int i;
 
     BigDiv(0, &tmp);
@@ -59,7 +59,7 @@ void
 xface::BigPrint()              /* Print a BigInt in HexaDecimal. */
 {
     int i, c, count;
-    WORD *w;
+    XFACE_WORD *w;
 
     count = 0;
     w = B.b_word + (i = B.b_words);
@@ -85,10 +85,10 @@ xface::BigPrint()              /* Print a BigInt in HexaDecimal. */
  */
 
 void
-xface::BigDiv(WORD a, WORD *r)
+xface::BigDiv(XFACE_WORD a, XFACE_WORD *r)
 {
     int i;
-    WORD *w;
+    XFACE_WORD *w;
     COMP c, d;
 
     a &= WORDMASK;
@@ -97,7 +97,7 @@ xface::BigDiv(WORD a, WORD *r)
         return;
     }
 
-/* Treat this as a == WORDCARRY and just shift everything right a WORD */
+/* Treat this as a == WORDCARRY and just shift everything right a XFACE_WORD */
 
     if (a == 0)    {
         i = --B.b_words;
@@ -117,7 +117,7 @@ xface::BigDiv(WORD a, WORD *r)
         c += (COMP) *--w;
         d = c / (COMP) a;
         c = c % (COMP) a;
-        *w = (WORD) (d & WORDMASK);
+        *w = (XFACE_WORD) (d & WORDMASK);
     }
     *r = c;
     if (B.b_word[B.b_words - 1] == 0) {
@@ -129,10 +129,10 @@ xface::BigDiv(WORD a, WORD *r)
 /* Multiply a by B storing the result in B. */
 
 void
-xface::BigMul(WORD a)
+xface::BigMul(XFACE_WORD a)
 {
     int i;
-    WORD *w;
+    XFACE_WORD *w;
     COMP c;
 
     a &= WORDMASK;
@@ -140,7 +140,7 @@ xface::BigMul(WORD a)
         return;
     }
 
-/* Treat this as a == WORDCARRY and just shift everything left a WORD */
+/* Treat this as a == WORDCARRY and just shift everything left a XFACE_WORD */
 
     if (a == 0) {
         if ((i = B.b_words++) >= MAXWORDS - 1) {
@@ -159,7 +159,7 @@ xface::BigMul(WORD a)
     c = 0;
     while (i--) {
         c += (COMP)*w * (COMP)a;
-        *(w++) = (WORD)(c & WORDMASK);
+        *(w++) = (XFACE_WORD)(c & WORDMASK);
         c >>= BITSPERWORD;
     }
     if (c) {
@@ -174,10 +174,10 @@ xface::BigMul(WORD a)
 /* Subtract a from B storing the result in B. */
 
 void
-xface::BigSub(WORD a)
+xface::BigSub(XFACE_WORD a)
 {
     int i;
-    WORD *w;
+    XFACE_WORD *w;
     COMP c;
 
     a &= WORDMASK;
@@ -187,13 +187,13 @@ xface::BigSub(WORD a)
     i = 1;
     w = B.b_word;
     c = (COMP) *w - (COMP) a;
-    *w = (WORD) (c & WORDMASK);
+    *w = (XFACE_WORD) (c & WORDMASK);
     while (c & WORDCARRY) {
         if (i >= B.b_words) {
 	  throw ERR_INTERNAL;
         }
         c = (COMP) *++w - 1;
-        *w = (WORD) (c & WORDMASK);
+        *w = (XFACE_WORD) (c & WORDMASK);
         i++;
     }
     if ((i == B.b_words) && (*w == 0) && (i > 0)) {
@@ -205,10 +205,10 @@ xface::BigSub(WORD a)
 /* Add to a to B storing the result in B. */
 
 void
-xface::BigAdd(WORD a)
+xface::BigAdd(XFACE_WORD a)
 {
     int i;
-    WORD *w;
+    XFACE_WORD *w;
     COMP c;
 
     a &= WORDMASK;
@@ -220,7 +220,7 @@ xface::BigAdd(WORD a)
     c = a;
     while ((i < B.b_words) && c) {
         c += (COMP) *w;
-        *w++ = (WORD) (c & WORDMASK);
+        *w++ = (XFACE_WORD) (c & WORDMASK);
         c >>= BITSPERWORD;
         i++;
     }

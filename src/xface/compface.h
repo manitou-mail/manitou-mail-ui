@@ -55,7 +55,7 @@ public:
  * Implementation uses arrays of WORDs.  COMPs must have at least
  * twice as many bits as WORDs to handle intermediate results.
  */
-#define WORD        unsigned char
+#define XFACE_WORD        unsigned char
 #define COMP        unsigned long
 #define BITSPERWORD 8
 #define WORDCARRY   (1 << BITSPERWORD)
@@ -65,7 +65,7 @@ public:
 typedef struct bigint
 {
     int b_words;
-    WORD b_word[MAXWORDS];
+    XFACE_WORD b_word[MAXWORDS];
 } BigInt;
 
  BigInt B;
@@ -99,8 +99,8 @@ static Guesses G;
  * Offset gives the first possible encoding of the range.
  */
 typedef struct prob {
-    WORD p_range;
-    WORD p_offset;
+    XFACE_WORD p_range;
+    XFACE_WORD p_offset;
 } Prob;
 
  Prob *ProbBuf[PIXELS * 2];
@@ -136,14 +136,14 @@ int Same(char *, int, int);
 int uncompface(char *);
 int WriteBuf();
 
-void BigAdd(WORD);
+void BigAdd(XFACE_WORD);
 void BigClear();
-void BigDiv(WORD, WORD *);
-void BigMul(WORD);
+void BigDiv(XFACE_WORD, XFACE_WORD *);
+void BigMul(XFACE_WORD);
 void BigPrint();
 void BigPush(Prob *);
 void BigRead(char *);
-void BigSub(WORD);
+void BigSub(XFACE_WORD);
 void BigWrite(char *);
 void CompAll(char *);
 void Compress(char *, int, int, int);

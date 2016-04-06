@@ -1,7 +1,7 @@
 #include "compface.h"
 #include "vars.h"
 
-#include <qstring.h>
+#include <QString>
 
 int xface_to_xpm(const char* xface_ascii, QString& xface_xpm)
 {

@@ -26,7 +26,7 @@ xface::BigRead(char *fbuf)
             continue;
         }
         BigMul(NUMPRINTS);
-        BigAdd((WORD)(c - FIRSTPRINT));
+        BigAdd((XFACE_WORD)(c - FIRSTPRINT));
     }
 }
 
@@ -34,7 +34,7 @@ xface::BigRead(char *fbuf)
 void
 xface::BigWrite(char *fbuf)
 {
-    static WORD tmp;
+    static XFACE_WORD tmp;
     static char buf[DIGITS];
     char *s;
     int i;
