@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.0" language="fr">
+<TS version="2.1" language="fr">
 <context>
     <name>QApplication</name>
     <message>
@@ -468,8 +468,8 @@
         <translation>Email:&lt;br&gt;support%1manitou-mail.org&lt;/a&gt;</translation>
     </message>
     <message>
-        <source>This is &lt;b&gt;Manitou-Mail&lt;/b&gt; version %1, (c) 2004-2015 Daniel V&amp;#233;rit&amp;#233; (&lt;i&gt;daniel@manitou-mail.org&lt;/i&gt;).</source>
-        <translation>&lt;b&gt;Manitou-Mail&lt;/b&gt; version %1, (c) 2004-2015 Daniel V&amp;#233;rit&amp;#233; (&lt;i&gt;daniel@manitou-mail.org&lt;/i&gt;).</translation>
+        <source>This is &lt;b&gt;Manitou-Mail&lt;/b&gt; version %1, (c) 2004-2016 Daniel V&amp;#233;rit&amp;#233; (&lt;i&gt;daniel@manitou-mail.org&lt;/i&gt;).</source>
+        <translation>&lt;b&gt;Manitou-Mail&lt;/b&gt; version %1, (c) 2004-2016 Daniel V&amp;#233;rit&amp;#233; (&lt;i&gt;daniel@manitou-mail.org&lt;/i&gt;).</translation>
     </message>
 </context>
 <context>
@@ -1249,10 +1249,6 @@
         <translation>Supprimer</translation>
     </message>
     <message>
-        <source>%1 match(es) found. Filter test finished.</source>
-        <translation>%1 concordance(s) trouvée(s). Test de filtre terminé.</translation>
-    </message>
-    <message>
         <source>%1 match(es) found. Testing more...</source>
         <translation>%1 concordance(s) trouvée(s). Test en cours...</translation>
     </message>
@@ -1324,6 +1320,10 @@ Save now?</source>
     <message>
         <source>Please sort by filter order (first column) to enable moving filters</source>
         <translation>Veuillez trier par ordre de filtrage (première colonne) pour pouvoir déplacer les filtres</translation>
+    </message>
+    <message>
+        <source>%1 match(es) found in %2 message(s). Filter test completed.</source>
+        <translation>%1 concordance(s) trouvée(s).dans %2 message(s). Test de filtre terminé.</translation>
     </message>
 </context>
 <context>
@@ -2770,10 +2770,6 @@ Les messages non encore importés seront perdus.</translation>
         <translation>&amp;Fils de discussion</translation>
     </message>
     <message>
-        <source>Wrap lines</source>
-        <translation>Césure des lignes</translation>
-    </message>
-    <message>
         <source>Hide quoted text</source>
         <translation>Cacher texte cité</translation>
     </message>
@@ -4026,6 +4022,10 @@ Voulez-vous le mettre à jour malgré cela?</translation>
     <message>
         <source>Archived messages</source>
         <translation>Messages archivés</translation>
+    </message>
+    <message>
+        <source>Untagged</source>
+        <translation>Non étiquettés</translation>
     </message>
 </context>
 <context>
