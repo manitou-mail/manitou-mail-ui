@@ -63,7 +63,7 @@
  #define OPTARG getoptns::optarg
 #endif
 
-#ifndef Q_WS_WIN
+#ifndef Q_OS_WIN
 #include <sys/utsname.h>
 #endif
 
@@ -136,7 +136,7 @@ get_config()
 void
 usage(const char* progname)
 {
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
   QMessageBox::critical(NULL, "Arguments error", "The possible arguments are --dbcnx followed by a connection string and --config followed by a configuration name.\nExample, --dbcnx \"dbname=mail user=mailadmin host=pgserver\" --config myconf");
 #else
   fprintf(stderr, "Usage: %s [--debug-output=level] [--config=confname] \"connect string\".\nThe connect string looks like, for example, \"dbname=mail user=mailadmin host=pgserver\".\n",
