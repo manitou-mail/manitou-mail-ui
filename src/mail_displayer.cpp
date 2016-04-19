@@ -187,7 +187,7 @@ mail_displayer::sprint_headers(int show_headers_level, mail_msg* msg)
 
   sOutput.reserve(8192);	// avoid many small reallocs
 
-  if(show_headers_level==1) {	// show all headers
+  if(show_headers_level==2) {	// show all headers
     while (nPos<nEnd) {
       int nPosEh=0;		// end of header name
       // position of end of current line
@@ -211,7 +211,7 @@ mail_displayer::sprint_headers(int show_headers_level, mail_msg* msg)
       nPos=nPosLf+1;
     }
   }
-  else if (show_headers_level==2) {
+  else if (show_headers_level==1) {
     // Show only headers from hListe
     const int nH=sizeof(hListe)/sizeof(hListe[0]);
     QString sLines[nH];
