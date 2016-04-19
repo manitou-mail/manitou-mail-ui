@@ -30,6 +30,8 @@
 #include <QAction>
 #include <QLayout>
 #include <QToolBar>
+#include <QTextCodec>
+#include <QStringList>
 
 mime_msg_viewer::mime_msg_viewer(const char* msg, const display_prefs& prefs)
 {
@@ -52,7 +54,7 @@ mime_msg_viewer::mime_msg_viewer(const char* msg, const display_prefs& prefs)
   QSplitter* splitter = new QSplitter(Qt::Vertical, this);
   layout->addWidget(splitter);
   m_view = new message_view(splitter, NULL);
-  QString font_name=get_config().get_string("display/font/msgbody");
+  QString font_name = get_config().get_string("display/font/msgbody");
   if (!font_name.isEmpty()) {
     QFont f;
     f.fromString(font_name);
@@ -68,13 +70,34 @@ mime_msg_viewer::mime_msg_viewer(const char* msg, const display_prefs& prefs)
   uint hlen = mail_header::header_length(msg);
   if (hlen==0)
     hlen=strlen(msg);
-  /* We assume that the header can be represented in latin1
-     if conformant, it should be us-ascii actually */
-  m_header = QString::fromLatin1(msg, hlen);
+
   mail_header mh;
+  mh.set_raw(msg, hlen);
+
   QString header_html="<div id=\"manitou-header\">";
-  mh.format(header_html, m_header);  
+  mh.format(header_html, mh.raw_headers());
   header_html.append("</div><br>");
+
+  QStringList ct = mh.get_header("Content-Type");
+  if (ct.size() >= 1) {
+    /* rfc2045 simplified parser */
+    QString field = ct.at(0);
+    QRegExp rx("^[a-z]+/[a-z]+;", Qt::CaseInsensitive);
+    if (field.indexOf(rx) == 0) {
+      // match
+      int l = rx.matchedLength();
+      QStringList params = field.mid(l).split(";");
+      if (params.size() >= 1) {
+	QRegExp rx("charset=\"?([a-z_-]+)\"?", Qt::CaseInsensitive);
+	for (int i=0; i<params.size(); i++) {
+	  if (rx.indexIn(params.at(i)) != -1) {
+	    set_encoding(rx.cap(0));
+	    break;
+	  }
+	}
+      }
+    }
+  }
 
   QString body_html;
   format_body(body_html, msg+hlen, prefs);
@@ -100,12 +123,21 @@ mime_msg_viewer::format_body(QString& output,
 			     const char* body,
 			     const display_prefs& prefs)
 {
-  // TODO: apply a codec to 'body' to ensure we get a proper unicode
-  // string in 'b'. Probably that current code doesn't work with
-  // non-latin encodings
-  QString b=body;
+  QString b;
   int startline=0;
   int endline;
+
+  if (!m_encoding.isEmpty()) {
+    QTextCodec* codec = QTextCodec::codecForName(m_encoding.toLocal8Bit());
+    if (codec) {
+      b = codec->toUnicode(body);
+    }
+    else
+      b = QString::fromLatin1(body);
+  }
+  else {
+    b = QString::fromLatin1(body);
+  }
 
   mail_displayer disp;
 
@@ -114,7 +146,7 @@ mime_msg_viewer::format_body(QString& output,
     if (endline<0) {
       endline = b.length();
     }
-    QString html_line=disp.expand_body_line(b.mid(startline, endline-startline+1),
+    QString html_line = disp.expand_body_line(b.mid(startline, endline-startline+1),
 					    prefs);
     //    b2.append();
     //    b2.append("<br>");

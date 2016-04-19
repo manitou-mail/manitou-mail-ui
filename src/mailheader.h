@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -59,13 +59,17 @@ public:
   static void decode_line(QString&);
   bool fetch_raw();
 
-  /* Contents extracted from the RAW_MAIL table and converted to unicode
-     (done in fetch_raw()), but not MIME-decoded */
-  QString m_raw;
+  void set_raw(const char* raw_msg, int length);
 
-  /* Non-decoded contents from the memory, with no associated
-     mail_id */
-  QString m_mem_raw;
+  const QString& raw_headers();
+
+  /* Return values of matching fields, in the order of the header */
+  QStringList get_header(const QString header_name);
+
+  /* Contents extracted from the RAW_MAIL table or from an attachment
+     and converted to unicode (done in fetch_raw()), but not
+     MIME-decoded */
+  QString m_raw;
 
   /* format the raw header 'src' into 'dest' (as an html string) */
   void format(QString& dest, const QString& src);

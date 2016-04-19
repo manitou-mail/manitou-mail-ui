@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -33,12 +33,15 @@ class mime_msg_viewer: public QWidget
 public:
   mime_msg_viewer(const char* rawmsg, const display_prefs& prefs);
   virtual ~mime_msg_viewer();
+  void set_encoding(const QString enc) {
+    m_encoding = enc;
+  }
 private:
   /* Appends to 'html_output' an html representation of 'body' which is
-     the body of a raw rfc822 message (proper encoding information should
-     come along, FIXME) */
+     the body of a raw rfc822 message */
   void format_body(QString& html_output, const char* body, const display_prefs& prefs);
 
+  QString m_encoding;
   message_view* m_view;
   attch_listview* m_attchview;
   QString m_header;

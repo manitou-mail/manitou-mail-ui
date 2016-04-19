@@ -452,6 +452,49 @@ mail_header::header_length(const char* rawmsg)
   return 0;
 }
 
+void
+mail_header::set_raw(const char* raw_msg, int length)
+{
+  m_raw = QString::fromLatin1(raw_msg, length);
+}
+
+const QString&
+mail_header::raw_headers()
+{
+  return m_raw;
+}
+
+QStringList
+mail_header::get_header(const QString name)
+{
+  QStringList res;
+  QString field = name;
+  field.append(':');
+  int flen = field.length();
+  int npos = 0;
+  int nend = m_raw.length();
+
+  while (npos < nend) {
+    int fpos = m_raw.indexOf(field, npos, Qt::CaseInsensitive);
+    if (fpos == -1) // not found
+      break;
+    if (fpos == 0 || m_raw.at(fpos-1)=='\n') {
+      int nposlf = m_raw.indexOf('\n', fpos+flen);
+      if (nposlf == -1) { // last header
+	res.append(m_raw.mid(fpos+flen).trimmed());
+	break;
+      }
+      else {
+	res.append(m_raw.mid(fpos+flen, nposlf-(fpos+flen)).trimmed());
+	npos = nposlf+1;
+      }
+    }
+    else
+      npos = fpos+flen;
+  }
+  return res;
+}
+
 bool
 mail_header::fetch_raw()
 {
