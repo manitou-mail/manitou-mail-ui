@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -1098,7 +1098,6 @@ mail_listview::insert_sub_tree(std::map<mail_id_t,mail_msg*>& m, mail_msg *msg)
       // has a parent in the list
       parent = model()->item_from_id(parent_id);
       if (!parent) {
-	DBG_PRINTF(2, "ERROR: parent message not found");
 	// recurse to insert msg's parent before msg
 	parent = insert_sub_tree(m, parent_iter->second);
       }
