@@ -555,6 +555,9 @@ mail_header::fetch_raw()
   return true;
 }
 
+/*
+  Format a raw mail header (h1) into HTML (sOutput)
+*/
 void
 mail_header::format(QString& sOutput, const QString& h1)
 {

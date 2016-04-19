@@ -73,8 +73,6 @@ mail_displayer::expand_body_line(const QString& line,
   static const QChar amp = QChar('&');
   static const QChar ctrl_92 = QChar((ushort)0x92);
   int col = 0;			// current column
-  int last_space = 0;		// offset in exp_s
-  int space_encode_chars;
   int word_cols = 0;		//
   QChar last_src_char;
   // positions of the occurrences of a searched text within the original string
@@ -103,9 +101,6 @@ mail_displayer::expand_body_line(const QString& line,
       for (j=0; j<(int)(tabsize-(col%tabsize)); j++)
 	exp_s.append("&nbsp;");
       col += j;
-      space_encode_chars=6;
-      if (j)
-	last_space = exp_s.length()-space_encode_chars;
       word_cols=0;
     }
     else if (c == lbracket) {
@@ -139,14 +134,11 @@ mail_displayer::expand_body_line(const QString& line,
     else if (c == ' ') {
       // repeated spaces are ignored as in html, so we use &nbsp; instead
       // (but only in the case of repeated spaces to limit the overhead)
-      last_space=exp_s.length();
       if (last_src_char==QChar(' ') || last_src_char==tab) {
 	exp_s.append("&nbsp;");
-	space_encode_chars=6;
       }
       else {
 	exp_s.append(c);
-	space_encode_chars=1;
       }
       word_cols = 0;
       col++;
@@ -192,10 +184,34 @@ mail_displayer::sprint_headers(int show_headers_level, mail_msg* msg)
   QString s_xface, s_face;
   uint face_offset=0;
   uint xface_offset=0;
-  QString hfontsz_o;		// <big> or empty
-  QString hfontsz_c;		// </big> or empty
 
-  if (show_headers_level==1) {
+  sOutput.reserve(8192);	// avoid many small reallocs
+
+  if(show_headers_level==1) {	// show all headers
+    while (nPos<nEnd) {
+      int nPosEh=0;		// end of header name
+      // position of end of current line
+      int nPosLf=h.indexOf('\n',nPos);
+      if (nPosLf==-1)
+	nPosLf=nEnd;
+      if (h.mid(nPos,1)!=" " && h.mid(nPos,1)!="\t" && h.mid(nPos,5)!="From "
+	  && (nPosEh=h.indexOf(':',nPos))>0)
+      {
+	  QString sContents = h.mid(nPosEh+1, nPosLf-nPosEh-1);
+	  sContents.replace(QRegExp("<"), "&lt;");
+	  sContents.replace(QRegExp(">"), "&gt;");
+	  sContents.replace(QRegExp ("\t"), " ");
+	  sOutput.append(QString("<font color=\"blue\">%1</font>%2<br>").
+			 arg(h.mid(nPos, nPosEh-nPos+1)).arg(sContents));
+      }
+      else {
+	sOutput.append(h.mid(nPos,nPosLf-nPos+1));
+	sOutput.append("<br>");
+      }
+      nPos=nPosLf+1;
+    }
+  }
+  else if (show_headers_level==2) {
     // Show only headers from hListe
     const int nH=sizeof(hListe)/sizeof(hListe[0]);
     QString sLines[nH];
@@ -205,6 +221,7 @@ mail_displayer::sprint_headers(int show_headers_level, mail_msg* msg)
       int nPosLf=h.indexOf('\n',nPos);
       if (nPosLf==-1)
 	nPosLf=nEnd;
+
       if (h.mid(nPos,7) == "X-Face:" && s_face.isEmpty()) {
 	xface_offset = nPos+7;
       }
@@ -222,8 +239,8 @@ mail_displayer::sprint_headers(int show_headers_level, mail_msg* msg)
 	  sContents.replace("<", "&lt;");
 	  sContents.replace(">", "&gt;");
 	  sContents.replace("\t", " ");
-	  sLines[i]=hfontsz_o+QString("<font color=\"blue\">") + h.mid(nPos,nHlen) +
-	    "</font>" + sContents + hfontsz_c + "<br>";
+	  sLines[i] = QString("<font color=\"blue\">") + h.mid(nPos,nHlen) +
+	    "</font>" + sContents + "<br>";
 	  break;
 	}
       }
@@ -285,6 +302,8 @@ mail_displayer::sprint_headers(int show_headers_level, mail_msg* msg)
   // remove the last <br>
   if (sOutput.endsWith("<br>"))
     sOutput.truncate(sOutput.length()-4);
+
+
   return sOutput;
 }
 
