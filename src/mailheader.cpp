@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -322,7 +322,6 @@ mail_header::decode_line(QString& s)
       // append the contents before the encoded word
       // except if it's spaces only
       QString before=s.mid(pos,r-pos);
-      //	printf("\tend_rx=%d before=%s\n", end_rx, before.latin1());
       if (end_rx>0) {
 	// when between two encoded words, ignore the contents
 	// if it contains only spaces (rfc822 'linear-white-space')
@@ -335,16 +334,14 @@ mail_header::decode_line(QString& s)
 	}
       }
       else {
-	//	printf("\tappend %s\n", before.latin1());
 	dline.append(before);
       }
     }
-    //printf("\tmatch at r=%d\n", r);
     int rxsz=rx.matchedLength();
     QStringList l=rx.capturedTexts();
     QStringList::Iterator it = l.begin();
     ++it;
-    //printf("\tcodecname=%s\n", (*it).latin1());
+
     QTextCodec* codec=QTextCodec::codecForName((*it).toLatin1());
     ++it;
     char enctype=(*it).at(0).toUpper().toLatin1();
@@ -359,7 +356,7 @@ mail_header::decode_line(QString& s)
       maxbufsz = bufsz;
     }
 #endif
-    //printf("\t*it=%s\n", (*it).latin1());
+
     int jb;
     if (enctype=='Q') {
       jb=append_decoded_qp((*it), buf);
@@ -375,7 +372,6 @@ mail_header::decode_line(QString& s)
       dline.append(codec->toUnicode(buf, jb));
     }
     else {
-      //printf("\tNO CODEC!\n");
       buf[bufsz]='\0';
       dline.append(buf);
     }
@@ -500,12 +496,6 @@ mail_header::fetch_raw()
       // if not 8 bit clean, apply an arbitrary codec
       if (has_8_bit && (codec=QTextCodec::codecForName("iso-8859-15"))) {
 	m_raw.append(codec->toUnicode((char*)data, j));
-#if QT_VERSION<0x040000
-	/* it's not clear whether it's desirable or not to delete the
-	   codec under Qt3, but it's not possible under Qt4 anyway,
-	   the destructor being protected */
-	delete codec;
-#endif
       }
       else {
 	m_raw.append((char*)data);
