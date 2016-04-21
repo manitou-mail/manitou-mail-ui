@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -57,7 +57,7 @@ public:
   QString format_filters_trace(const filter_log_list&);
   QString sprint_additional_headers(const display_prefs& prefs,
 				    mail_msg* msg);
-  static QString& htmlize(QString);
+  static QString htmlize(QString);
 private:
 
 };

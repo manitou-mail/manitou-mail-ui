@@ -369,8 +369,7 @@ void
 new_mail_widget::to_format_html_text()
 {
   QString text = mail_displayer::htmlize(m_bodyw->document()->toPlainText());
-  text.replace("\n", "<br>\n");  
-  m_html_edit->set_html_text(text);
+  m_html_edit->set_html_text(text.replace("\n", "<br>\n"));
   format_html_text();
 }
 

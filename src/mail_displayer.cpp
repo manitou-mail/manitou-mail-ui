@@ -372,7 +372,7 @@ mail_displayer::text_body_to_html(const QString &b, const display_prefs& prefs)
 }
 
 // [static] Return an html-displayable form of the string
-QString&
+QString
 mail_displayer::htmlize(QString s)
 {
   return s.replace("<", "&lt;").replace(">", "&gt;");
