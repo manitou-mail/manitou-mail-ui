@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2013 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -149,6 +149,7 @@ manitou_application::manitou_application(int& argc, char** argv)
   : QApplication(argc,argv)
 {
   default_style_name = style()->objectName();
+  m_tray_icon = NULL;
 }
 
 manitou_application::~manitou_application()
@@ -187,15 +188,13 @@ manitou_application::setup_desktop_tray_icon()
 {
   m_tray_icon=NULL;
 
-#if defined(Q_OS_LINUX) || defined(Q_OS_OSX)
   if (get_config().get_string("display/notifications/new_mail")=="system") {
     if (QSystemTrayIcon::isSystemTrayAvailable()) {
-      QIcon icon(UI_ICON("manitou-logo.png"));
+      QIcon icon(UI_ICON(ICON16_TRAYICON));
       m_tray_icon = new QSystemTrayIcon(icon);
       m_tray_icon->show();
     }
   }
-#endif
 }
 
 void
@@ -210,6 +209,8 @@ void
 manitou_application::cleanup()
 {
   DBG_PRINTF(2, "cleanup");
+  if (m_tray_icon)
+    delete m_tray_icon;
   helper::close();
 }
 
