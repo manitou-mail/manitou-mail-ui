@@ -11,14 +11,13 @@ if available. The files should have been installed under
 the $datadir/manitou/translations directory, where $datadir
 defaults to $prefix/share and $prefix defaults to /usr/local.
 
-The ts files are maintained using Trolltech Qt 'linguist' application.
-See http://doc.trolltech.com/4.3/linguist-manual.html for a complete
+The ts files are maintained using Qt 'linguist' application.
+See http://doc.qt.io/qt-5/qtlinguist-index.html for a complete
 documentation.
 Compilation of translation files is done by the 'lrelease' Qt utility.
 
-Both 'linguist' and 'lrelease' are part of Trolltech GPL source code
-archives for the Qt library.
+Both 'linguist' and 'lrelease' are part of Qt.
 
 When using a pre-compiled libqt package set up by a third party, these
 tools may be available separately from the library; for example
-they're in the qt4-dev-tools and libqt4-dev in debian distributions.
+they're in the qttools5-dev-tools in Debian/Ubuntu distributions.
