@@ -1,3 +1,19 @@
+ v1.5.0, Apr 2016
+--------------------------
+user interface:
+- port to Qt5
+- bug fixes with Unicode characters in headers when composing
+- use abbreviated sizes in attachment list
+- fix "Fetch more" bug
+- fix locale bug when retrieving FP numbers from queries
+
+manitou-mdx:
+- replace tab by space in multi-line headers
+- reimplement rfc2047 encoding for consecutive words
+- add workaround for a DBD::Pg 3.x bug with utf-8 handling
+- fix utf-8 encoding in html mime parts
+- fix undesirable CRLF conversion in attachments on MS-Windows
+
  v1.4.0, Sep 2015
 --------------------------
 user interface:
