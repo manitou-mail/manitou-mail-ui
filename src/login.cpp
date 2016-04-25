@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -122,21 +122,37 @@ login_dialog::connect_string()
 {
   QString res;
   if (!m_dbname->currentText().isEmpty()) {
-    res += " dbname=" + m_dbname->currentText();
+    res.append("dbname=" + quote_connect_param(m_dbname->currentText()));
   }
   if (!m_login->text().isEmpty()) {
-    res += " user=" + m_login->text();
+    res.append(" user=" + quote_connect_param(m_login->text()));
   }
   if (!m_password->text().isEmpty()) {
-    res += " password=" + m_password->text();
+    res.append(" password=" + quote_connect_param(m_password->text()));
   }
   if (!m_host->text().isEmpty()) {
-    res += " host=" + m_host->text();
+    res.append(" host=" + quote_connect_param(m_host->text()));
   }
   if (!m_params->text().isEmpty()) {
-    res += " " + m_params->text();
+    res.append(" " + m_params->text());
   }
   return res.trimmed();
+}
+
+QString
+login_dialog::quote_connect_param(QString param)
+{
+  /*
+    From postgres doc: To write an empty value, or a value containing
+    spaces, surround it with single quotes, e.g., keyword = 'a
+    value'. Single quotes and backslashes within the value must be
+    escaped with a backslash, i.e., \' and \\
+  */
+  if (param.isEmpty() || param.contains(' ') || param.contains('\'')) {
+    return QString("'%1'").arg(param.replace("\\", "\\\\").replace("'", "\\'"));
+  }
+  else
+    return param;
 }
 
 void
