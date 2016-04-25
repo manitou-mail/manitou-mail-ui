@@ -340,22 +340,16 @@ main(int argc, char **argv)
      (2012-10-08). */
   (void)QUuid::createUuid();
 
-  app.connect(&app, SIGNAL(lastWindowClosed()), SLOT(quit()));
-
   if (cnx_string==NULL) {
-    login_dialog* dlg = new login_dialog();
-    dlg->show();
-    dlg->set_focus();
-    app.exec();
-    if (dlg->result()==QDialog::Rejected)
-      exit(0);
-    delete dlg;
+    login_dialog dlg;
+    if (dlg.exec() == QDialog::Rejected)
+      return 0;
   }
   else {
     QString errstr;
     if (!ConnectDb(cnx_string, &errstr)) {
       QMessageBox::critical(NULL, QObject::tr("Fatal database error"), QObject::tr("Error while connecting to the database:\n")+errstr);
-      exit(1);
+      return 1;
     }
   }
 
@@ -387,6 +381,7 @@ main(int argc, char **argv)
   msg_list_window* w = new msg_list_window(&filter,0);
   w->show();
 
+  app.connect(&app, SIGNAL(lastWindowClosed()), SLOT(quit()));
   app.connect(&app, SIGNAL(aboutToQuit()), SLOT(cleanup()));
   app.exec();
   DisconnectDb();

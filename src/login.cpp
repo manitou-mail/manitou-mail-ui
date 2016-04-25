@@ -88,6 +88,7 @@ login_dialog::login_dialog() : QDialog(0)
   setWindowIcon(UI_ICON(ICON16_DISCONNECT));
 
   init_settings();
+  set_focus();
 }
 
 login_dialog::~login_dialog()
@@ -244,8 +245,5 @@ login_dialog::db_connect()
     settings.setValue("host", host());
     settings.setValue("params", params());
     accept();
-    // quit explicitly to make sure back that we go back to main()
-    // this is necessary if other windows are opened, like the help window.
-    gl_pApplication->quit();
   }
 }
