@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -107,6 +107,10 @@ helper::show_help(const QString topic)
     path = gl_help_path;
   }
 
+  /* Note that an OS-independant '/' path separator is used in all the
+     code below. From Qt doc: "QFile expects the file separator to be
+     '/' regardless of operating system". */
+
   if (!path.isEmpty() && path.right(1) == "/")
     path.truncate(path.length()-1); // remove trailing slash
 
@@ -115,8 +119,10 @@ helper::show_help(const QString topic)
      but if the user makes it point directly into one of these
      sub-directories, then let's use that instead of guessing the language */
 
+  QString index_file = "/index.html";
+
   path_tried[0] = path;
-  if (!QFile::exists(path+"/manitou.qhc")) {
+  if (!QFile::exists(path+index_file)) {
     QLocale locale;
 #if 0 // temporarily disable the help translation until we get it translated :)
     QString lname = locale.name();
@@ -126,13 +132,13 @@ helper::show_help(const QString topic)
     QString lname="en_us";
 #endif
     // try help_path + language_country
-    path_tried[1] = path+"/"+lname;
-    if (!QFile::exists(path_tried[1]+"/index.html")) {
+    path_tried[1] = path + "/" + lname;
+    if (!QFile::exists(path_tried[1]+index_file)) {
       // try help_path + language
       int sep_pos = lname.indexOf('_');
-      if (sep_pos>=0) {
-	path_tried[2]=path+"/"+lname.left(sep_pos);
-	if (!QFile::exists(path_tried[2]+"/index.html")) {
+      if (sep_pos >= 0) {
+	path_tried[2] = path + "/" + lname.left(sep_pos);
+	if (!QFile::exists(path_tried[2]+index_file)) {
 	  path.truncate(0);
 	}
 	else {
@@ -151,7 +157,7 @@ helper::show_help(const QString topic)
   if (path.isEmpty()) {
     QString msg=QObject::tr("The file 'index.html' could not be found in any of the following directories:\n");
     for (int ii=0; ii<3 && !path_tried[ii].isEmpty(); ii++) {
-     msg.append(path_tried[ii]);
+      msg.append(path_tried[ii]);
       msg.append("\n");
     }
     msg.append(QObject::tr("Please use the Preferences (Paths tab) to enter the directory where help files are located."));
@@ -173,10 +179,6 @@ helper::show_help(const QString topic)
 //    DBG_PRINTF(2, "WRN: topic '%s' not found\n", (const char*)topic.local8Bit());
     return;
   }
-/*
-  QString p=path + "/" + page;
-  DBG_PRINTF(4, "showPage('%s')", p.toLocal8Bit().constData());
-*/
   m_qassistant->show_page(page);
 }
 
