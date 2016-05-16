@@ -1,4 +1,4 @@
- v1.5.0, Apr 2016
+ v1.5.0, May 2016
 --------------------------
 user interface:
 - port to Qt5
@@ -6,6 +6,8 @@ user interface:
 - use abbreviated sizes in attachment list
 - fix "Fetch more" bug
 - fix locale bug when retrieving FP numbers from queries
+- fix bug interpreting certain URLs with percent-encoded chars
+- russian translation added
 
 manitou-mdx:
 - replace tab by space in multi-line headers
