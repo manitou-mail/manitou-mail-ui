@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT([manitou], [1.5.0])
+AC_INIT([manitou-ui], [1.5.0])
 AC_CONFIG_SRCDIR([src/msg_list_window.cpp])
 
 AM_INIT_AUTOMAKE
@@ -110,5 +110,5 @@ AC_SUBST(PG_LIBS)
 AC_SUBST(EXTRAOBJ)
 
 dnl AC_SUBST(THREADS_LIBS)
-AC_OUTPUT(Makefile src/Makefile src/xface/Makefile icons/Makefile icons/html/Makefile translations/Makefile)
+AC_OUTPUT(Makefile src/Makefile src/xface/Makefile icons/Makefile icons/html/Makefile translations/Makefile help/Makefile help/en/Makefile)
 
