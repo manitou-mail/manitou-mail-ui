@@ -206,6 +206,12 @@ manitou_application::desktop_notify(const QString title, const QString message)
 }
 
 void
+manitou_application::display_warning(const QString msg)
+{
+  fprintf(stderr, "Warning: %s\n", msg.toLocal8Bit().constData());
+}
+
+void
 manitou_application::cleanup()
 {
   DBG_PRINTF(2, "cleanup");
@@ -360,6 +366,10 @@ main(int argc, char **argv)
   global_conf.set_name(conf_name);
   global_conf.init();
   global_conf.apply();
+
+  if (!QFile::exists(gl_xpm_path+"/"+FT_ICON16_QUIT)) {
+    gl_pApplication->display_warning(QObject::tr("Icon files not found at: %1").arg(gl_xpm_path));
+  }
 
   msgs_filter filter;
   filter.m_sql_stmt="0";
