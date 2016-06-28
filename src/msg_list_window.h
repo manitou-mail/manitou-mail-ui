@@ -238,7 +238,7 @@ public slots:
   void save_attachment();
   void select_all_text();
 
-  void search_db();
+  void searchbar_search();
   void search_text_changed(const QString&);
 
   void search_generic(const QString& text, int where, int options);
@@ -387,6 +387,11 @@ private:
   fetch_thread m_thread;
   QTimer* m_timer;
   QTimer* m_timer_idle;
+
+  /* Short-lived filter object for conditions and results. It should
+     be allocated before loading results and freed immediately
+     after. Aside from this, m_filter is normally used to refer to
+     the selection of mails in a current window/page. */
   msgs_filter* m_loading_filter;
   int m_timer_ticks;		/* in 1/5 seconds */
   bool m_waiting_for_results;

@@ -97,6 +97,10 @@ public:
   // to do some post-processing after the fetch
   void postprocess_fetch(fetch_thread&);
 
+  // returns a valid query that will always fetch an empty list of messages
+  static sql_query empty_list_query();
+  static const char* select_list_mail_columns;
+
   //private:
 
   enum recipient_type {
@@ -159,6 +163,8 @@ public:
 #endif
 
 private:
+  void process_date_clause(sql_query& q, QString date_expr);
+
   bool m_auto_refresh;
   int add_address_selection (sql_query& q, const QString email_addr, int addr_type);
   /* number of criteria that needs to match an address from

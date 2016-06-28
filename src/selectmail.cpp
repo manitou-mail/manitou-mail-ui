@@ -197,11 +197,20 @@ msgs_filter::load_result_list(PGresult* res, std::list<mail_result>* l, int max_
     return 0;
 }
 
-
+/*
+  Parse a searchbar expression. No semantic analysis, just extraction of tokens.
+*/
 int
 msgs_filter::parse_search_string(QString s, fts_options& opt)
 {
+  /* state:
+     10: start or in-between tokens
+     20: option value
+     40: inside double quotes
+     50: next character is quoted
+  */
   int state=10;
+
   QString curr_word;
   QString curr_substr;
   QString curr_op, curr_opval;
@@ -290,13 +299,30 @@ msgs_filter::quote_like_arg(const QString& s)
   return r;
 }
 
+// static
+const char*
+msgs_filter::select_list_mail_columns =
+  "m.mail_id,"
+  "sender,"
+  "subject,"
+  "to_char(msg_date,'YYYYMMDDHH24MISS'),"
+  "thread_id,"
+  "m.status,"
+  "in_reply_to,"
+  "sender_fullname,"
+  "priority,"
+  "flags,"
+  "recipients";
+
 /*
   Return values:
-  0: database error
+  0: database error or invalid input
   1: OK
   2: the query would return no result (currently, it happens when a condition
-   is set on an email address that doesn't exist in the ADDRESSES table,
-   or a tag that's not in the TAGS table)
+     is set on an email address that doesn't exist in the ADDRESSES table,
+     or a tag that's not in the TAGS table)
+  3: there are invalid parameters in the filter that imply a user-visible
+     error message.
 
   'fetch_more' can be set on subsequent invocations to fetch more results
   (think "next page") based on the lower/higher (msg_date,mail_id) previously
@@ -417,21 +443,14 @@ msgs_filter::build_query(sql_query& q)
       q.add_clause(QString("msg_date<'%1'::date+1::int").arg(m_date_max.toString("yyyy/M/d")));
     }
 
-    if (!m_date_clause.isEmpty()) {
-      if (m_date_clause=="today") {
-	q.add_clause("msg_date>=date_trunc('day',now()) AND msg_date<date_trunc('day',now())+'1 day'::interval");
-      }
-      else if (m_date_clause=="yesterday") {
-	q.add_clause("msg_date>=date_trunc('day',now())-'1 day'::interval AND msg_date<date_trunc('day',now())");
-      }
-      else if (m_date_clause.at(0)=='-') {
-	QRegExp rx("^-([0-9]+)$");
-	if (m_date_clause.indexOf(rx)==0) {
-	  int days=rx.capturedTexts().at(1).toInt();
-	  q.add_clause(QString("msg_date>=now()-'%1 days'::interval").arg(days));
-	}
-      }
-    }
+    /* The date from the search bar is ignored if a date clause already exists.
+       It shouldn't normally happen that both are specified. */
+    if (m_date_clause.isEmpty())
+      m_date_clause = m_fts.m_operators["date"];
+
+    if (!m_date_clause.isEmpty())
+      process_date_clause(q, m_date_clause);
+
     // </date clause>
 
     if (!m_body_substring.isEmpty()) {
@@ -516,8 +535,7 @@ msgs_filter::build_query(sql_query& q)
       q.add_final(sFinal);
     }
 
-    QString select = "SELECT m.mail_id,sender,subject,to_char(msg_date,'YYYYMMDDHH24MISS'),thread_id,m.status,in_reply_to,sender_fullname,priority,flags,recipients";
-    q.start(select);
+    q.start(QString("SELECT ") + select_list_mail_columns);
     if (m_sql_stmt.isEmpty())
       m_user_query = q.subquery("m.mail_id");
     else
@@ -527,7 +545,92 @@ msgs_filter::build_query(sql_query& q)
     DBEXCPT(p);
     return 0;
   }
+  catch(QString errmsg) {
+    QMessageBox::critical(NULL, QObject::tr("Error"), errmsg);
+    // to be safe, leave a clean query, but the caller shouldn't use it
+    q = msgs_filter::empty_list_query();
+    return 3;
+  }
   return 1;
+}
+
+// static
+sql_query
+msgs_filter::empty_list_query()
+{
+  sql_query q;
+  q.add_table("mail");
+  q.start(QString("SELECT ") + select_list_mail_columns);
+  q.add_clause("false");
+  return q;
+}
+
+/*
+  Create SQL clauses from date_expr.
+  Does not process m_date_min and m_date_max.
+  May throw an exception with a QString
+*/
+void
+msgs_filter::process_date_clause(sql_query& q, QString date_expr)
+{
+  if (date_expr.isEmpty())
+    return;
+
+  QDate qd;
+
+  if (date_expr == "today") {
+    q.add_clause("msg_date>=date_trunc('day',now()) AND msg_date<date_trunc('day',now())+'1 day'::interval");
+  }
+  else if (date_expr == "yesterday") {
+    q.add_clause("msg_date>=date_trunc('day',now())-'1 day'::interval"
+		 " AND msg_date<date_trunc('day',now())");
+  }
+  else if (date_expr.at(0) == '-') {
+    // -[0-9]+ means "at most N days old"
+    QRegExp rx("^-([0-9]+)$");
+    if (date_expr.indexOf(rx) == 0) {
+      int days = rx.capturedTexts().at(1).toInt();
+      q.add_clause(QString("msg_date>=now()-'%1 days'::interval").arg(days));
+    }
+  }
+  else {
+    QRegExp rx("^\\d{4}$");
+    // exactly 4 digits: interpreted as a year (YYYY)
+    if (rx.indexIn(date_expr) == 0) {
+      int year = rx.cap(0).toInt();
+      qd.setDate(year,1,1);
+      if (!qd.isValid())
+	throw QObject::tr("Invalid year in date parameter.");
+      q.add_clause(QString("msg_date>='%1-01-01'::date AND msg_date<'%2-01-01'::date")
+		   .arg(year).arg(year+1));
+    }
+    else {
+      QRegExp rx1("^(\\d{4})-(\\d{2})$");
+      // YYYY-MM
+      if (rx1.indexIn(date_expr) == 0) {
+	qd.setDate(rx1.cap(1).toInt(), rx1.cap(2).toInt(), 1);
+	if (!qd.isValid())
+	  throw QObject::tr("Invalid year-month in date parameter.");
+	q.add_clause(QString("msg_date>='%1-%2-01'::date AND "
+			     "msg_date<'%1-%2-01'::date+'1 month'::interval")
+		     .arg(rx1.cap(1)).arg(rx1.cap(2)));
+      }
+      else {
+	QRegExp rx2("^(\\d{4})-(\\d{2})-(\\d{2})$");
+	// YYYY-MM-DD
+	if (rx2.indexIn(date_expr) == 0) {
+	  qd.setDate(rx2.cap(1).toInt(), rx2.cap(2).toInt(), rx2.cap(3).toInt());
+	  if (!qd.isValid())
+	    throw QObject::tr("Invalid year-month-day in date parameter.");
+	  q.add_clause(QString("msg_date>='%1-%2-%3'::date AND "
+			       "msg_date<'%1-%2-%3'::date+'1 day'::interval")
+		       .arg(rx2.cap(1)).arg(rx2.cap(2)).arg(rx2.cap(3)));
+	}
+	else
+	  throw QObject::tr("Unable to parse date expression.");
+      }
+    }
+  }
 }
 
 /*
@@ -601,7 +704,7 @@ msgs_filter::fetch(mail_listview* qlv, bool fetch_more)
       m_date_bound = m_results_date_bound;
       m_mail_id_bound = m_results_mail_id_bound;
     }
-    r=build_query(q);
+    r = build_query(q);
     if (r==1) {
       db_cnx db;
       QString s=q.get();
@@ -660,6 +763,7 @@ msgs_filter::fetch(mail_listview* qlv, bool fetch_more)
     else if (r==2) {
       QMessageBox::information(NULL, APP_NAME, QObject::tr("No results"));
     }
+    //  if (r==3) do nothing
   }
   catch (int e) {
     r=e;
@@ -1239,6 +1343,7 @@ msg_select_dialog::ok()
   else if (r==2) {
     QMessageBox::information(this, APP_NAME, tr("No results"));
   }
+  // r==3 ignored, error message already displayed
 }
 
 void

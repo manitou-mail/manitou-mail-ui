@@ -80,7 +80,7 @@
 #define STACKED_LV
 
 void
-msg_list_window::search_db()
+msg_list_window::searchbar_search()
 {
   QString txt = m_ql_search->text().toLower();
   if (txt.length()<3) {
@@ -133,7 +133,7 @@ msg_list_window::make_search_toolbar()
   m_ql_search = new search_edit(this);
   toolbar->addWidget(m_ql_search);
   m_ql_search->setMinimumWidth(200);
-  connect(m_ql_search, SIGNAL(returnPressed()), this, SLOT(search_db()));
+  connect(m_ql_search, SIGNAL(returnPressed()), this, SLOT(searchbar_search()));
   connect(m_ql_search, SIGNAL(textChanged(const QString&)), this, SLOT(search_text_changed(const QString&)));
   toolbar->addAction(m_action_search);
 }
@@ -234,7 +234,7 @@ msg_list_window::create_actions()
 	  this, SLOT(sender_properties()));
 
   m_action_search = new QAction(FT_MAKE_ICON(FT_ICON16_FIND), tr("Search"), this);
-  connect(m_action_search, SIGNAL(triggered()), this, SLOT(search_db()));
+  connect(m_action_search, SIGNAL(triggered()), this, SLOT(searchbar_search()));
 
   m_action_new_mail = new QAction(FT_MAKE_ICON(FT_ICON16_EDIT), tr("New mail"), this);
   connect(m_action_new_mail, SIGNAL(triggered()), this, SLOT(new_mail()));
@@ -2019,10 +2019,20 @@ msg_list_window::new_list()
 void
 msg_list_window::sel_filter(const msgs_filter& f)
 {
+  msgs_filter* filter = new msgs_filter(f);
+  // First build of the query to check for validity
+  sql_query fquery;
+  int r0 = filter->build_query(fquery);
+  if (r0 == 3) {
+    // failure
+    delete filter;
+    return;
+  }
+
   setCursor(Qt::WaitCursor);
 //  m_new_mail_btn->hide();
 
-  m_loading_filter = new msgs_filter(f);
+  m_loading_filter = filter;
 
   if (m_loading_filter->m_has_progress_bar)
     install_progressbar(tr("Querying database..."));
@@ -2047,6 +2057,8 @@ msg_list_window::sel_filter(const msgs_filter& f)
   else if (r==2) {
     QMessageBox::information(this, APP_NAME, tr("No results"));
   }
+  /* if (r==3) ignored. Shouldn't happen given the pre-check at the
+     beginning of the function */
 }
 
 void
@@ -2196,6 +2208,7 @@ msg_list_window::fetch_more()
   else if (r == 2) {
     QMessageBox::information(this, APP_NAME, tr("No results"));
   }
+  // r==3 ignored
 }
 
 void
