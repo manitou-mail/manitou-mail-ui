@@ -634,7 +634,7 @@ msgs_filter::process_date_clause(sql_query& q, date_comparator comp, QString dat
 	q.add_clause(QString("msg_date>='%1-01-01'::date").arg(year));
     }
     else {
-      QRegExp rx1("^(\\d{4})-(\\d{2})$");
+      QRegExp rx1("^(\\d{4})-(\\d\\d?)$");
       // YYYY-MM
       if (rx1.indexIn(date_expr) == 0) {
 	qd.setDate(rx1.cap(1).toInt(), rx1.cap(2).toInt(), 1);
@@ -652,7 +652,7 @@ msgs_filter::process_date_clause(sql_query& q, date_comparator comp, QString dat
 		       .arg(rx1.cap(1)).arg(rx1.cap(2)));
       }
       else {
-	QRegExp rx2("^(\\d{4})-(\\d{2})-(\\d{2})$");
+	QRegExp rx2("^(\\d{4})-(\\d\\d?)-(\\d\\d?)$");
 	// YYYY-MM-DD
 	if (rx2.indexIn(date_expr) == 0) {
 	  qd.setDate(rx2.cap(1).toInt(), rx2.cap(2).toInt(), rx2.cap(3).toInt());
