@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -28,9 +28,11 @@
 
 #if defined(DB_MAIL_ID_32)
 typedef quint32 mail_id_t;
+typedef quint32 attach_id_t;
 #define MAIL_ID_FMT_STRING "%u"
 #elif defined(DB_MAIL_ID_64)
 typedef quint64 mail_id_t;
+typedef quint64 attach_id_t;
 #define MAIL_ID_FMT_STRING "%llu"
 #endif
 

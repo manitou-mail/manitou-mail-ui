@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -25,23 +25,24 @@
 #include <QFile>
 
 const char* app_config::m_default_values[] = {
+  "autocheck_newmail", "3",
+  "composer/address_check", "basic",
+  "composer/format_for_new_mail", "text/plain",
+  "composer/format_for_replies", "same_as_sender",
+  "display/notifications/new_mail", "system",
+  "display/wordsearch/progress_bar", "0",
+  "display_threads", "1",
+  "fetch_ahead_max_msgs", "10",
+  "forward_includes_attachments", "1",
+  "max_db_connections", "3",
+  "max_msgs_per_selection", "500",
+  "messages_order", "oldest_first",
+  "msg_window_pages", "5",
+  "preferred_display_format", "html",
+  "query_dialog/address_autocompleter", "1",
   "sender_displayed_as", "name",
   "show_headers_level", "1",
   "show_tags", "1",
-  "autocheck_newmail", "3",
-  "display_threads", "1",
-  "messages_order", "oldest_first",
-  "msg_window_pages", "5",
-  "max_db_connections", "3",
-  "max_msgs_per_selection", "500",
-  "fetch_ahead_max_msgs", "10",
-  "preferred_display_format", "html",
-  "composer/format_for_replies", "same_as_sender",
-  "composer/format_for_new_mail", "text/plain",
-  "composer/address_check", "basic",
-  "display/notifications/new_mail", "system",
-  "display/wordsearch/progress_bar", "0",
-  "query_dialog/address_autocompleter", "1",
   NULL
 };
 

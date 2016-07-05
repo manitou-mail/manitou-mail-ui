@@ -829,7 +829,8 @@ mail_msg::store(ui_feedback* ui)
 {
   bool result=false;
   PGresult* res;
-  db_cnx db;
+  db_ctxt dbc;
+  db_cnx& db = *dbc.m_db;
   PGconn* c=db.connection();
   try {
     db.begin_transaction();
@@ -924,7 +925,7 @@ mail_msg::store(ui_feedback* ui)
       result = (result && store_note());
     }
     m_Attachments.setMailId(m_nMailId);
-    result=(result && m_Attachments.store(ui));
+    result=(result && m_Attachments.store(&dbc, ui));
     if (result)
       db.commit_transaction();
     else {
@@ -933,10 +934,13 @@ mail_msg::store(ui_feedback* ui)
     }
   }
   catch(db_excpt& p) {
-    DBG_PRINTF(2, "rollback caused by db_excpt");
     db.rollback_transaction();
     DBEXCPT(p);
     result=false;
+  }
+  catch(app_exception& exc) {
+    db.rollback_transaction();
+    throw exc;
   }
   catch(int errcode) {
     DBG_PRINTF(2, "rollback caused by other reason (%d)", errcode);
@@ -1174,6 +1178,20 @@ mail_msg::setup_forward()
   
   msg.set_body_text(fwd_body);
   msg.set_fwded_mail_id(this->get_id());
+
+  /* Optionally pre-include the attachments of the forwarded mail */
+  if (conf.get_bool("forward_includes_attachments")) {
+    DBG_PRINTF(4, "forward_includes_attachments is true");
+    attachments_list& al_src = attachments();
+    attachments_list& al_dst = msg.attachments();
+    for (std::list<attachment>::iterator it = al_src.begin(); it != al_src.end(); ++it) {
+      /* Keep the attachment if it has a filename and no content-id.
+	 This is meant to avoid contents related to HTML parts */
+      if (!(*it).filename().isEmpty() && (*it).mime_content_id().isEmpty()) {
+	al_dst.push_back((*it).dup_no_data());
+      }
+    }
+  }
 
   return msg;
 }

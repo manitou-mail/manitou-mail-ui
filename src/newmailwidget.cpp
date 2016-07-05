@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2014 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -239,8 +239,16 @@ new_mail_widget::new_mail_widget(mail_msg* msg, QWidget* parent)
   m_qAttch=new attch_listview(split);
   m_qAttch->allow_delete(true);
   m_qAttch->setAcceptDrops(true);
-  m_qAttch->hide();
-  m_qAttch->set_attch_list(&m_msg.attachments());
+  if (m_msg.attachments().size()==0)
+    m_qAttch->hide();
+  else {
+    std::list<attachment>::iterator it;
+    for (it=m_msg.attachments().begin(); it!=m_msg.attachments().end(); ++it) {
+      attch_lvitem* item = new attch_lvitem(m_qAttch, &(*it));
+      item->fill_columns();
+    }
+    m_qAttch->show();
+  }
   connect(m_qAttch, SIGNAL(attach_file_request(const QUrl)),
 	  this, SLOT(attach_file(const QUrl)));
 
@@ -749,6 +757,16 @@ new_mail_widget::send()
       return;
   }
 
+  /* Collect attachments from the listview */
+  m_msg.attachments().clear();
+  for (int i=0; i<m_qAttch->topLevelItemCount(); i++) {
+    attch_lvitem* item = dynamic_cast<attch_lvitem*>(m_qAttch->topLevelItem(i));
+    attachment* a = item->get_attachment();
+    if (a) {
+      m_msg.attachments().push_back(*a);
+    }
+  }
+
   if (m_edit_mode == html_mode) {
     // Collect the attachments refered to by the HTML contents, and generated
     // MIME content-id's for them.
@@ -800,7 +818,6 @@ new_mail_widget::send()
     return;
   }
 
-
   ui_feedback* ui = new ui_feedback(this);
   statusBar()->showMessage(tr("Saving message"));
 
@@ -813,32 +830,37 @@ new_mail_widget::send()
   connect(ui, SIGNAL(set_val(int)), m_progress_bar, SLOT(setValue(int)));
   connect(ui, SIGNAL(set_text(const QString&)), statusBar(), SLOT(showMessage(const QString&)));
 
-  if (m_msg.store(ui)) {
-    /* If this message was a reply, then tell to the originator mailitem
-       to update it's status */
-    if (m_msg.inReplyTo() != 0) {
-      DBG_PRINTF(5, "refresh_request for %d", m_msg.inReplyTo());
-      emit refresh_request(m_msg.inReplyTo());
-    }
-    else if (m_msg.forwardOf().size() != 0) {
-      const std::vector<mail_id_t>& v = m_msg.forwardOf();
-      for (uint i=0; i < v.size(); i++) {
-	emit refresh_request(v[i]);
+  try {
+    if (m_msg.store(ui)) {
+      /* If this message was a reply, then tell to the originator mailitem
+	 to update it's status */
+      if (m_msg.inReplyTo() != 0) {
+	DBG_PRINTF(5, "refresh_request for %d", m_msg.inReplyTo());
+	emit refresh_request(m_msg.inReplyTo());
       }
+      else if (m_msg.forwardOf().size() != 0) {
+	const std::vector<mail_id_t>& v = m_msg.forwardOf();
+	for (uint i=0; i < v.size(); i++) {
+	  emit refresh_request(v[i]);
+	}
+      }
+      m_close_confirm=false;
+      close();
     }
-    m_close_confirm=false;
-    close();
+    else {
+      QMessageBox::critical(this, tr("Error"), "Error while saving the message");
+      statusBar()->showMessage(tr("Send failed."), 3000);
+    }
   }
-  else {
-    QMessageBox::critical(this, tr("Error"), "Error while saving the message");
+  catch(app_exception& exc) {
+    QMessageBox::critical(this, tr("Error"), exc.m_err_msg);
     statusBar()->showMessage(tr("Send failed."), 3000);
-    if (m_progress_bar) {
-      delete m_progress_bar;
-      m_progress_bar=NULL;
-    }
+  }
+  if (m_progress_bar) {
+    delete m_progress_bar;
+    m_progress_bar=NULL;
   }
 }
-
 
 void
 new_mail_widget::attach_files()
@@ -855,11 +877,9 @@ new_mail_widget::attach_files()
     m_last_attch_dir = QFileInfo(*it).canonicalPath();
     attch.get_size_from_file();
     attch.set_mime_type(attachment::guess_mime_type(*it));
-    m_msg.attachments().push_back(attch);
-    attachment& attch1 = m_msg.attachments().back();
 
     // Insert the attachment's listviewitem at the end of the listview
-    attch_lvitem* pItem=new attch_lvitem(m_qAttch, &attch1);
+    attch_lvitem* pItem = new attch_lvitem(m_qAttch, &attch);
     pItem->fill_columns();
   }
   m_qAttch->show();
@@ -874,11 +894,9 @@ new_mail_widget::attach_file(const QUrl url)
     attch.set_filename(info.absoluteFilePath());
     attch.get_size_from_file();
     attch.set_mime_type(attachment::guess_mime_type(info.absoluteFilePath()));
-    m_msg.attachments().push_back(attch);
-    attachment& attch1 = m_msg.attachments().back();
 
     // Insert the attachment's listviewitem at the end of the listview
-    attch_lvitem* pItem=new attch_lvitem(m_qAttch, &attch1);
+    attch_lvitem* pItem = new attch_lvitem(m_qAttch, &attch);
     pItem->fill_columns();
     m_qAttch->show();
   }

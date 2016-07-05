@@ -145,6 +145,18 @@ usage(const char* progname)
   exit(1);
 }
 
+app_exception::app_exception()
+{
+}
+
+app_exception::app_exception(QString errmsg) : m_err_msg(errmsg)
+{
+}
+
+app_exception::~app_exception()
+{
+}
+
 manitou_application::manitou_application(int& argc, char** argv)
   : QApplication(argc,argv)
 {

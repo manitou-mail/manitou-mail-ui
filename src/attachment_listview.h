@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -35,9 +35,6 @@ class attch_listview: public QTreeWidget
 public:
   attch_listview(QWidget* parent);
   virtual ~attch_listview();
-  void set_attch_list(attachments_list* l) {
-    m_pAttchList=l;
-  }
   void progress_report(int);
   void allow_delete(bool b);
   void save_attachments();
@@ -47,8 +44,6 @@ protected:
   QStringList mimeTypes() const;
 
 private:
-  // ptr to the list of attachments of the message object
-  attachments_list* m_pAttchList;
   bool m_abort; //  attachment download aborted
 signals:
   void progress(int);
@@ -74,18 +69,27 @@ class attch_lvitem : public QTreeWidgetItem
 public:
   //  attch_lvitem() {}
   attch_lvitem(attch_listview* p, attachment* a) : QTreeWidgetItem(p) {
-    m_pAttachment = a;
-    m_type = (a?0:1);
-    m_listview=p;
+    if (a) {
+      m_attach = a->dup_no_data();
+      m_type = type_attachment;
+    }
+    else
+      m_type = type_note;
   }
+
   attch_lvitem(attch_listview* p, QTreeWidgetItem* q, attachment* a) :
-    QTreeWidgetItem(p,q) {
-    m_pAttachment = a;
-    m_type = (a?0:1);
-    m_listview=p;
+    QTreeWidgetItem(p,q)
+  {
+    if (a) {
+      m_attach = a->dup_no_data();
+      m_type = type_attachment;
+    }
+    else
+      m_type = type_note;
   }
+
   attch_listview* lview() const {
-    return m_listview;
+    return dynamic_cast<attch_listview*>(treeWidget());
   }
   virtual ~attch_lvitem() {}
   void fill_columns();
@@ -97,20 +101,23 @@ public:
   // download the attachment into 'destfilename'
   bool download(const QString destfilename, bool* abort);
 
-  attachment* get_attachment() const {
-    return m_pAttachment;
+  attachment* get_attachment() {
+    return m_type == type_attachment ? &m_attach : NULL;
   }
 
   void set_note(const QString& note);
   bool is_note() const {
-    return (m_type==1);
+    return (m_type == type_note);
   }
 private:
-  int m_type; // 0=attachment, 1=note
-  attachment* m_pAttachment;
+  //  int m_type; // 0=attachment, 1=note
+  enum row_type {
+    type_attachment = 0,
+    type_note = 1
+  } m_type;
+  attachment m_attach;
   QString m_note;
   QPalette m_palette_for_notes;
-  attch_listview* m_listview;
 };
 
 class attch_dialog_save: public QDialog

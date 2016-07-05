@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -229,6 +229,7 @@ public:
   bool unique_constraint_violation() const {
     return m_err_code=="23505";
   }
+  // error_code fixed to "UU001" for client-side errors
   static const char* client_assertion;
 private:
   QString m_query;

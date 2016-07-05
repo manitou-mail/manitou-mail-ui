@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -42,7 +42,7 @@
 #endif
 
 attachment::attachment() :
-  m_Id(0), m_data(NULL), m_descFetched(false), m_inMemory(false)
+  m_Id(0), m_data(NULL)
 {
 }
 
@@ -53,10 +53,24 @@ attachment::attachment(const attachment& a)
   m_filename = a.m_filename;
   m_mime_type = a.m_mime_type;
   m_size = a.m_size;
-  m_inMemory = a.m_inMemory;
-  m_descFetched = a.m_descFetched;
   m_charset = a.m_charset;
   m_mime_content_id = a.m_mime_content_id;
+}
+
+/* Duplicate the metadata and ID of src, excluding memory contents */
+attachment
+attachment::dup_no_data() const
+{
+  attachment a;
+
+  a.m_data = NULL;
+  a.m_Id = m_Id;
+  a.m_filename = m_filename;
+  a.m_mime_type = m_mime_type;
+  a.m_size = m_size;
+  a.m_charset = m_charset;
+  a.m_mime_content_id = m_mime_content_id;
+  return a;
 }
 
 attachment::~attachment()
@@ -283,7 +297,7 @@ attachment::set_contents(const char* contents, uint size)
 }
 
 void
-attachment::set_contents_ptr (char* contents, uint size)
+attachment::set_contents_ptr(char* contents, uint size)
 {
   m_data = contents;
   m_size = size;
@@ -388,7 +402,7 @@ attachment::streamout_content(std::ofstream& of)
     PGconn* c=db.connection();
     int lobj_fd = lo_open(c, lobjId, INV_READ);
     if (lobj_fd < 0) {
-      DBG_PRINTF(4, "lo_open returns %d", lobj_fd);
+      DBG_PRINTF(7, "lo_open returns %d", lobj_fd);
       throw db_excpt("lo_open", db);
     }
     char data[8192];
@@ -427,7 +441,7 @@ attachment::open_lo(struct lo_ctxt* slo)
     }
     db->begin_transaction();
     int lobj_fd = lo_open(c, lobjId, INV_READ);
-    DBG_PRINTF(4, "lo_open returns %d", lobj_fd);
+    DBG_PRINTF(7, "lo_open returns %d", lobj_fd);
     if (lobj_fd < 0) {
       slo->lfd=-1;
       throw db_excpt("lo_open", *db);
@@ -467,22 +481,12 @@ attachment::close_lo(struct lo_ctxt* slo)
 {
   if (slo->lfd>=0) {
     PGconn* c = slo->db->connection();
-    DBG_PRINTF(4, "lo_close(%d)", slo->lfd);
+    DBG_PRINTF(7, "lo_close(%d)", slo->lfd);
     lo_close(c, slo->lfd);
     slo->db->commit_transaction();
   }
   delete slo->db;
   slo->db=NULL;
-}
-
-bool
-attachment::fetch()
-{
-  if (m_descFetched)
-    return true;
-#ifdef WITH_PGSQL
-  return true;
-#endif
 }
 
 void
@@ -506,6 +510,49 @@ attachment::human_readable_size()
     return QString("%L1 kB").arg(s/(double)factor, 0, 'f', 1);
   else
     return QString("%L1 MB").arg(s/((double)factor*factor), 0, 'f', 1);
+}
+
+/* Reinsert an identical attachment and assign it to a different mail
+   (the contents are not duplicated).
+   When called, m_Id is the id of the existing attachment (source of copy)
+   If the duplication is successful, m_Id is overwritten by the id of
+   the target attachement.
+   Can throw db_excpt and app_exception.
+ */
+
+bool
+attachment::duplicate_existing(mail_id_t mail_id, db_ctxt* dbc)
+{
+  db_cnx& db = *(dbc->m_db);
+  attach_id_t new_id;
+  static const char* errtxt = QT_TR_NOOP("The contents from the referenced attachment:\n %1\nare no longer accessible in the database.\nThis attachment must be removed from the mail being composed.");
+
+  sql_stream s("INSERT INTO attachments(attachment_id, mail_id, content_type,"
+	       " content_size, filename,mime_content_id)"
+	       " SELECT nextval('seq_attachment_id'),"
+	       ":mail_id,"
+	       "content_type, content_size, filename, mime_content_id"
+	       " FROM attachments WHERE attachment_id=:att_id"
+	       " RETURNING attachment_id", db);
+  s << mail_id << m_Id;
+  if (!s.eos()) {
+    s >> new_id;
+    sql_stream s2("INSERT INTO attachment_contents(attachment_id, content, fingerprint)"
+		    " SELECT :target_id, content, fingerprint"
+		    " FROM attachment_contents WHERE attachment_id=:source_id", db);
+    s2 << new_id << m_Id;
+    if (s2.affected_rows()==0) {
+      /* Can't duplicate: the source attachment is no longer accessible */
+      throw app_exception(QObject::tr(errtxt).arg(m_filename));
+    }
+    m_Id = new_id;
+  }
+  else {
+    /* Can't duplicate, as above */
+    throw app_exception(QObject::tr(errtxt).arg(m_filename));
+  }
+
+  return true;
 }
 
 bool
@@ -643,8 +690,8 @@ attachment::import_file_content(ui_feedback* ui)
     }
 
     if (m_filename.length()>0) {
-      QByteArray qb_fname = QFile::encodeName(m_filename);
       if (lobj_id==0) {
+	QByteArray qb_fname = QFile::encodeName(m_filename);
 	if (!ui) {
 	  // if not reporting progress, import in one go
 	  lobj_id = lo_import(db.connection(), qb_fname.constData());
@@ -757,7 +804,8 @@ attachments_list::fetch()
     s << m_mailId;
     while (!s.eos()) {
       attachment attch;
-      int id, size;
+      int size;
+      attach_id_t id;
       QString filename, content_type, charset, mime_content_id;
       s >> id >> content_type >> size >> filename >> charset >> mime_content_id;
       attch.setAll(id, size, filename, content_type, charset);
@@ -780,7 +828,7 @@ attachments_list::get_by_content_id(const QString mime_content_id)
     return NULL;
   std::list<attachment>::iterator it;
   for (it=begin(); it!=end(); it++) {
-    DBG_PRINTF(5, "attch %d,mime_content_id=%s", (*it).getId(), (*it).mime_content_id().toLocal8Bit().constData());
+    DBG_PRINTF(7, "attch %d,mime_content_id=%s", (*it).getId(), (*it).mime_content_id().toLocal8Bit().constData());
     if ((*it).mime_content_id() == mime_content_id)
       return &(*it);
   }
@@ -789,11 +837,19 @@ attachments_list::get_by_content_id(const QString mime_content_id)
 }
 
 bool
-attachments_list::store(ui_feedback* ui)
+attachments_list::store(db_ctxt* dbc, ui_feedback* ui)
 {
   std::list<attachment>::iterator it;
-  for (it=begin(); it!=end(); it++) {
-    if (!(*it).store(m_mailId, ui))
+  for (it=begin(); it!=end(); ++it) {
+    if ((*it).getId() != 0) {
+      /* When the attachment already exists in the database for another mail,
+	 create a new reference to it. It might fail if the attachment has
+         been deleted after we picked it up, in which an app_exception
+         will be thrown */
+      if (!(*it).duplicate_existing(m_mailId, dbc))
+	return false;
+    }
+    else if (!(*it).store(m_mailId, ui))
       return false;
   }
   return true;
@@ -853,7 +909,7 @@ attachment::read(qint64 size, char* buf)
   if (size==0) return 0;
   PGconn* c = m_lo.db->connection();
   int r = lo_read(c, m_lo.lfd, buf, (size_t)size);
-  DBG_PRINTF(4, "attachment::read requested %d bytes, read %d bytes on lfd=%d",
+  DBG_PRINTF(7, "attachment::read requested %d bytes, read %d bytes on lfd=%d",
 	     (size_t)size, r, m_lo.lfd);
   if (r<size || r==0) {
     m_lo.eof=true;
@@ -891,7 +947,7 @@ attachment_network_reply::attachment_network_reply(const QNetworkRequest &req, a
     DBG_PRINTF(2, "error in opening attachment (attachment_id=%d)", a->getId());
   }
   else {
-    DBG_PRINTF(5, "attachment opened (attachment_id=%d)", a->getId());
+    DBG_PRINTF(7, "attachment opened (attachment_id=%d)", a->getId());
     setRequest(req);
     setOperation(QNetworkAccessManager::GetOperation);
     setReadBufferSize(0);
@@ -903,19 +959,19 @@ attachment_network_reply::attachment_network_reply(const QNetworkRequest &req, a
 
 attachment_network_reply::~attachment_network_reply()
 {
-  DBG_PRINTF(4, "~attachment_network_reply()");
+  DBG_PRINTF(7, "~attachment_network_reply()");
 }
 
 qint64
 attachment_network_reply::readData(char* data, qint64 size)
 {
-  DBG_PRINTF(4, "readData size=%ld", size);
+  DBG_PRINTF(7, "readData size=%ld", size);
   if (m_a->eof()) {
-    DBG_PRINTF(4, "eof on attachment");
+    DBG_PRINTF(7, "eof on attachment");
     return -1;
   }
   qint64 res=m_a->read(size, data);
-  DBG_PRINTF(4, "read %ld bytes", res);
+  DBG_PRINTF(7, "read %ld bytes", res);
   if (!m_a->eof() && res==size) {
     QTimer::singleShot(0, this, SLOT(go_ready_read())); // emit readyRead();
   }
@@ -929,7 +985,7 @@ bool
 attachment_network_reply::atEnd() const
 {
   bool b=m_a->eof();
-  DBG_PRINTF(4, "atEnd returns %d", b);
+  DBG_PRINTF(7, "atEnd returns %d", b);
   return m_a->eof();
 }
 
@@ -943,7 +999,7 @@ attachment_network_reply::isSequential() const
 void
 attachment_network_reply::abort()
 {
-  DBG_PRINTF(4, "abort");
+  DBG_PRINTF(7, "abort");
   m_a->close();
 }
 
@@ -952,7 +1008,7 @@ qint64
 attachment_network_reply::bytesAvailable() const
 {
   qint64 ret=(!m_a->eof()?32768:0) + QNetworkReply::bytesAvailable();
-  DBG_PRINTF(3, "bytesAvailable returning %lld", ret);
+  DBG_PRINTF(7, "bytesAvailable returning %lld", ret);
   return ret;
 }
 
@@ -966,11 +1022,11 @@ void attachment_network_reply::go()
     /* We no longer emit error(err) here otherwise the load of the document
        containing the attachment apparently never finishes.
        This happens in particular for empty attachments */
-    DBG_PRINTF(4, "emit finished");
+    DBG_PRINTF(7, "emit finished");
     emit finished();
   }
   else {
-    DBG_PRINTF(4, "emit readyRead");
+    DBG_PRINTF(7, "emit readyRead");
     emit readyRead(); 
   } 
 }
@@ -978,13 +1034,13 @@ void attachment_network_reply::go()
 void
 attachment_network_reply::go_finished()
 {
-  DBG_PRINTF(4, "go_finished");
+  DBG_PRINTF(7, "go_finished");
   emit finished();
 }
 
 void
 attachment_network_reply::go_ready_read()
 {
-  DBG_PRINTF(4, "go_ready_read");
+  DBG_PRINTF(7, "go_ready_read");
   emit readyRead(); 
 }

@@ -106,6 +106,18 @@ private:
   QSystemTrayIcon* m_tray_icon;
 };
 
+/* Application-level exception. Code that opens a database transaction
+   should first clean it up before throwing that exception.
+   Code that catches these exceptions is generally expected to display
+   the corresponding error through the GUI. */
+class app_exception
+{
+public:
+  app_exception();
+  app_exception(QString errmsg);
+  virtual ~app_exception();
+  QString m_err_msg;
+};
 
 extern manitou_application* gl_pApplication;
 

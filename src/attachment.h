@@ -45,8 +45,12 @@ public:
   attachment();
   attachment(const attachment&);
   virtual ~attachment();
-  mail_id_t getId() const { return m_Id; }
-  void setId(mail_id_t id) { m_Id=id; }
+
+  /* Duplicate the metadata and ID of src, excluding contents cached in memory */
+  attachment dup_no_data() const;
+
+  attach_id_t getId() const { return m_Id; }
+  void setId(attach_id_t id) { m_Id=id; }
 
   void compute_sha1_fp();
 
@@ -62,21 +66,24 @@ public:
   void streamout_content(std::ofstream&);
   bool store(mail_id_t mail_id, ui_feedback* ui=NULL);
 
+  /* Reinsert an identical attachment and assign it to a different mail
+     (the contents are not duplicated) */
+  bool duplicate_existing(mail_id_t mail_id, db_ctxt* dbc);
+
   /* Insert the contents of a file into the ATTACHMENT_CONTENTS table
      members updated: m_size, m_Id */
   bool import_file_content(ui_feedback* ui=NULL);
 
   static QString guess_mime_type(const QString);
+  static QString extension(const QString);
 
-  uint size() { fetch(); return m_size; }
-
+  const QString filename() { return m_filename; }
+  QString mime_type() { return m_mime_type; }
+  QString charset() { return m_charset; }
+  uint size() { return m_size; }
   /* rounded size with kB,Mb units */
   QString human_readable_size();
 
-  const QString filename() { fetch(); return m_filename; }
-  static QString extension(const QString);
-  QString mime_type() { fetch(); return m_mime_type; }
-  QString charset() { fetch(); return m_charset; }
   QString application() const;
   QString default_os_application();
   void launch_external_viewer(const QString document_path);
@@ -88,14 +95,13 @@ public:
   // copy of the attachment 
   QString get_temp_location();
 
-  void setAll(mail_id_t id, uint size, const QString filename, const QString mime_type,
+  void setAll(attach_id_t id, uint size, const QString filename, const QString mime_type,
     const QString charset=QString::null) {
     m_Id=id;
     m_filename=filename;
     m_size=size;
     m_mime_type=mime_type;
     m_charset=charset;
-    m_descFetched=true;
   }
   void set_mime_content_id(const QString id) {
     m_mime_content_id=id;
@@ -135,21 +141,17 @@ public:
   static bool fetch_filename_suffixes(QMap<QString,QString>&);
 
 protected:
-  int m_Id;
+  attach_id_t m_Id;
   char *m_data;			// with malloc() and free()
   QString m_filename;
   QString m_charset;
   QString m_mime_type;
   QString m_mime_content_id;
   uint m_size;
-  // "description" of attachment has been fetched or is otherwise known
-  bool m_descFetched;
-  bool m_inMemory;
   QString m_sha1_b64;
 private:
   QString sha1_to_base64(unsigned int digest[5]);
   // dummy
-  bool fetch();
   void free_data();
   struct lo_ctxt m_lo;
 };
@@ -181,7 +183,7 @@ public:
   attachments_list();
   virtual ~attachments_list();
   bool fetch();
-  bool store(ui_feedback* ui=NULL);
+  bool store(db_ctxt* dbc, ui_feedback* ui=NULL);
   void setMailId(mail_id_t id) { m_mailId=id; }
   attachment* get_by_content_id(const QString mime_content_id);
 

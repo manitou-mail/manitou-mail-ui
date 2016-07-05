@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -45,12 +45,12 @@ void
 attch_lvitem::fill_columns()
 {
   QString sSize;
-  if (m_pAttachment && m_type==0) {
-    setText(0, m_pAttachment->mime_type());
-    setText(1, m_pAttachment->filename());
-    sSize = m_pAttachment->human_readable_size();
+  if (m_type==type_attachment) {
+    setText(0, m_attach.mime_type());
+    setText(1, m_attach.filename());
+    sSize = m_attach.human_readable_size();
   }
-  else if (m_type==1) {
+  else if (m_type==type_note) {
     setText(0, "(private note)");
     setText(1, m_note);
     sSize.sprintf("%d", m_note.length());
@@ -59,6 +59,8 @@ attch_lvitem::fill_columns()
     setBackground(1, brush);
     setBackground(2, brush);
   }
+  else
+    return; // shouldn't happen
   setText(2, sSize);
   setTextAlignment(0, Qt::AlignTop);
   setTextAlignment(1, Qt::AlignTop);
@@ -69,8 +71,8 @@ attch_lvitem::fill_columns()
 void
 attch_lvitem::set_note(const QString& note)
 {
-  m_note=note;
-  m_type=1;
+  m_note = note;
+  m_type = type_note;
 }
 
 /* download the attachment into 'destfilename'
@@ -80,20 +82,19 @@ attch_lvitem::set_note(const QString& note)
 bool
 attch_lvitem::download(const QString destfilename, bool *abort)
 {
-  attachment* pa = m_pAttachment;
   DBG_PRINTF(5, "saving attachment into %s", destfilename.toLocal8Bit().constData());
   struct attachment::lo_ctxt lo;
-  if (pa->open_lo(&lo)) {
+  if (m_attach.open_lo(&lo)) {
     QByteArray qba = destfilename.toLocal8Bit();
     std::ofstream of(qba.constData(), std::ios::out|std::ios::binary);
     lview()->progress_report(-(int)((lo.size+lo.chunk_size-1)/lo.chunk_size));
     int steps=0;
     int r;
     do {
-      r = pa->streamout_chunk(&lo, of);
+      r = m_attach.streamout_chunk(&lo, of);
       lview()->progress_report(++steps);
     } while (r && (!abort || *abort==false));
-    pa->close_lo(&lo);
+    m_attach.close_lo(&lo);
     of.close();
     if (*abort) {
       QFile::remove(destfilename);
@@ -111,7 +112,7 @@ attch_lvitem::save_to_disk(const QString fname, bool* abort)
 }
 
 attch_listview::attch_listview(QWidget* parent):
-  QTreeWidget(parent), m_pAttchList(NULL)
+  QTreeWidget(parent)
 {
   QString fontname=get_config().get_string("display/font/msglist");
   if (!fontname.isEmpty() && fontname!="xft") {
@@ -217,18 +218,9 @@ void
 attch_listview::remove_current_attachment()
 {
   DBG_PRINTF(3, "remove attachment\n");
-  attch_lvitem* pItem=dynamic_cast<attch_lvitem*>(currentItem());
+  attch_lvitem* pItem = dynamic_cast<attch_lvitem*>(currentItem());
   if (!pItem) return;
-  QModelIndex midx = indexFromItem(pItem);
-  int pos=midx.row();
-  std::list<attachment>::iterator it=m_pAttchList->begin();
-  for (int i=0; it!=m_pAttchList->end(); ++it,++i) {
-    if (i==pos) {
-      m_pAttchList->erase(it);
-      delete pItem;
-      break;
-    }
-  }
+  delete pItem;
 }
 
 void
@@ -286,7 +278,7 @@ attch_listview::save_attachments()
   QList<QTreeWidgetItem*>::const_iterator itw = list.begin();
   for (; itw!=list.end(); ++itw) {
     attch_lvitem* item = static_cast<attch_lvitem*>(*itw);
-    if (item->is_note())
+    if (item->is_note() || !item->get_attachment())
       continue;
     if (!item->get_attachment()->filename().isEmpty())
       list_name.push_back(item);
