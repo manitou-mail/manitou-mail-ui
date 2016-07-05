@@ -72,7 +72,9 @@ msgs_filter::init()
   m_include_trash = false;
   m_newer_than=0;
   m_has_progress_bar = false;
-  m_date_clause=QString::null;
+  m_date_clause = QString::null;
+  m_date_before_clause = QString::null;
+  m_date_after_clause = QString::null;
   m_max_results=get_config().get_number("max_msgs_per_selection");
   if (m_max_results==0)
     m_max_results=1000;
@@ -445,12 +447,19 @@ msgs_filter::build_query(sql_query& q)
 
     /* The date from the search bar is ignored if a date clause already exists.
        It shouldn't normally happen that both are specified. */
-    if (m_date_clause.isEmpty())
+    if (m_date_clause.isEmpty()) {
       m_date_clause = m_fts.m_operators["date"];
+      m_date_before_clause = m_fts.m_operators["before"];
+      m_date_after_clause = m_fts.m_operators["after"];
+    }
 
     if (!m_date_clause.isEmpty())
-      process_date_clause(q, m_date_clause);
-
+      process_date_clause(q, date_equal, m_date_clause);
+    if (!m_date_before_clause.isEmpty())
+      process_date_clause(q, date_before, m_date_before_clause);
+    if (!m_date_after_clause.isEmpty())
+      process_date_clause(q, date_after, m_date_after_clause);
+      
     // </date clause>
 
     if (!m_body_substring.isEmpty()) {
@@ -566,12 +575,14 @@ msgs_filter::empty_list_query()
 }
 
 /*
-  Create SQL clauses from date_expr.
+  Create SQL clauses from the given comparator (equal,before,after)
+  to compare mail.msg_date with date_expr.
   Does not process m_date_min and m_date_max.
-  May throw an exception with a QString
+  For date_before and date_after, the boundary is included.
+  May throw an exception with a QString.
 */
 void
-msgs_filter::process_date_clause(sql_query& q, QString date_expr)
+msgs_filter::process_date_clause(sql_query& q, date_comparator comp, QString date_expr)
 {
   if (date_expr.isEmpty())
     return;
@@ -579,18 +590,31 @@ msgs_filter::process_date_clause(sql_query& q, QString date_expr)
   QDate qd;
 
   if (date_expr == "today") {
-    q.add_clause("msg_date>=date_trunc('day',now()) AND msg_date<date_trunc('day',now())+'1 day'::interval");
+    if (comp == date_equal)
+      q.add_clause("msg_date>=date_trunc('day',now()) AND msg_date<date_trunc('day',now())+'1 day'::interval");
+    else if (comp == date_before) {
+      q.add_clause("msg_date<current_date");
+    }
+    else if (comp == date_after) {
+      q.add_clause("msg_date>=current_date");
+    }
   }
   else if (date_expr == "yesterday") {
-    q.add_clause("msg_date>=date_trunc('day',now())-'1 day'::interval"
-		 " AND msg_date<date_trunc('day',now())");
+    if (comp == date_equal)
+      q.add_clause("msg_date>=current_date-1 AND msg_date<current_date");
+    else if (comp == date_before)
+      q.add_clause("msg_date<current_date");
+    else if (comp == date_after)
+      q.add_clause("msg_date>=current_date-1");
   }
   else if (date_expr.at(0) == '-') {
-    // -[0-9]+ means "at most N days old"
-    QRegExp rx("^-([0-9]+)$");
-    if (date_expr.indexOf(rx) == 0) {
-      int days = rx.capturedTexts().at(1).toInt();
-      q.add_clause(QString("msg_date>=now()-'%1 days'::interval").arg(days));
+    // -[0-9]+ means "at most N days old". Implemented only for date_equal comparison
+    if (comp == date_equal) {
+      QRegExp rx("^-([0-9]+)$");
+      if (date_expr.indexOf(rx) == 0) {
+	int days = rx.capturedTexts().at(1).toInt();
+	q.add_clause(QString("msg_date>=now()-'%1 days'::interval").arg(days));
+      }
     }
   }
   else {
@@ -601,8 +625,13 @@ msgs_filter::process_date_clause(sql_query& q, QString date_expr)
       qd.setDate(year,1,1);
       if (!qd.isValid())
 	throw QObject::tr("Invalid year in date parameter.");
-      q.add_clause(QString("msg_date>='%1-01-01'::date AND msg_date<'%2-01-01'::date")
-		   .arg(year).arg(year+1));
+      if (comp == date_equal)
+	q.add_clause(QString("msg_date>='%1-01-01'::date AND msg_date<'%2-01-01'::date")
+		     .arg(year).arg(year+1));
+      else if (comp == date_before)
+	q.add_clause(QString("msg_date<'%1-01-01'::date").arg(year+1));
+      else if (comp == date_after)
+	q.add_clause(QString("msg_date>='%1-01-01'::date").arg(year));
     }
     else {
       QRegExp rx1("^(\\d{4})-(\\d{2})$");
@@ -611,9 +640,16 @@ msgs_filter::process_date_clause(sql_query& q, QString date_expr)
 	qd.setDate(rx1.cap(1).toInt(), rx1.cap(2).toInt(), 1);
 	if (!qd.isValid())
 	  throw QObject::tr("Invalid year-month in date parameter.");
-	q.add_clause(QString("msg_date>='%1-%2-01'::date AND "
-			     "msg_date<'%1-%2-01'::date+'1 month'::interval")
-		     .arg(rx1.cap(1)).arg(rx1.cap(2)));
+	if (comp == date_equal) 
+	  q.add_clause(QString("msg_date>='%1-%2-01'::date AND "
+			       "msg_date<'%1-%2-01'::date+'1 month'::interval")
+		       .arg(rx1.cap(1)).arg(rx1.cap(2)));
+	else if (comp == date_before)
+	  q.add_clause(QString("msg_date<'%1-%2-01'::date+'1 month'::interval")
+		       .arg(rx1.cap(1)).arg(rx1.cap(2)));
+	if (comp == date_after) 
+	  q.add_clause(QString("msg_date>='%1-%2-01'::date")
+		       .arg(rx1.cap(1)).arg(rx1.cap(2)));
       }
       else {
 	QRegExp rx2("^(\\d{4})-(\\d{2})-(\\d{2})$");
@@ -622,9 +658,16 @@ msgs_filter::process_date_clause(sql_query& q, QString date_expr)
 	  qd.setDate(rx2.cap(1).toInt(), rx2.cap(2).toInt(), rx2.cap(3).toInt());
 	  if (!qd.isValid())
 	    throw QObject::tr("Invalid year-month-day in date parameter.");
-	  q.add_clause(QString("msg_date>='%1-%2-%3'::date AND "
-			       "msg_date<'%1-%2-%3'::date+'1 day'::interval")
-		       .arg(rx2.cap(1)).arg(rx2.cap(2)).arg(rx2.cap(3)));
+	  if (comp == date_equal)
+	    q.add_clause(QString("msg_date>='%1-%2-%3'::date AND "
+				 "msg_date<'%1-%2-%3'::date+'1 day'::interval")
+			 .arg(rx2.cap(1)).arg(rx2.cap(2)).arg(rx2.cap(3)));
+	  else if (comp == date_before)
+	    q.add_clause(QString("msg_date<'%1-%2-%3'::date+'1 day'::interval")
+			 .arg(rx2.cap(1)).arg(rx2.cap(2)).arg(rx2.cap(3)));
+	  else if (comp == date_after)
+	    q.add_clause(QString("msg_date>='%1-%2-%3'::date")
+			 .arg(rx2.cap(1)).arg(rx2.cap(2)).arg(rx2.cap(3)));
 	}
 	else
 	  throw QObject::tr("Unable to parse date expression.");
@@ -1188,7 +1231,9 @@ msg_select_dialog::to_filter(msgs_filter* filter)
     }
   }
   else {
-    filter->m_date_clause=QString::null;
+    filter->m_date_clause = QString::null;
+    filter->m_date_before_clause = QString::null;
+    filter->m_date_after_clause = QString::null;
     filter->m_date_min = QDate();
     filter->m_date_max = QDate();
   }

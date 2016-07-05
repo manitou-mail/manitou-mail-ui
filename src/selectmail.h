@@ -128,6 +128,8 @@ public:
 
   int m_newer_than;		/* newer than or N days old */
   QString m_date_clause;
+  QString m_date_before_clause;
+  QString m_date_after_clause;
 
   int m_min_prio;
   uint m_tag_id;
@@ -163,8 +165,17 @@ public:
 #endif
 
 private:
-  void process_date_clause(sql_query& q, QString date_expr);
-
+  enum date_comparator {
+    date_equal,
+    date_after,
+    date_before
+  };
+  /* Add criteria to the sql_query that correspond to a comparison
+     with date_expr using the date_comparator (equal or after or
+     before) */
+  void process_date_clause(sql_query& q,
+			   date_comparator comp,
+			   QString date_expr);
   bool m_auto_refresh;
   int add_address_selection (sql_query& q, const QString email_addr, int addr_type);
   /* number of criteria that needs to match an address from
