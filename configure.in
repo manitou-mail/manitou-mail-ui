@@ -13,7 +13,7 @@ AC_PROG_INSTALL
 AC_LANG(C++)
 AC_PROG_RANLIB
 
-AT_WITH_QT([+webkit +network +widgets +webkitwidgets +printsupport])
+AT_WITH_QT([+webkit +network +widgets +webkitwidgets +printsupport],[c++11])
 AT_REQUIRE_QT_VERSION([5.2.0])
 
 dnl Check for multithread libraries
