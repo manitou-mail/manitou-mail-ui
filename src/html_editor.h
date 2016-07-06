@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -84,6 +84,8 @@ public slots:
   void align_right();
   void center();
   void justify();
+  // run actions from the menubar
+  void run_edit_action(const char*);
 
 private slots:
   void load_finished(bool);

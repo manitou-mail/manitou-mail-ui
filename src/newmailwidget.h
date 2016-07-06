@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2014 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -112,6 +112,8 @@ public slots:
   void to_format_html_text();
   void to_format_plain_text();
   void attach_file(const QUrl);
+
+  void run_edit_action(const char*);
 
 signals:
 /*  void change_status_request (uint id, uint mask_set, uint mask_unset);*/

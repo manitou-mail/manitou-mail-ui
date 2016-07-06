@@ -283,18 +283,37 @@ new_mail_widget::new_mail_widget(mail_msg* msg, QWidget* parent)
   pMsg->addAction(ico_print, tr("Print"), this, SLOT(print()));
   pMsg->addAction(ico_close, tr("&Cancel"), this, SLOT(cancel()));
 
-  QIcon ico_cut(FT_MAKE_ICON(FT_ICON16_EDIT_CUT));
-  QIcon ico_copy(FT_MAKE_ICON(FT_ICON16_EDIT_COPY));
-  QIcon ico_paste(FT_MAKE_ICON(FT_ICON16_EDIT_PASTE));
-  QIcon ico_undo(FT_MAKE_ICON(FT_ICON16_UNDO));
-  QIcon ico_redo(FT_MAKE_ICON(FT_ICON16_REDO));
-
   QMenu* pEdit = new QMenu(tr("Edit"), this);
-  pEdit->addAction(ico_cut, tr("Cut"), m_bodyw, SLOT(cut()));
-  pEdit->addAction(ico_copy, tr("Copy"), m_bodyw, SLOT(copy()));
-  pEdit->addAction(ico_paste, tr("Paste"), m_bodyw, SLOT(paste()));
-  pEdit->addAction(ico_undo, tr("Undo"), m_bodyw, SLOT(undo()));
-  pEdit->addAction(ico_redo, tr("Redo"), m_bodyw, SLOT(redo()));
+
+  connect(pEdit->addAction(FT_MAKE_ICON(FT_ICON16_EDIT_CUT),
+			   tr("Cut")),
+	  &QAction::triggered,
+	  this,
+	  [this]{ run_edit_action("cut"); });
+
+  connect(pEdit->addAction(FT_MAKE_ICON(FT_ICON16_EDIT_COPY),
+			   tr("Copy")),
+	  &QAction::triggered,
+	  this,
+	  [this]{ run_edit_action("copy"); });
+
+  connect(pEdit->addAction(FT_MAKE_ICON(FT_ICON16_EDIT_PASTE),
+			   tr("Paste")),
+	  &QAction::triggered,
+	  this,
+	  [this]{ run_edit_action("paste"); });
+
+  connect(pEdit->addAction(FT_MAKE_ICON(FT_ICON16_UNDO),
+			   tr("Undo")),
+	  &QAction::triggered,
+	  this,
+	  [this]{ run_edit_action("undo"); });
+
+  connect(pEdit->addAction(FT_MAKE_ICON(FT_ICON16_REDO),
+			   tr("Redo")),
+	  &QAction::triggered,
+	  this,
+	  [this]{ run_edit_action("redo"); });
 
   m_ident_menu = new QMenu(tr("Identity"), this);
   load_identities(m_ident_menu);
@@ -1268,3 +1287,23 @@ new_mail_widget::print()
   doc->print(&printer);
 }
 
+void
+new_mail_widget::run_edit_action(const char* action_keyword)
+{
+  if (m_edit_mode == plain_mode) {
+    QString action = QString::fromLatin1(action_keyword);
+    if (action == "cut")
+      m_bodyw->cut();
+    else if (action == "copy")
+      m_bodyw->copy();
+    else if (action == "paste")
+      m_bodyw->paste();
+    else if (action == "undo")
+      m_bodyw->undo();
+    else if (action == "redo")
+      m_bodyw->redo();
+  }
+  else if (m_edit_mode == html_mode) {
+    m_html_edit->run_edit_action(action_keyword);
+  }
+}

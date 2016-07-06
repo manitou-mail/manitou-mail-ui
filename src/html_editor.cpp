@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -617,4 +617,20 @@ html_editor::dropEvent(QDropEvent* event)
   }
   else
     QWebView::dropEvent(event);
+}
+
+void
+html_editor::run_edit_action(const char* action_kw)
+{
+  QString action = QString::fromLatin1(action_kw);
+  if (action == "cut")
+    page()->triggerAction(QWebPage::Cut);
+  else if (action == "copy")
+    page()->triggerAction(QWebPage::Copy);
+  else if (action == "paste")
+    page()->triggerAction(QWebPage::Paste);
+  else if (action == "undo")
+    page()->triggerAction(QWebPage::Undo);
+  else if (action == "redo")
+    page()->triggerAction(QWebPage::Redo);
 }
