@@ -170,12 +170,21 @@ private:
     date_after,
     date_before
   };
+  enum status_comparator {
+    status_is,
+    status_isnot
+  };
   /* Add criteria to the sql_query that correspond to a comparison
      with date_expr using the date_comparator (equal or after or
      before) */
   void process_date_clause(sql_query& q,
 			   date_comparator comp,
 			   QString date_expr);
+  /* Add criteria to the sql_query that correspond to a status test,
+     m.status having or not having certain status bits. */
+  void process_status_clause(sql_query& q,
+			     status_comparator comp,
+			     QList<QString> vals);
   bool m_auto_refresh;
   int add_address_selection (sql_query& q, const QString email_addr, int addr_type);
   /* number of criteria that needs to match an address from

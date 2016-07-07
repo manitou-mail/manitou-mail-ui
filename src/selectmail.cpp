@@ -240,7 +240,7 @@ msgs_filter::parse_search_string(QString s, fts_options& opt)
     }
     else if (state==20) {
       if (c==' ') {
-	opt.m_operators.insert(curr_op, curr_opval);
+	opt.m_operators.insertMulti(curr_op, curr_opval);
 	state=10;
       }
       else
@@ -276,7 +276,7 @@ msgs_filter::parse_search_string(QString s, fts_options& opt)
     DBG_PRINTF(3, "parse error: state=%d", state);
   }
   if (state==20)
-    opt.m_operators.insert(curr_op, curr_opval);
+    opt.m_operators.insertMulti(curr_op, curr_opval);
 
   if (!curr_word.isEmpty()) {
     if (curr_word.at(0)=='-')
@@ -461,6 +461,14 @@ msgs_filter::build_query(sql_query& q)
       process_date_clause(q, date_after, m_date_after_clause);
       
     // </date clause>
+
+    // status clause through is:status and isnot:status
+    if (m_fts.m_operators.contains("is")) {
+      process_status_clause(q, status_is, m_fts.m_operators.values("is"));
+    }
+    if (m_fts.m_operators.contains("isnot")) {
+      process_status_clause(q, status_isnot, m_fts.m_operators.values("isnot"));
+    }
 
     if (!m_body_substring.isEmpty()) {
       q.add_table("body b");
@@ -671,6 +679,40 @@ msgs_filter::process_date_clause(sql_query& q, date_comparator comp, QString dat
 	}
 	else
 	  throw QObject::tr("Unable to parse date expression.");
+      }
+    }
+  }
+}
+
+/*
+  Create SQL clauses from the given comparator (status_is, status_isnot)
+  to test if mail.status has or doesn't have bits corresponding
+  to the statuses named in <vals>.
+*/
+void
+msgs_filter::process_status_clause(sql_query& q,
+				   status_comparator comp,
+				   QList<QString> vals)
+{
+  static struct {
+    const char* name;
+    int bitmask;
+  } statuses[] = {
+    {"read", mail_msg::statusRead},
+    {"replied", mail_msg::statusReplied},
+    {"forwarded", mail_msg::statusFwded},
+    {"archived", mail_msg::statusArchived},
+    {"sent", mail_msg::statusSent}
+  };
+
+  for (int si=0; si < vals.size(); ++si) {
+    const QString& s = vals.at(si);
+    for (int i=0; i < (int)sizeof(statuses)/(int)sizeof(statuses[0]); i++) {
+      if (QString::compare(s, statuses[i].name, Qt::CaseInsensitive)==0) {
+	if (comp == status_is)
+	  q.add_clause(QString("m.status&%1=%1").arg(statuses[i].bitmask));
+	else if (comp == status_isnot)
+	  q.add_clause(QString("m.status&%1=0").arg(statuses[i].bitmask));
       }
     }
   }
