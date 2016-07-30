@@ -276,7 +276,7 @@ msgs_filter::parse_search_string(QString s, fts_options& opt)
     DBG_PRINTF(3, "parse error: state=%d", state);
   }
   if (state==20)
-    opt.m_operators.insertMulti(curr_op, curr_opval);
+    opt.m_operators.insertMulti(curr_op.toLower(), curr_opval);
 
   if (!curr_word.isEmpty()) {
     if (curr_word.at(0)=='-')
