@@ -174,6 +174,12 @@ private:
     status_is,
     status_isnot
   };
+  enum address_type {
+    from_address,
+    to_address,
+    cc_address
+  };
+
   /* Add criteria to the sql_query that correspond to a comparison
      with date_expr using the date_comparator (equal or after or
      before) */
@@ -185,6 +191,11 @@ private:
   void process_status_clause(sql_query& q,
 			     status_comparator comp,
 			     QList<QString> vals);
+  /* Add criteria to the sql_query that correspond to a sender/recipient test */
+  void process_address_clause(sql_query& q,
+			      address_type atype,
+			      QList<QString> vals);
+
   bool m_auto_refresh;
   int add_address_selection (sql_query& q, const QString email_addr, int addr_type);
   /* number of criteria that needs to match an address from

@@ -470,6 +470,17 @@ msgs_filter::build_query(sql_query& q)
       process_status_clause(q, status_isnot, m_fts.m_operators.values("isnot"));
     }
 
+    // from/to/cc clauses
+    if (m_fts.m_operators.contains("from")) {
+      process_address_clause(q, from_address, m_fts.m_operators.values("from"));
+    }
+    if (m_fts.m_operators.contains("to")) {
+      process_address_clause(q, to_address, m_fts.m_operators.values("to"));
+    }
+    if (m_fts.m_operators.contains("cc")) {
+      process_address_clause(q, cc_address, m_fts.m_operators.values("cc"));
+    }
+
     if (!m_body_substring.isEmpty()) {
       q.add_table("body b");
       q.add_clause(QString("strpos(b.bodytext,'") + m_body_substring + QString("')>0 and m.mail_id=b.mail_id"));
@@ -715,6 +726,38 @@ msgs_filter::process_status_clause(sql_query& q,
 	  q.add_clause(QString("m.status&%1=0").arg(statuses[i].bitmask));
       }
     }
+  }
+}
+
+/*
+  Create SQL clauses to filter on from/to/cc
+  <vals> are interpreted as email addresses (no name)
+*/
+void
+msgs_filter::process_address_clause(sql_query& q,
+				    address_type atype,
+				    QList<QString> vals)
+{
+  for (int si=0; si < vals.size(); ++si) {
+    int cnt = ++m_addresses_count;
+    int itype;
+    switch(atype) {
+    case from_address:
+      itype = 1; break;
+    case to_address:
+      itype = 2; break;
+    case cc_address:
+      itype = 3; break;
+    default:
+      throw QString("Unexpected address type %1").arg((int)atype);
+    }
+    q.add_table(QString("mail_addresses ma%1").arg(cnt));
+    q.add_table(QString("addresses a%1").arg(cnt));
+
+    q.add_clause(QString("ma%1.addr_type=%2").arg(cnt).arg(itype));
+    q.add_clause(QString("m.mail_id=ma%1.mail_id").arg(cnt));
+    q.add_clause(QString("ma%1.addr_id=a%1.addr_id").arg(cnt));
+    q.add_clause(QString("a%1.email_addr").arg(cnt), vals.at(si));
   }
 }
 
