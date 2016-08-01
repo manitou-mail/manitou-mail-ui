@@ -195,6 +195,9 @@ private:
   void process_address_clause(sql_query& q,
 			      address_type atype,
 			      QList<QString> vals);
+  /* Add criteria to the sql_query for the tag operator */
+  void process_tag_clause(sql_query& q,
+			  QList<QString> vals);
 
   bool m_auto_refresh;
   int add_address_selection (sql_query& q, const QString email_addr, int addr_type);

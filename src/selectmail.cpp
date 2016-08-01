@@ -505,6 +505,11 @@ msgs_filter::build_query(sql_query& q)
       process_address_clause(q, cc_address, m_fts.m_operators.values("cc"));
     }
 
+    // tag clause
+    if (m_fts.m_operators.contains("tag")) {
+      process_tag_clause(q, m_fts.m_operators.values("tag"));
+    }
+
     if (!m_body_substring.isEmpty()) {
       q.add_table("body b");
       q.add_clause(QString("strpos(b.bodytext,'") + m_body_substring + QString("')>0 and m.mail_id=b.mail_id"));
@@ -790,6 +795,27 @@ msgs_filter::process_address_clause(sql_query& q,
     q.add_clause(QString("m.mail_id=ma%1.mail_id").arg(cnt));
     q.add_clause(QString("ma%1.addr_id=a%1.addr_id").arg(cnt));
     q.add_clause(QString("a%1.email_addr").arg(cnt), vals.at(si));
+  }
+}
+
+/*
+  Create SQL clauses to filter on tags
+*/
+void
+msgs_filter::process_tag_clause(sql_query& q, QList<QString> vals)
+{
+  for (int si=0; si < vals.size(); ++si) {
+    int tag_id = tags_repository::hierarchy_lookup(vals.at(si));
+    DBG_PRINTF(7, "tag looked up: %s, found=%d", vals.at(si).toLocal8Bit().constData(),
+	       tag_id);
+    if (tag_id) {
+      q.add_table(QString("mail_tags mt%1").arg(++m_addresses_count));
+      q.add_clause(QString("mt%1.mail_id=m.mail_id AND mt%1.tag=%2").
+		   arg(m_addresses_count).arg(tag_id));
+    }
+    else {
+      q.add_clause("false");
+    }
   }
 }
 

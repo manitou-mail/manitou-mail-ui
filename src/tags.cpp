@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -110,6 +110,87 @@ tags_repository::names_list(std::list<uint>& id_list)
   // Qt's documentation
   return m.values();
 }
+
+/** Search a tag by name (including hierarchy) in the repository.
+ * The separator is "->" (ascii).
+ * Returns the tag_id or 0 if not found
+ * <fullname> may have backslash-quoted characters
+ */
+int
+tags_repository::hierarchy_lookup(QString fullname)
+{
+  QString curtag;
+  QStringList levels;
+  int state = 0; // 0:normal, 1=quoted pair, 2=minus sign
+  for (int i=0; i<fullname.length(); i++) {
+    QChar c = fullname.at(i);
+    switch(c.unicode()) {
+      case '\\':
+	if (state == 1) {
+	  curtag.append(c);
+	  state = 0;
+	}
+	else if (state == 2) {
+	  curtag.append('-');	// recall previous '-' that was held
+	  state = 1;
+	}
+	else {
+	  state = 1;
+	}
+	break;
+      case '-':
+	if (state == 1)
+	  curtag.append(c);
+	else
+	  state = 2;		// hold off '-'
+	break;
+      case '>':
+	if (state == 2) {
+	  levels.append(curtag);
+	  curtag.truncate(0);
+	}
+	else {
+	  curtag.append(c);
+	}
+	state = 0;
+	break;
+      default:
+	if (state == 2)
+	  curtag.append('-');	// recall previous '-' that was held
+	state = 0;
+	curtag.append(c);
+	break;
+    }
+  }
+  if (state==2)
+    curtag.append('-');		// recall previous '-' that was held
+  else if (state==1)
+    curtag.append('\\');	// ending backslash is taken verbatim
+  levels.append(curtag);
+
+  int exp_parent = 0;  // expected parent (tag_id)
+  for (int j=0; j<levels.count(); j++) {
+    std::map<int,message_tag>::const_iterator it;
+    it = m_tags_map.begin();
+    while (it != m_tags_map.end()) {
+      if (it->second.name().compare(levels.at(j), Qt::CaseInsensitive)==0) {
+	if (it->second.parent_id() == exp_parent) {
+	  // if it's the same name and at the same level of the hierarchy
+	  exp_parent = it->first;  // the parent of the next level
+	  break;
+	}
+      }
+      ++it;
+    }
+    if (it == m_tags_map.end()) {
+      // not found
+      return 0;
+    }
+  }
+  return exp_parent;
+}
+
+
 
 QString
 tags_repository::name(int id)

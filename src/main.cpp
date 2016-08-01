@@ -398,6 +398,7 @@ main(int argc, char **argv)
   users_repository::fetch();
   message_port::init();
   msg_status_cache::init_db();
+  tags_repository::fetch();
   app.setup_desktop_tray_icon();
 
   msg_list_window* w = new msg_list_window(&filter,0);

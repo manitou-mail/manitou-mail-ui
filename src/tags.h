@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -81,13 +81,9 @@ private:
   // number of tagged messages, -1 if unknown
 };
 
-/*
-  Container for a list of tags. Used to contain all the tags of the
-  current mail database in static storage.  
-  The tags contained are represented by their unique id (tag_id) and
-  name, but (TODO) this class should really contain message_tag
-  objects instead of those (int,QString)
-*/
+/** Container for a list of tags. It's used to contain all the tags of the
+ * current mail database in static storage.
+ */
 class tags_repository
 {
 public:
@@ -99,6 +95,8 @@ public:
   //  static void get_sorted_list(QStringList*);
   static QString name (int id);
   static QString hierarchy(int id);
+  /* search a tag by name (including hierarchy) in the repository */
+  static int hierarchy_lookup(QString fullname);
 };
 
 /* Another container for a list of tags. FIXME: merge with tags_repository */
