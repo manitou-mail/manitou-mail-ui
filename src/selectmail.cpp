@@ -208,8 +208,10 @@ msgs_filter::parse_search_string(QString s, fts_options& opt)
   /* state:
      10: start or in-between tokens
      20: option value
-     40: inside double quotes
-     50: next character is quoted
+     40: word inside enclosing double quotes
+     45: option value inside enclosing double quotes
+     50: next character is backslash-quoted (outside of enclosed text)
+     55: next character is backslash-quoted (inside of enclosed text in option)
   */
   int state=10;
 
@@ -221,15 +223,26 @@ msgs_filter::parse_search_string(QString s, fts_options& opt)
     QChar c=s.at(i);
     DBG_PRINTF(7, "p i=%u, char=%c, state=%d", i, c.toLatin1(), state);
     if (c==QChar('"')) {
-      if (state==10) state=40;
+      if (state==10)
+	state=40;
+      else if (state==20)
+	state=45;
       else if (state==40) {
 	if (!curr_substr.isEmpty())
 	  opt.m_substrs.append(curr_substr);
 	state=10;
       }
+      else if (state==45) {
+	opt.m_operators.insertMulti(curr_op, curr_opval);
+	state=10;
+      }
       else if (state==50) {
 	curr_word.append(c);
 	curr_substr.append(c);	
+      }
+      else if (state==55) {
+	curr_opval.append(c);	// append double-quote as a normal character
+	state=45;
       }
     }
     else if (state==10 && c==QChar(':')) {
@@ -247,8 +260,19 @@ msgs_filter::parse_search_string(QString s, fts_options& opt)
 	curr_opval.append(c); // TODO: better fail if c is not LetterOrNumber
     }
     else if (state==40 && c==QChar('\\')) {
-      // next character is quoted
+      // next character (in non-option enclosed section) is quoted
       state=50;
+    }
+    else if (state==45 && c==QChar('\\')) {
+      // next character (in enclosed option value) is quote
+      state=55;
+    }
+    else if (state==45) {
+      curr_opval.append(c);
+    }
+    else if (state==55) {
+      curr_opval.append(c);
+      state=45;
     }
     else if (!(c.isLetterOrNumber() || c=='_' || c=='.' || c=='@' || c=='-')) {
       // delimiter
