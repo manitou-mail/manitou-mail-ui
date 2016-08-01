@@ -510,7 +510,7 @@ msgs_filter::build_query(sql_query& q)
       q.add_clause(QString("strpos(b.bodytext,'") + m_body_substring + QString("')>0 and m.mail_id=b.mail_id"));
     }
 
-    if (!m_fts.m_words.isEmpty()) {
+    if (!m_fts.m_words.isEmpty() || !m_fts.m_exclude_words.isEmpty()) {
       if (get_config().get_string("search/accents")=="unaccented" ||
 	  m_fts.m_operators["accents"]=="i" ||
 	  m_fts.m_operators["accents"]=="insensitive")
@@ -520,7 +520,15 @@ msgs_filter::build_query(sql_query& q)
 	}
       QString words_incl = db_word::format_db_string_array(m_fts.m_words, db);
       QString words_excl = db_word::format_db_string_array(m_fts.m_exclude_words, db);
-      q.add_clause(QString("m.mail_id in (select * from wordsearch(%1,%2))").arg(words_incl).arg(words_excl));
+      if (!m_fts.m_words.isEmpty()) {
+	q.add_clause(QString("m.mail_id in (select * from wordsearch(%1,%2))").arg(words_incl).arg(words_excl));
+      }
+      else {
+	for (int i=0; i<m_fts.m_exclude_words.count(); i++) {
+	  QString excl = db_word::format_db_string_array(QStringList(m_fts.m_exclude_words.at(i)), db);
+	  q.add_clause(QString("m.mail_id not in (select * from wordsearch(%1))").arg(excl));
+	}
+      }
     }
 
     if (!m_fts.m_substrs.empty()) {
