@@ -472,7 +472,7 @@ msg_list_window::init_menu()
   m_menu_actions[me_Display_Threaded]->setCheckable(true);
   m_menu_actions[me_Display_Threaded]->setChecked(display_vars.m_threaded);
 
-  m_menu_actions[me_Display_Hide_Quoted] = m_pMenuDisplay->addAction(tr("Hide quoted text"), this, SLOT(toggle_hide_quoted(bool)), Qt::CTRL+Qt::Key_H);
+  m_menu_actions[me_Display_Hide_Quoted] = m_pMenuDisplay->addAction(tr("Collapse quoted text"), this, SLOT(toggle_hide_quoted(bool)), Qt::CTRL+Qt::Key_H);
   m_menu_actions[me_Display_Hide_Quoted]->setCheckable(true);
   m_menu_actions[me_Display_Hide_Quoted]->setChecked(display_vars.m_hide_quoted);
 

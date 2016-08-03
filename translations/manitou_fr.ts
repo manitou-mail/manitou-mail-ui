@@ -2770,7 +2770,7 @@ Les messages non encore importés seront perdus.</translation>
         <translation>&amp;Fils de discussion</translation>
     </message>
     <message>
-        <source>Hide quoted text</source>
+        <source>Collapse quoted text</source>
         <translation>Cacher texte cité</translation>
     </message>
     <message>
