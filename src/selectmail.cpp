@@ -528,6 +528,16 @@ msgs_filter::build_query(sql_query& q)
       process_tag_clause(q, m_fts.m_operators.values("tag"));
     }
 
+    // attachment filename
+    if (m_fts.m_operators.contains("filename")) {
+      process_filename_clause(q, m_fts.m_operators.values("filename"));
+    }
+
+    // attachment file suffix
+    if (m_fts.m_operators.contains("filesuffix")) {
+      process_filesuffix_clause(q, m_fts.m_operators.values("filesuffix"));
+    }
+
     if (!m_body_substring.isEmpty()) {
       q.add_table("body b");
       q.add_clause(QString("strpos(b.bodytext,'") + m_body_substring + QString("')>0 and m.mail_id=b.mail_id"));
@@ -834,6 +844,44 @@ msgs_filter::process_tag_clause(sql_query& q, QList<QString> vals)
     else {
       q.add_clause("false");
     }
+  }
+}
+
+/*
+  Create SQL clauses to filter on attached filename
+*/
+void
+msgs_filter::process_filename_clause(sql_query& q, QList<QString> vals)
+{
+  for (int si=0; si < vals.size(); ++si) {
+    q.add_table(QString("attachments AS at%1").arg(++m_alias_sequence));
+    q.add_clause(QString("at%1.mail_id=m.mail_id AND at%1.filename ILIKE '%%2%'").
+		 arg(m_alias_sequence).arg(quote_like_arg(vals.at(si))));
+  }
+}
+
+/*
+  Create SQL clauses to filter on suffixes of filename
+  Accept a list of suffix with slash as the separator, as in:
+  doc/docx/pdf
+*/
+void
+msgs_filter::process_filesuffix_clause(sql_query& q, QList<QString> vals)
+{
+  for (int si=0; si < vals.size(); ++si) {
+    QStringList list = vals.at(si).split("/");
+    QString like_clause;
+    int seq = ++m_alias_sequence;
+    q.add_table(QString("attachments AS at%1").arg(seq));
+
+    for (int i=0; i<list.size(); ++i) {
+      if (!like_clause.isEmpty())
+	like_clause.append(" OR ");
+      like_clause.append(QString("at%1.filename ILIKE '%.%2'").
+			 arg(seq).arg(quote_like_arg(list.at(i))));
+    }
+    q.add_clause(QString("at%1.mail_id=m.mail_id AND (%2)").
+		 arg(seq).arg(like_clause));
   }
 }
 
