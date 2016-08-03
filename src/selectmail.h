@@ -206,6 +206,11 @@ private:
      the mail_addresses table. For each one of these we have to use
      a different sql alias for the mail_addresses table */
   unsigned int m_addresses_count;
+
+  /* When using aliased tables, use a counter as a suffix to disambiguate
+     different aliases to the same table */
+  int m_alias_sequence;
+
   static const int max_possible_prio;
 
   /* escape % and _ for LIKE clauses and add % at the start and end */

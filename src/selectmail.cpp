@@ -79,6 +79,7 @@ msgs_filter::init()
   if (m_max_results==0)
     m_max_results=1000;
   m_addresses_count=0;
+  m_alias_sequence=0;
   m_sAddress=QString::null;
   m_subject=QString::null;
   m_body_substring=QString::null;
@@ -821,9 +822,9 @@ msgs_filter::process_tag_clause(sql_query& q, QList<QString> vals)
     DBG_PRINTF(7, "tag looked up: %s, found=%d", vals.at(si).toLocal8Bit().constData(),
 	       tag_id);
     if (tag_id) {
-      q.add_table(QString("mail_tags mt%1").arg(++m_addresses_count));
+      q.add_table(QString("mail_tags mt%1").arg(++m_alias_sequence));
       q.add_clause(QString("mt%1.mail_id=m.mail_id AND mt%1.tag=%2").
-		   arg(m_addresses_count).arg(tag_id));
+		   arg(m_alias_sequence).arg(tag_id));
     }
     else {
       q.add_clause("false");
