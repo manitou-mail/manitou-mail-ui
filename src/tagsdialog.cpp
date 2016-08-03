@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -191,17 +191,16 @@ tags_dialog::item_changed(QTreeWidgetItem* item, int col)
 	  QMessageBox::critical(this, tr("Error"),
 				tr("This name is already used for another tag of the same branch"));
 	  cancel=true;
-	  
 	}
       }
     }
   }
 	
   if (cancel) {
-    //    q->setText(0, t.name());
-    /* Keep editing. FIXME: if the user cancels the edition after that point,
-       the value that we just rejected will be the current value.
-       We need a second pass at save time to filter again against these values. */
+    /* Keep editing with the old value. */
+    bool isblocked = item->treeWidget()->blockSignals(true);
+    q->setText(0, t.name());
+    item->treeWidget()->blockSignals(isblocked);
     m_qlist->last_failed = item;
     QTimer::singleShot(0, m_qlist, SLOT(reedit()));
   }
