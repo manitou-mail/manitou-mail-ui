@@ -199,6 +199,15 @@ msgs_filter::load_result_list(PGresult* res, std::list<mail_result>* l, int max_
     return 0;
 }
 
+void
+fts_options::clear()
+{
+  m_words.clear();
+  m_exclude_words.clear();
+  m_substrs.clear();
+  m_operators.clear();
+}
+
 /*
   Parse a searchbar expression. No semantic analysis, just extraction of tokens.
 */
@@ -218,6 +227,9 @@ msgs_filter::parse_search_string(QString s, fts_options& opt)
   QString curr_word;
   QString curr_substr;
   QString curr_op, curr_opval;
+
+  opt.clear();
+
   uint len=s.length();
   for (uint i=0; i<len; i++) {
     QChar c=s.at(i);
@@ -1341,6 +1353,7 @@ msg_select_dialog::to_filter(msgs_filter* filter)
   }
   else {
     filter->m_body_substring = m_wString->text();
+    filter->m_fts.clear();
   }
   filter->m_subject = m_wSubject->text();
   filter->m_sql_stmt = m_wSqlStmt->text();

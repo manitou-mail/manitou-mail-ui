@@ -53,6 +53,7 @@ class QDialogButtonBox;
 class fts_options
 {
 public:
+  void clear();
   //  QString m_word;
   QStringList m_words;		// full-text search: words to find
   QStringList m_exclude_words;  // full-text search: words to exclude
