@@ -325,17 +325,21 @@ msgs_filter::parse_search_string(QString s, fts_options& opt)
   return 0;
 }
 
+/*
+  Quote any special character in the string to use it as a LITERAL
+  argument to an SQL LIKE operator, assuming the default ESCAPE regime
+  (backslash).
+  Returns the literal ready to inject into the query except for the surrounding
+  single quotes.
+ */
 QString
 msgs_filter::quote_like_arg(const QString& s)
 {
   QString r=s;
-  r.replace('\\', "\\\\");
   r.replace('_', "\\_");
-  r.replace('\'', "\\'");
   r.replace('%', "\\%");
-  r.append('%');
-  r.prepend('%');
-  return r;
+  db_cnx db;
+  return db.escape_string_literal(r);
 }
 
 // static
@@ -461,7 +465,8 @@ msgs_filter::build_query(sql_query& q)
       q.add_clause(QString("mq.mail_id=m.mail_id and mq.tag=%1").arg(m_tag_id));
     }
     if (!m_subject.isEmpty()) {
-      q.add_clause("subject", quote_like_arg(m_subject), " ILIKE ");
+      QString qs = QString("%%1%").arg(quote_like_arg(m_subject));
+      q.add_clause("subject", qs, " ILIKE ");
     }
     if (m_thread_id) {
       q.add_clause("thread_id", (int)m_thread_id);
@@ -554,7 +559,7 @@ msgs_filter::build_query(sql_query& q)
       if (it!=m_fts.m_substrs.end())
 	q.add_table("body b");
       for (; it!=m_fts.m_substrs.end(); ++it) {
-	q.add_clause("bodytext ilike '" + quote_like_arg(*it) + "' AND m.mail_id=b.mail_id");
+	q.add_clause("bodytext ilike '%" + quote_like_arg(*it) + "%' AND m.mail_id=b.mail_id");
       }
     }
 
