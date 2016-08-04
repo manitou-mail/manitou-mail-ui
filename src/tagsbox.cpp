@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2009 Daniel Vérité
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -21,6 +21,8 @@
 #include "tagsbox.h"
 #include "errors.h"
 #include "message_port.h"
+#include "users.h"
+
 #include <map>
 
 #include <QPainter>
@@ -220,6 +222,15 @@ tags_box_widget::toggle_tag_state(QTreeWidgetItem* item, int column)
   tag_lvitem* tag_item = dynamic_cast<tag_lvitem*>(item);
   if (!tag_item)
     return;
+
+  if (!user::has_permission("update")) {
+    if (tag_item->checkState(0) != tag_item->last_state()) {
+      // revert to the previous state
+      tag_item->set_on(!tag_item->is_on());
+    }
+    emit state_changed_denied(tag_item->tag_id(), (tag_item->checkState(0)==Qt::Checked));
+    return;
+  }
   if (tag_item->checkState(0) != tag_item->last_state()) {
     tag_item->update_last_state();
     tag_item->colorize();

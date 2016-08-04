@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2009 Daniel Vérité
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -93,6 +93,7 @@ private:
   QTreeWidget* m_lv;
 signals:
   void state_changed(int tag_id, bool checked);
+  void state_changed_denied(int tag_id, bool checked);
 };
 
 #endif // INC_TAGSBOX_H

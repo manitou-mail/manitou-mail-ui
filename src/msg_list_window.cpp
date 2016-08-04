@@ -444,6 +444,9 @@ msg_list_window::init_menu()
     m_pMenuFile->addAction(UI_ICON(ICON16_EXPORT_MESSAGES), tr("Export messages"), this, SLOT(export_messages()));
 #endif
 
+  m_menu_actions[me_File_Edit_Users] =
+    m_pMenuFile->addAction(UI_ICON(ICON16_USERS), tr("Manage Users"), this, SLOT(manage_users()));
+
   m_pMenuFile->addSeparator();
 
   m_menu_actions[me_File_Quit] =
@@ -828,9 +831,11 @@ msg_list_window::msg_list_window (const msgs_filter* filter, display_prefs* dpre
   m_timer->start(200);
   connect(m_timer, SIGNAL(timeout()), this, SLOT(timer_func()));
 
-  connect(this, SIGNAL(mail_chg_status(int,mail_msg*)), SLOT(change_mail_status(int,mail_msg*)));
+  connect(this, SIGNAL(mail_chg_status(int,mail_msg*)),
+	  SLOT(change_mail_status(int,mail_msg*)));
 
-  connect(this, SIGNAL(mail_multi_chg_status(int,std::vector<mail_msg*>*)), SLOT(change_multi_mail_status(int,std::vector<mail_msg*>*)));
+  connect(this, SIGNAL(mail_multi_chg_status(int,std::vector<mail_msg*>*)),
+	  SLOT(change_multi_mail_status(int,std::vector<mail_msg*>*)));
 
   // subscribe to refresh requests
   message_port::connect_receiver(SIGNAL(list_refresh_request()),
@@ -985,6 +990,8 @@ void
 msg_list_window::change_mail_status (int status_mask, mail_msg* msg)
 {
   DBG_PRINTF(8, "change_mail_status(mask=%d, mail_id=%d)", status_mask, msg->get_id());
+  if (!user::has_permission("update"))
+    return;
   msg->set_status(msg->status()|status_mask);
   if (msg->update_status()) {
     DBG_PRINTF(5, "status of mail %d updated", msg->get_id());
@@ -1034,6 +1041,10 @@ void
 msg_list_window::msg_delete()
 {
   DBG_PRINTF(8, "msg_delete()");
+  if (!user::has_permission("delete")) {
+    statusBar()->showMessage(tr("No permission to delete messages."));
+    return;
+  }
   remove_selected_msgs(1);
 }
 
@@ -1041,6 +1052,10 @@ void
 msg_list_window::msg_trash()
 {
   DBG_PRINTF(8, "msg_trash()");
+  if (!user::has_permission("trash")) {
+    statusBar()->showMessage(tr("No permission to trash messages."));
+    return;
+  }
   remove_selected_msgs(0);
 }
 
@@ -1574,6 +1589,13 @@ msg_list_window::export_messages()
 }
 
 void
+msg_list_window::manage_users()
+{
+  extern void open_users_dialog();
+  open_users_dialog();
+}
+
+void
 msg_list_window::edit_tags()
 {
   tags_dialog* w=NULL;
@@ -1737,7 +1759,7 @@ void
 msg_list_window::forward()
 {
   std::vector<mail_msg*> v_sel;
-  m_qlist->get_selected (v_sel);
+  m_qlist->get_selected(v_sel);
 
   if (v_sel.size()==0)
     return;
@@ -1978,6 +2000,13 @@ msg_list_window::abort_operation()
 void
 msg_list_window::new_mail()
 {
+  if (!user::has_permission("compose")) {
+    QMessageBox::critical(this,
+			  tr("Permission denied"),
+			  tr("Composing messages is not enabled for the current profile."));
+    return;
+  }
+
   mail_msg msg;;
   new_mail_widget* w = new new_mail_widget(&msg, 0);
   if (w->errmsg().isEmpty()) {
@@ -2827,39 +2856,49 @@ msg_list_window::mail_selected(mail_msg* msg)
     DBG_PRINTF(6, "mail_selected: null msg");
     return;
   }
-  DBG_PRINTF(5,"mail_selected: %d", msg->GetId());
-  m_qlist->refresh(msg->get_id()); // will update from database
-  // display body
-  m_msgview->set_mail_item(msg);
-  if (!m_fetch_on_demand) {
-    display_msg_contents();
-  }
-  else {
-    m_msgview->set_show_on_demand(true);
-    m_qAttch->clear();
-    m_qAttch->hide();
-  }
-
-  // show tags
-  if (!m_fetch_on_demand)
-    display_selection_tags();
-
-  // set status
-  // we don't change the status of a message that is an
-  // attachment to a database message: we would have no way of saving
-  // this information.
-  // also we don't update the status in fetch on demand mode
-  if (!(msg->status() & mail_msg::statusAttached) && !m_fetch_on_demand) {
-    uint known_status=msg->status();
-    // update in memory
-    msg->set_status(msg->status() | mail_msg::statusRead);
-    // update in database
-    msg->update_status();
-    // show for all views
-    if (known_status != msg->status()) {
-      m_qlist->update_msg(msg);
-      propagate_status(msg);
+  try {
+    DBG_PRINTF(5,"mail_selected: %d", msg->GetId());
+    m_qlist->refresh(msg->get_id()); // will update from database
+    // display body
+    m_msgview->set_mail_item(msg);
+    if (!m_fetch_on_demand) {
+      display_msg_contents();
     }
+    else {
+      m_msgview->set_show_on_demand(true);
+      m_qAttch->clear();
+      m_qAttch->hide();
+    }
+
+    // show tags
+    if (!m_fetch_on_demand)
+      display_selection_tags();
+
+    /* Set status.
+       We don't change the status of a message that is an attachment to
+       a database message: we would have no way of saving this information
+       (in practice, we don't have such messages currently) also we don't
+       update the status in fetch on demand mode or no permission.
+    */
+
+    if (!(msg->status() & mail_msg::statusAttached) &&
+	!m_fetch_on_demand &&
+	user::has_permission("update"))
+    {
+      uint known_status=msg->status();
+      // update in memory
+      msg->set_status(msg->status() | mail_msg::statusRead);
+      // update in database
+      msg->update_status();
+      // show for all views
+      if (known_status != msg->status()) {
+	m_qlist->update_msg(msg);
+	propagate_status(msg);
+      }
+    }
+  }
+  catch(db_excpt& p) {
+    DBEXCPT(p);
   }
 }
 
@@ -2867,6 +2906,8 @@ void
 msg_list_window::msg_archive()
 {
   DBG_PRINTF(5, "msg_archive");
+  if (!user::has_permission("update"))
+    return;
   std::vector<mail_msg*> v;
   m_qlist->get_selected(v);
   if (v.empty()) {

@@ -88,6 +88,7 @@ HEADERS += about.h \
            text_merger.h \
            ui_controls.h \
            ui_feedback.h \
+           users_dialog.h \
            user_queries.h \
            users.h \
            filter_results_window.h \
@@ -168,6 +169,7 @@ SOURCES += about.cpp \
            tagsdialog.cpp \
            text_merger.cpp \
            ui_feedback.cpp \
+           users_dialog.cpp \
            user_queries.cpp \
            users.cpp \
            words.cpp \

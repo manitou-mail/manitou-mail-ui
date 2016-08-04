@@ -390,11 +390,6 @@ main(int argc, char **argv)
   gl_pApplication->setAttribute(Qt::AA_DontShowIconsInMenus, false);
 #endif
 
-  /* Instantiate the user in the database if necessary. Ideally we
-     should ask for a fullname if not already known, but there's no
-     GUI support for that yet */
-  user::create_if_missing(QString::null);
-
   users_repository::fetch();
   message_port::init();
   msg_status_cache::init_db();

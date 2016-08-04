@@ -420,6 +420,30 @@
         <source>Uploading file %1</source>
         <translation>Envoi du fichier %1</translation>
     </message>
+    <message>
+        <source>Icon files not found at: %1</source>
+        <translation>Fichiers d&apos;icônes non trouvés à l&apos;emplacement: %1</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation>Erreur</translation>
+    </message>
+    <message>
+        <source>Invalid year in date parameter.</source>
+        <translation>Année invalide dans le paramètre de date.</translation>
+    </message>
+    <message>
+        <source>Invalid year-month in date parameter.</source>
+        <translation>Mois-année invalide dans le paramètre de date.</translation>
+    </message>
+    <message>
+        <source>Invalid year-month-day in date parameter.</source>
+        <translation>Année-mois-jour invalide dansle paramètre de date.</translation>
+    </message>
+    <message>
+        <source>Unable to parse date expression.</source>
+        <translation>Expression signifiant une date.incorrecte.</translation>
+    </message>
 </context>
 <context>
     <name>about_box</name>
@@ -892,6 +916,19 @@
     </message>
 </context>
 <context>
+    <name>attachment</name>
+    <message>
+        <source>The contents from the referenced attachment:
+ %1
+are no longer accessible in the database.
+This attachment must be removed from the mail being composed.</source>
+        <translation>Le contenu de la pièce jointe référencée:
+%1
+n&apos;est plus accessible dans la base.
+Cette pièce jointe doit être supprimé du message en cours de composition.</translation>
+    </message>
+</context>
+<context>
     <name>attch_dialog_save</name>
     <message>
         <source>Open or save</source>
@@ -1074,7 +1111,7 @@
     </message>
     <message>
         <source>No message to export.</source>
-        <translation>Pas de message à exporter</translation>
+        <translation>Pas de message à exporter.</translation>
     </message>
 </context>
 <context>
@@ -3173,6 +3210,26 @@ Les messages non encore importés seront perdus.</translation>
         <source>Export messages</source>
         <translation>Exporter messages</translation>
     </message>
+    <message>
+        <source>Manage Users</source>
+        <translation>Gérer les utilisateurs</translation>
+    </message>
+    <message>
+        <source>No permission to delete messages.</source>
+        <translation>Pas de permission d&apos;effacer les messages.</translation>
+    </message>
+    <message>
+        <source>No permission to trash messages.</source>
+        <translation>Pas de permission de mettre les messages en corbeille.</translation>
+    </message>
+    <message>
+        <source>Permission denied</source>
+        <translation>Permission refusée</translation>
+    </message>
+    <message>
+        <source>Composing messages is not enabled for the current profile.</source>
+        <translation>La composition de messages n&apos;est pas activée pour le profil en cours.</translation>
+    </message>
 </context>
 <context>
     <name>msg_select_dialog</name>
@@ -3580,7 +3637,7 @@ Expédier malgré tout?</translation>
     </message>
     <message>
         <source>Send failed.</source>
-        <translation>Echec de l&apos;envoi</translation>
+        <translation>Echec de l&apos;envoi.</translation>
     </message>
 </context>
 <context>
@@ -4029,6 +4086,65 @@ Voulez-vous le mettre à jour malgré cela?</translation>
     </message>
 </context>
 <context>
+    <name>role_perms_edit_dialog</name>
+    <message>
+        <source>Add a group</source>
+        <translation>Ajouter un groupe</translation>
+    </message>
+    <message>
+        <source>Edit group permissions</source>
+        <translation>Editer les permissions du groupe</translation>
+    </message>
+    <message>
+        <source>Name of role:</source>
+        <translation>Nom du rôle:</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;This role is superuser, implying all permissions on all database objects.&lt;/b&gt;</source>
+        <translation>&lt;b&gt;Ce rôle étant superutilisateur, il a toute permission sur tous les objets en base.&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <source>Permissions:</source>
+        <translation>Permissions:</translation>
+    </message>
+    <message>
+        <source>Read messages</source>
+        <translation>Lire les messages</translation>
+    </message>
+    <message>
+        <source>Modify messages (status)</source>
+        <translation>Modifier les messages (statut)</translation>
+    </message>
+    <message>
+        <source>Trash messages</source>
+        <translation>Mettre en corbeille</translation>
+    </message>
+    <message>
+        <source>Delete messages</source>
+        <translation>Effacer les messages</translation>
+    </message>
+    <message>
+        <source>Write new messages</source>
+        <translation>Composer de nouveaux messages</translation>
+    </message>
+    <message>
+        <source>Define tags and filters</source>
+        <translation>Définir labels et filtres</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation>Erreur</translation>
+    </message>
+    <message>
+        <source>The role name must not be empty.</source>
+        <translation>Le nom du rôle ne peut être vide.</translation>
+    </message>
+    <message>
+        <source>The role could not be created.</source>
+        <translation>Le rôle n&apos;a pu être créé.</translation>
+    </message>
+</context>
+<context>
     <name>save_query_box</name>
     <message>
         <source>SQL statement:</source>
@@ -4298,6 +4414,204 @@ Save now?</source>
     <message>
         <source>Cancel</source>
         <translation>Annuler</translation>
+    </message>
+</context>
+<context>
+    <name>user_edit_dialog</name>
+    <message>
+        <source>Add a database user</source>
+        <translation>Ajouter un utilisateur à la base</translation>
+    </message>
+    <message>
+        <source>Edit a database user</source>
+        <translation>Editer un utilisateur de le base</translation>
+    </message>
+    <message>
+        <source>Current database: &lt;b&gt;%1&lt;/b&gt;</source>
+        <translation>Base en cours: &lt;b&gt;%1&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <source>Change</source>
+        <translation>Changer</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Superuser account: unrestricted permissions.&lt;/b&gt;</source>
+        <translation>&lt;b&gt;Compte superutilisateur: pas de restriction de permission.&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <source>Login &lt;sup&gt;(*)&lt;/sup&gt;:</source>
+        <translation>Login &lt;sup&gt;(*)&lt;/sup&gt;:</translation>
+    </message>
+    <message>
+        <source>Password &lt;sup&gt;(*)&lt;/sup&gt;:</source>
+        <translation>Mot de passe &lt;sup&gt;(*)&lt;/sup&gt;:</translation>
+    </message>
+    <message>
+        <source>Retype password &lt;sup&gt;(*)&lt;/sup&gt;:</source>
+        <translation>Retaper mot de passe &lt;sup&gt;(*)&lt;/sup&gt;:</translation>
+    </message>
+    <message>
+        <source>Active &lt;sup&gt;(*)&lt;/sup&gt;:</source>
+        <translation>Actif &lt;sup&gt;(*)&lt;/sup&gt;:</translation>
+    </message>
+    <message>
+        <source>The database role has the LOGIN capability.</source>
+        <translation>Le rôle a le droit de se connecter.</translation>
+    </message>
+    <message>
+        <source>Can connect &lt;sup&gt;(**)&lt;/sup&gt;:</source>
+        <translation>Peut se connecter &lt;sup&gt;(**)&lt;/sup&gt;:</translation>
+    </message>
+    <message>
+        <source>The login has CONNECT permission on this database.</source>
+        <translation>Le login peut se connecter à cette base.</translation>
+    </message>
+    <message>
+        <source>Registered &lt;sup&gt;(**)&lt;/sup&gt;:</source>
+        <translation>Enregistré &lt;sup&gt;(**)&lt;/sup&gt;:</translation>
+    </message>
+    <message>
+        <source>The user account corresponds to an operator in this database.</source>
+        <translation>Le compte utilisateur correspond à un opérateur dans cette base.</translation>
+    </message>
+    <message>
+        <source>Operator name &lt;sup&gt;(*)&lt;/sup&gt;:</source>
+        <translation>Nom opérateur &lt;sup&gt;(*)&lt;/sup&gt;:</translation>
+    </message>
+    <message>
+        <source>Groups &lt;sup&gt;(*)&lt;/sup&gt;:</source>
+        <translation>Groupes &lt;sup&gt;(*)&lt;/sup&gt;:</translation>
+    </message>
+    <message>
+        <source>Custom field #1 &lt;sup&gt;(**)&lt;/sup&gt;:</source>
+        <translation>Champ personnalisé #1 &lt;sup&gt;(**)&lt;/sup&gt;:</translation>
+    </message>
+    <message>
+        <source>Custom field #2 &lt;sup&gt;(**)&lt;/sup&gt;:</source>
+        <translation>Champ personnalisé #2 &lt;sup&gt;(**)&lt;/sup&gt;:</translation>
+    </message>
+    <message>
+        <source>Custom field #3 &lt;sup&gt;(**)&lt;/sup&gt;:</source>
+        <translation>Champ personnalisé #3 &lt;sup&gt;(**)&lt;/sup&gt;:</translation>
+    </message>
+    <message>
+        <source>(*)  Fields marked with &lt;sup&gt;(*)&lt;/sup&gt; apply across all databases of this server.&lt;br&gt;(**) Fields marked with &lt;sup&gt;(**)&lt;/sup&gt; apply only to the current database: &lt;b&gt;%1&lt;/b&gt;.</source>
+        <translation>(*) Les champs marqués avec &lt;sup&gt;(*)&lt;/sup&gt; s&apos;appliquent à toutes les bases de ce server&lt;br&gt;(**)Les champs marqués avec &lt;sup&gt;(**)&lt;/sup&gt; s&apos;appliquent seulement à la base en cours: &lt;b&gt;%1&lt;/b&gt;.</translation>
+    </message>
+    <message>
+        <source>The passwords don&apos;t match.</source>
+        <translation>Les mots de passe ne concordent pas.</translation>
+    </message>
+    <message>
+        <source>The new password cannot be empty. Uncheck the Change button to keep the old password.</source>
+        <translation>Le nouveau mot de passe ne peut être vide. Décocher le bouton Changer pour garder l&apos;ancien mot de passe.</translation>
+    </message>
+    <message>
+        <source>The login is already used for another user or group.</source>
+        <translation>Le login est déjà utilisé pour un autre utilisateur ou groupe.</translation>
+    </message>
+    <message>
+        <source>The login cannot be empty.</source>
+        <translation>Le login ne peut être vide.</translation>
+    </message>
+    <message>
+        <source>When changing the login, a password must be set simultaneously.</source>
+        <translation>Lors d&apos;un changement de login, un mot de passe doit être fourni simultanément.</translation>
+    </message>
+    <message>
+        <source>A registered account may not have an empty operator name.</source>
+        <translation>Un compte enregistré ne peut avoir un nom d&apos;opérateur vide.</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation>Erreur</translation>
+    </message>
+</context>
+<context>
+    <name>users_dialog</name>
+    <message>
+        <source>Database users</source>
+        <translation>Utilisateurs de base de donnée</translation>
+    </message>
+    <message>
+        <source>Current database: &lt;b&gt;%1&lt;/b&gt;</source>
+        <translation>Base en cours: &lt;b&gt;%1&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <source>Users</source>
+        <translation>Utilisateurs</translation>
+    </message>
+    <message>
+        <source>Groups</source>
+        <translation>Groupes</translation>
+    </message>
+    <message>
+        <source>Tabular view</source>
+        <translation>Vue tabulaire</translation>
+    </message>
+    <message>
+        <source>&amp;Add</source>
+        <translation>&amp;AJouter</translation>
+    </message>
+    <message>
+        <source>&amp;Edit</source>
+        <translation>&amp;Editer</translation>
+    </message>
+    <message>
+        <source>&amp;Close</source>
+        <translation>&amp;Fermer</translation>
+    </message>
+    <message>
+        <source>Login</source>
+        <translation>Login</translation>
+    </message>
+    <message>
+        <source>Can connect</source>
+        <translation>Peut se connecter</translation>
+    </message>
+    <message>
+        <source>Operator name</source>
+        <translation>Nom d&apos;opérateur</translation>
+    </message>
+    <message>
+        <source>Database login</source>
+        <translation>Login base de données</translation>
+    </message>
+    <message>
+        <source>Checked if allowed to connect to this database</source>
+        <translation>Coché si autorisé à se connecter à cette base</translation>
+    </message>
+    <message>
+        <source>Name as a Manitou-Mail operator in this database</source>
+        <translation>Nom en tant qu&apos;opérateur Manitou-Mail de cette base</translation>
+    </message>
+    <message>
+        <source>Role</source>
+        <translation>Rôle</translation>
+    </message>
+    <message>
+        <source>Has the LOGIN capability</source>
+        <translation>A la capacité LOGIN</translation>
+    </message>
+    <message>
+        <source>Does not have the LOGIN capability</source>
+        <translation>N&apos;a pas la capacité LOGIN</translation>
+    </message>
+    <message>
+        <source>Allowed to connect to this database</source>
+        <translation>Autorisé à se connecter à cette base</translation>
+    </message>
+    <message>
+        <source>Not allowed to connect to this database</source>
+        <translation>Non autorisé à se connecter à cette base</translation>
+    </message>
+    <message>
+        <source>Registered as operator in this database</source>
+        <translation>Enregistré en opérateur dans cette base</translation>
+    </message>
+    <message>
+        <source>Not registered as operator in this database</source>
+        <translation>Non enregistré en opérateur dans cette base</translation>
     </message>
 </context>
 <context>

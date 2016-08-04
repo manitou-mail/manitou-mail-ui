@@ -101,6 +101,7 @@ extern QString gl_xpm_path;
 #define ICON16_DIALOG_OK "dialog-ok.png"
 #define ICON16_IMPORT_MBOX "icon-import-mbox.png"
 #define ICON16_EXPORT_MESSAGES "filesaveas.png"
+#define ICON16_USERS "config-users.png"
 
 #define ICON16_TRAYICON "mail-trayicon.png"
 

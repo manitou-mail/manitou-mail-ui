@@ -159,7 +159,10 @@ public slots:
   void preferences();
   void open_global_notepad();
   void import_mailbox();
+
   void export_messages();
+  void manage_users();
+
   void new_window();
   void close_window();
   void edit_tags();
@@ -303,6 +306,7 @@ private:
     me_File_Global_Notepad,
     me_File_Import_Mailbox,
     me_File_Export_Messages,
+    me_File_Edit_Users,
     me_File_Mailing,
     me_Edit_Cut,
     me_Edit_Copy,
