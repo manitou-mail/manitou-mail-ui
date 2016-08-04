@@ -1,1 +1,1 @@
-SUBDIRS = src icons icons/html translations 
+SUBDIRS = src icons icons/html translations help
