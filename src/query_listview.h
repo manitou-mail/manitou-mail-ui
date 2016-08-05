@@ -146,6 +146,10 @@ private:
   bool fetch_tag_map();
   void add_current_tag(uint);
   int map_count(int mask_not_set, uint tag_id);
+
+  /* expand sub-nodes down to depth */
+  void expand_depth(query_lvitem* start_item, int depth);
+
   void free_mail_maps();
   void make_item_current_tags(const tag_node* root);
   void insert_child_tags(tag_node* r, query_tag_lvitem* item, int type, QSet<uint>* set);

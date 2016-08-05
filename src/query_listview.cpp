@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -298,9 +298,17 @@ query_listview::init()
   query_lvitem* item_new = new query_lvitem(this, tr("Unread messages"));
   m_item_new_all = new query_lvitem(item_new, query_lvitem::new_all, tr("All"));
   m_item_new_untagged = new query_lvitem(item_new, query_lvitem::new_not_tagged, tr("Not tagged"));
-  item_new->setExpanded(true);
+  if (get_config().get_number("display/quicksel/expand_unread") > 0)
+    item_new->setExpanded(true);
+  else
+    item_new->setExpanded(false);
 
   create_branch_current(&root_tag);
+  int current_depth = get_config().get_number("display/quicksel/expand_current");
+  if (current_depth==0)
+    m_item_current->setExpanded(false);
+  else
+    expand_depth(m_item_current, current_depth);
 
   // Tagged messages
   // The root_tag is a pseudo-tag with an id=0
@@ -315,6 +323,11 @@ query_listview::init()
   insert_child_tags(&root_tag, m_item_tags, query_lvitem::archived_tagged, NULL);
   m_item_tags->sortChildren(0, Qt::AscendingOrder);
 
+  int archive_depth = get_config().get_number("display/quicksel/expand_archived");
+  if (archive_depth > 0) {
+    expandItem(m_item_archived);
+    expand_depth(m_item_tags, archive_depth);
+  }
 
   m_item_virtfold_sent = new query_lvitem(this, tr("Sent mail"));
   m_item_virtfold_sent->set_type(query_lvitem::virtfold_sent);
@@ -331,6 +344,20 @@ query_listview::init()
   display_counter(query_lvitem::new_not_tagged);
 }
 
+/* Recursively expand the sub-items down to depth */
+void
+query_listview::expand_depth(query_lvitem* start_item, int depth)
+{
+  if (depth<=0 || start_item==NULL)
+    return;
+  start_item->setExpanded(true);
+  if (depth==1)
+    return;
+  for (int i=0; i<start_item->childCount(); i++) {
+    // start_item->child(i)->setExpanded(true);
+    expand_depth(dynamic_cast<query_lvitem*>(start_item->child(i)), depth-1);
+  }
+}
 
 void
 query_listview::reload_user_queries()
