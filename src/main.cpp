@@ -384,7 +384,8 @@ main(int argc, char **argv)
   }
 
   msgs_filter filter;
-  filter.m_sql_stmt="0";
+  QString sq = get_config().get_string("display/start_query");
+  filter.m_sql_stmt= sq.isEmpty() ? "0" : sq;
 
 #ifdef Q_OS_UNIX
   gl_pApplication->setAttribute(Qt::AA_DontShowIconsInMenus, false);

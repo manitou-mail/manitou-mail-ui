@@ -29,6 +29,7 @@ const char* app_config::m_default_values[] = {
   "composer/address_check", "basic",
   "composer/format_for_new_mail", "text/plain",
   "composer/format_for_replies", "same_as_sender",
+  "display/start_query", "select mail_id from mail order by msg_date desc nulls last limit 100",
   "display/notifications/new_mail", "system",
   "display/wordsearch/progress_bar", "0",
   "display_threads", "1",
