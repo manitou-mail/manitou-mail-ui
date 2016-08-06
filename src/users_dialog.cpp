@@ -380,6 +380,9 @@ user_edit_dialog::create_new_user(user& u, db_ctxt* pdbc)
 			   u.m_can_login,
 			   pdbc))
     {
+      if (u.m_can_connect) {
+	user::grant_connect(u.m_login, pdbc->m_db->dbname(), pdbc);
+      }
       if (m_registered->isChecked())
 	u.insert(pdbc);
     }
@@ -507,7 +510,8 @@ role_perms_edit_dialog::role_perms_edit_dialog(int role_oid)
   QVBoxLayout* top_layout = new QVBoxLayout(this);
 
   db_role role(m_role_oid);
-  role.fetch_properties(&dbc);
+  if (role_oid > 0)
+    role.fetch_properties(&dbc);
 
   top_layout->addWidget(new QLabel(tr("Name of role:")));
 
@@ -515,7 +519,7 @@ role_perms_edit_dialog::role_perms_edit_dialog(int role_oid)
   m_role_name->setMaxLength(name_maxlength);
   top_layout->addWidget(m_role_name);
 
-  if (role.is_superuser()) {
+  if (m_role_oid > 0 && role.is_superuser()) {
     QLabel* label = new QLabel(tr("<b>This role is superuser, implying all permissions on all database objects.</b>"));
     top_layout->addWidget(label);
   }

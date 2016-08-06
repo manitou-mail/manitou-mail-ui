@@ -609,7 +609,7 @@ user::oid_db_role(const QString login, bool case_sensitive)
   }
 }
 
-db_role::db_role(int oid) : m_oid(oid)
+db_role::db_role(int oid) : m_oid(oid), m_is_superuser(false)
 {
 }
 
