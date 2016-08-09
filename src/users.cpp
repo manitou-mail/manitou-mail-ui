@@ -71,6 +71,10 @@ user::current_user_id()
 bool
 user::has_permission(const QString ability)
 {
+  // application-side permission checks are not available before 1.5.1
+  if (db_schema::compare_version("1.5.1") < 0)
+    return true;
+
   static QMap<QString,bool> permission_cache;
 
   QMap<QString,bool>::const_iterator it = permission_cache.constFind(ability);
