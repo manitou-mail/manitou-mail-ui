@@ -4531,7 +4531,7 @@ Save now?</source>
     <name>users_dialog</name>
     <message>
         <source>Database users</source>
-        <translation>Utilisateurs de base de donnée</translation>
+        <translation>Utilisateurs de base de données</translation>
     </message>
     <message>
         <source>Current database: &lt;b&gt;%1&lt;/b&gt;</source>
@@ -4551,7 +4551,7 @@ Save now?</source>
     </message>
     <message>
         <source>&amp;Add</source>
-        <translation>&amp;AJouter</translation>
+        <translation>&amp;Ajouter</translation>
     </message>
     <message>
         <source>&amp;Edit</source>
