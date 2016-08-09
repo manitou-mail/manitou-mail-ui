@@ -626,28 +626,48 @@ db_ctxt::~db_ctxt()
     delete m_db;
 }
 
-#if 0
-std::list<QString>
-ReferencesList(const QString &s)
-{
-  std::list<QString> l;
-  uint nLen=s.length();
-  uint nPos=0;
 
-  while (nPos<nLen) {
-    int nStart=s.indexOf('<', nPos);
-    if (nStart!=-1) {
-      int endPos=s.indexOf('>',nStart);
-      if (endPos!=-1) {
-	l.push_back(s.mid(nStart+1,endPos-nStart-1));
-	nPos=endPos+1;
-      }
-      else
-	nPos=nLen;
-    }
-    else
-      nPos=nLen;
+
+/* db_schema static members */
+int db_schema::m_version[3];
+QString db_schema::m_version_string;
+
+/** Compare argument with version of schema from rt_key='schema_version' in runtime_info
+ The expected format is X.Y.Z, or X.Y, or X
+ return values:
+ -1: version in db is older than argument
+  0: version is equal
+  1: version in db is newer than argument
+ for example, (compare_version("1.5.1)>=0) is 1 if the schema version is at least 1.5.1
+ */
+//static
+int
+db_schema::compare_version(const QString version)
+{
+  int* v_db = db_schema::version();
+  QStringList s = version.split('.');
+  for (int i = 0; i < 3; i++) {
+      int v_arg = (s.count()>i) ? s.at(i).toInt() : 0;
+      if (v_arg != v_db[i])
+	return v_db[i] - v_arg;
   }
-  return l;
 }
-#endif
+
+//static
+int*
+db_schema::version()
+{
+  if (!m_version_string.isNull())
+    return m_version;
+  db_cnx db;
+  sql_stream s("SELECT rt_value FROM runtime_info WHERE rt_key='schema_version'", db);
+  if (!s.eos()) {
+    s >> m_version_string;
+    QStringList s = m_version_string.split('.');
+    for (int i = 0; i < 3; i++)
+	   m_version[i] = s.count() > i ? s.at(i).toInt() : 0;
+  }
+  else
+    m_version_string = QString::null;
+  return m_version;
+}

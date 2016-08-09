@@ -248,4 +248,14 @@ public:
   bool propagate_exceptions;
 };
 
+// Manitou-Mail schema information
+class db_schema
+{
+public:
+  static QString m_version_string;	// cached from table runtime_info
+  static int m_version[3];
+  static int compare_version(const QString);
+  static int* version();
+};
+
 #endif // INC_DATABASE_H
