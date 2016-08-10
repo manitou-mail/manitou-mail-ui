@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -76,6 +76,7 @@ public:
   sql_stream& operator<<(unsigned short);
   sql_stream& operator<<(float);
   sql_stream& operator<<(quint64);
+  sql_stream& operator<<(bool);
   sql_stream& operator<<(sql_null);
 
   sql_stream& operator>>(int&);

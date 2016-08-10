@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -277,6 +277,15 @@ sql_stream::operator<<(long l)
   char buf[15];
   sprintf(buf,"%ld", l);
   replace_placeholder(m_nArgPos, buf, strlen(buf));
+  next_bind();
+  return *this;
+}
+
+sql_stream&
+sql_stream::operator<<(bool value)
+{
+  check_binds();
+  replace_placeholder(m_nArgPos, (value ? "true" : "false"), (value ? 4 : 5));
   next_bind();
   return *this;
 }
