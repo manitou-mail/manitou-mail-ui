@@ -78,6 +78,7 @@ public:
   sql_stream& operator<<(quint64);
   sql_stream& operator<<(bool);
   sql_stream& operator<<(sql_null);
+  sql_stream& operator<<(const QList<int>&);
 
   sql_stream& operator>>(int&);
   sql_stream& operator>>(unsigned int&);

@@ -354,6 +354,26 @@ sql_stream::operator<<(sql_null n _UNUSED_)
   return *this;
 }
 
+sql_stream&
+sql_stream::operator<<(const QList<int>& list)
+{
+  check_binds();
+
+  QString txt = "ARRAY[";
+  for (QList<int>::const_iterator it = list.begin(); it != list.end(); ++it) {
+    if (it != list.begin())
+      txt.append(',');
+    txt.append(QString("%1").arg(*it));
+  }
+  txt.append("]::int[]");
+  if (list.isEmpty())
+    txt = "'{}'::int[]";
+
+  replace_placeholder(m_nArgPos, txt.toLocal8Bit().constData(), txt.length());
+  next_bind();
+  return *this;
+}
+
 void
 sql_stream::check_binds()
 {
