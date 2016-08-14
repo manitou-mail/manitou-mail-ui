@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -32,17 +32,24 @@ class mail_identity
 public:
   mail_identity();
   virtual ~mail_identity();
+  // db fields
+  int m_identity_id;
   QString m_email_addr;
   QString m_name;
   QString m_signature;
   QString m_xface;
+  int m_root_tag_id;
+  bool m_is_restricted;
+
+  // internal fields
   QString m_orig_email_addr;	// m_email_addr at load time
-  int m_identity_id;
   int m_internal_id;
-  bool update_db();
   bool m_dirty;
   bool m_is_default;
   bool m_fetched;
+
+  bool update_db();
+  bool compare_fields(const mail_identity&);
 };
 
 class identities : public std::map<QString,mail_identity>

@@ -27,6 +27,7 @@
 #include "main.h"
 #include "users_dialog.h"
 #include "users.h"
+#include "identities.h"
 
 #ifdef SHOW_USERS_GRID
 #include "pivot_table.h"
@@ -45,6 +46,8 @@
 #include <QListWidget>
 #include <QListWidgetItem>
 #include <QSizePolicy>
+#include <QListWidget>
+#include <QCheckBox>
 
 //
 // custom_user_field
@@ -500,6 +503,32 @@ user_edit_dialog::done(int r)
 }
 
 
+// role_oid => list of identities that this role can access
+QMap<int,bool>
+role_perms_edit_dialog::accessible_identities(Oid role_oid, db_ctxt* dbc)
+{
+  db_cnx* db = dbc->m_db;
+  QMap<int,bool> list;
+  QString query = "SELECT identity_id FROM identities_permissions WHERE role_oid=:p1";
+  try {
+    sql_stream s(query, *db);
+    s << role_oid;
+    while (!s.eos()) {
+      int id;
+      s >> id;
+      list.insert(id,true);
+    }
+  }
+  catch(db_excpt& p) {
+    if (dbc && dbc->propagate_exceptions)
+      throw p;
+    else
+      DBEXCPT(p);
+  }
+  return list;
+}
+
+
 role_perms_edit_dialog::role_perms_edit_dialog(int role_oid)
 {
   m_role_oid = role_oid;
@@ -518,6 +547,28 @@ role_perms_edit_dialog::role_perms_edit_dialog(int role_oid)
   m_role_name = new QLineEdit(role.name());
   m_role_name->setMaxLength(name_maxlength);
   top_layout->addWidget(m_role_name);
+
+  top_layout->addWidget(new QLabel(tr("Access to restricted identities:")));
+  m_list_idents = new QListWidget();
+  top_layout->addWidget(m_list_idents);
+  identities idents;
+  idents.fetch();
+  m_a_ids = accessible_identities(m_role_oid, &dbc);
+  identities::const_iterator iter1;
+  for (iter1 = idents.begin(); iter1 != idents.end(); ++iter1) {
+    /* Only the restricted identities are shown in the list, since
+       access control through RLS policies applies only with them.
+       That may disconcert users, but showing non-restricted identities
+       without the possibility of unchecking them would probably
+       be worst. */
+    if (!iter1->second.m_is_restricted)
+      continue;
+    QListWidgetItem* item = new QListWidgetItem(iter1->second.m_email_addr);
+    m_list_idents->addItem(item);
+    item->setCheckState(m_a_ids.contains(iter1->second.m_identity_id) ?
+			Qt::Checked : Qt::Unchecked);
+    item->setData(Qt::UserRole, iter1->second.m_identity_id);
+  }
 
   if (m_role_oid > 0 && role.is_superuser()) {
     QLabel* label = new QLabel(tr("<b>This role is superuser, implying all permissions on all database objects.</b>"));
@@ -589,6 +640,7 @@ role_perms_edit_dialog::set_grants()
   QString rolname = m_role_name->text().trimmed();
 
   try {
+    dbc.m_db->begin_transaction();
     if (!m_role_oid) {
       // Create the new role
       user::create_db_user(rolname, QString::null, false, &dbc);
@@ -618,8 +670,26 @@ role_perms_edit_dialog::set_grants()
 	  role.revoke(privs.at(pi), &dbc);
       }
     }
+
+    QList<int> list_ids;  // list of checked private identities
+    bool ids_changed = false;	// did any checkbox switch state?
+    for (int row=0; row < m_list_idents->count(); row++) {
+      QListWidgetItem* item = m_list_idents->item(row);
+      int iid = item->data(Qt::UserRole).toInt(); // identity_id
+      if ((item->checkState() == Qt::Checked) != m_a_ids.contains(iid)) // compare 2 states
+	ids_changed = true;
+      if (item->checkState() == Qt::Checked)
+	list_ids.append(iid);
+    }
+    if (ids_changed) {
+      // call set_identity_permissions(in_oid, in_identities int[], in_perms char[] = ['A']);
+      sql_stream s("select set_identity_permissions(:o, :t, null)", *dbc.m_db);
+      s << m_role_oid << list_ids;
+    }
+    dbc.m_db->commit_transaction();
   }
   catch(db_excpt& p) {
+    dbc.m_db->rollback_transaction();
     DBEXCPT (p);
   }
 }

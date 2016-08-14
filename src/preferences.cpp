@@ -21,6 +21,7 @@
 #include "helper.h"
 #include "identities.h"
 #include "app_config.h"
+#include "tags.h"
 
 #include <QTabWidget>
 #include <QComboBox>
@@ -69,10 +70,12 @@ struct prefs_dialog::preferences_widgets {
   // identities tab
   QLineEdit* w_email;
   QLineEdit* w_name;
+  QLineEdit* w_root_tag;
   QLineEdit* w_xface;
   QPlainTextEdit* w_signature;
   QComboBox* w_ident_cb;
   QPushButton* w_del_ident;
+  QCheckBox* w_restricted;
   QCheckBox* w_default_identity;
   /* The email address that corresponds to the default identity. The
      value is overwritten when the "use as default" checkbox is
@@ -713,6 +716,22 @@ prefs_dialog::ident_widget()
   }
   row++;
   {
+    QLabel* l=new QLabel(tr("Restricted"),w);
+    QCheckBox* cb=new QCheckBox(w);
+    grid->addWidget(l, row, 0);
+    grid->addWidget(cb, row, 1);
+    m_widgets->w_restricted=cb;
+  }
+  row++;
+  {
+    QLabel* l=new QLabel(tr("Root tag"),w);
+    QLineEdit* ln=new QLineEdit(w);
+    grid->addWidget(l, row, 0);
+    grid->addWidget(ln, row, 1);
+    m_widgets->w_root_tag=ln;
+  }
+  row++;
+  {
     QLabel* l=new QLabel(tr("Use as default"),w);
     QCheckBox* cb=new QCheckBox(w);
     grid->addWidget(l, row, 0);
@@ -1182,6 +1201,8 @@ prefs_dialog::widgets_to_ident()
   id->m_email_addr = m_widgets->w_email->text();
   id->m_signature = m_widgets->w_signature->toPlainText();
   id->m_is_default = m_widgets->w_default_identity->isChecked();
+  id->m_root_tag_id = tags_repository::hierarchy_lookup(m_widgets->w_root_tag->text());
+  id->m_is_restricted = m_widgets->w_restricted->isChecked();
   if (id->m_is_default) {
     // if id is now the "default" identity,
     // remove that attribute to the previous default unless it's the same
@@ -1218,6 +1239,8 @@ prefs_dialog::ident_to_widgets()
     m_widgets->w_name->setText(id->m_name);
     m_widgets->w_xface->setText(id->m_xface);
     m_widgets->w_email->setText(id->m_email_addr);
+    m_widgets->w_restricted->setChecked(id->m_is_restricted);
+    m_widgets->w_root_tag->setText(tags_repository::hierarchy(id->m_root_tag_id));
     m_widgets->w_signature->setPlainText(id->m_signature);
     m_widgets->w_default_identity->setChecked(id->m_is_default);
   }
@@ -1227,6 +1250,8 @@ prefs_dialog::ident_to_widgets()
     m_widgets->w_email->setText(QString::null);
     m_widgets->w_signature->setPlainText(QString::null);
     m_widgets->w_default_identity->setChecked(false);
+    m_widgets->w_restricted->setChecked(false);
+    m_widgets->w_root_tag->setText(QString::null);
   }
 }
 
@@ -1362,9 +1387,7 @@ prefs_dialog::update_identities_db()
 	iter=m_ids_map.find(p->m_email_addr);
 	if (iter!=m_ids_map.end()) {
 	  mail_identity* ps = &(iter->second); // before change
-	  if ((ps->m_name != p->m_name ||
-	       ps->m_signature != p->m_signature ||
-	       ps->m_xface != p->m_xface)) {
+	  if (!ps->compare_fields(*p)) { // have fields been changed?
 	    if (!in_trans) {
 	      db.begin_transaction();
 	      in_trans=true;
@@ -1382,7 +1405,7 @@ prefs_dialog::update_identities_db()
       }
     }
 
-    /* Delete the identities that were present initially but not in the end map */
+    /* Delete the identities that were present initially but not in the final map */
     sql_stream sd("DELETE FROM identities WHERE email_addr=:p1", db);
     for (iter=m_ids_map.begin(); iter!=m_ids_map.end(); ++iter) {
       if (done_set.find(iter->first) == done_set.end()) {

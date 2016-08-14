@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -23,12 +23,28 @@
 #include "db.h"
 #include "sqlstream.h"
 
-mail_identity::mail_identity() : m_dirty(false), m_fetched(false)
+mail_identity::mail_identity() : m_identity_id(0),
+				 m_root_tag_id(0),
+				 m_is_restricted(false),
+				 m_dirty(false),
+				 m_fetched(false)
 {
 }
 
 mail_identity::~mail_identity()
 {
+}
+
+bool
+mail_identity::compare_fields(const mail_identity& other)
+{
+  return (
+    this->m_email_addr == other.m_email_addr &&
+    this->m_name == other.m_name &&
+    this->m_signature == other.m_signature &&
+    this->m_root_tag_id == other.m_root_tag_id &&
+    this->m_is_restricted == other.m_is_restricted &&
+    this->m_xface == other.m_xface);
 }
 
 bool
@@ -38,13 +54,14 @@ identities::fetch(bool force/*=false*/)
     return true;
 
   db_cnx db;
-  const QString default_email=get_config().get_string("default_identity");
+  const QString default_email = get_config().get_string("default_identity");
   try {
-    sql_stream s("SELECT identity_id, email_addr,username,xface,signature FROM identities ORDER BY email_addr", db);
+    sql_stream s("SELECT identity_id, email_addr,username,xface,signature,root_tag,restricted FROM identities ORDER BY email_addr", db);
     while (!s.eos()) {
       mail_identity id;
       s >> id.m_identity_id;
-      s >> id.m_email_addr >> id.m_name >> id.m_xface >> id.m_signature;
+      s >> id.m_email_addr >> id.m_name >> id.m_xface >> id.m_signature
+	>> id.m_root_tag_id >> id.m_is_restricted;
       if (id.m_email_addr.isEmpty()) {
 	// Ignore identities with no email to be safe. This shouldn't happen.
 	continue;
@@ -62,6 +79,7 @@ identities::fetch(bool force/*=false*/)
   }
   return true;
 }
+
 
 mail_identity*
 identities::get_by_id(int id)
@@ -82,14 +100,13 @@ mail_identity::update_db()
     sql_stream ss("SELECT 1 FROM identities WHERE email_addr=:p1", db);
     ss << m_orig_email_addr;
     if (!ss.eos()) {
-      sql_stream su("UPDATE identities SET email_addr=:p1, username=:p2, xface=:p3, signature=:p4 WHERE email_addr=:p5", db);
-      su << m_email_addr << m_name << m_xface << m_signature;
+      sql_stream su("UPDATE identities SET email_addr=:p1, username=:p2, xface=:p3, signature=:p4, restricted=:r, root_tag=nullif(:t,0) WHERE email_addr=:p5", db);
+      su << m_email_addr << m_name << m_xface << m_signature << m_is_restricted << m_root_tag_id;
       su << m_orig_email_addr;
-//      DBG_PRINTF(5,"updated identity '%s'\n", m_email_addr.latin1());
     }
     else {
-      sql_stream si("INSERT INTO identities(email_addr,username,xface,signature) VALUES (:p1,:p2,:p3,:p4)", db);
-      si << m_email_addr << m_name << m_xface << m_signature;
+      sql_stream si("INSERT INTO identities(email_addr,username,xface,signature,restricted,root_tag) VALUES (:p1,:p2,:p3,:p4,:p5,nullif(:p6,0))", db);
+      si << m_email_addr << m_name << m_xface << m_signature << m_is_restricted << m_root_tag_id;
     }
     m_orig_email_addr = m_email_addr;
   }

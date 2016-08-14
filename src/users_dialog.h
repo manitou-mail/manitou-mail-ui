@@ -22,8 +22,8 @@
 
 #include <QWidget>
 #include <QDialog>
+#include <QMap>
 #include <QLineEdit>
-#include <QCheckBox>
 #include <QTabWidget>
 #include <QDialogButtonBox>
 #include <QPlainTextEdit>
@@ -39,6 +39,8 @@ class QFormLayout;
 class QListWidget;
 class QTabWidget;
 class QResizeEvent;
+class QListWidget;
+class QCheckBox;
 
 #ifdef SHOW_USERS_GRID
 class pivot_table;
@@ -85,7 +87,11 @@ private:
   bool m_initial_privs[priv_max];
 
   int m_role_oid;
+  QMap<int,bool> m_a_ids;
+
   QLineEdit* m_role_name;
+  QListWidget* m_list_idents;
+
   static const int name_maxlength=64;
 
   QPlainTextEdit* m_description;
@@ -105,6 +111,7 @@ private:
 
   QDialogButtonBox* m_buttons;
   void set_grants();
+  QMap<int,bool> accessible_identities(Oid, db_ctxt*);
 
 private slots:
   void set_checkboxes();
