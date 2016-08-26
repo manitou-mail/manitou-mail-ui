@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -20,53 +20,13 @@
 #ifndef INC_EDIT_ADDRESS_WIDGET_H
 #define INC_EDIT_ADDRESS_WIDGET_H
 
-#include <QLineEdit>
+#include "line_edit_autocomplete.h"
 
-class QListWidget;
-class QListWidgetItem;
-class QTimer;
-
-/* light version of QCompleter. We don't use QCompleter because its
-   prefix-based completion algorithm can't be overriden by our
-   specific rules. */
-class email_completer : public QObject
+class edit_address_widget: public line_edit_autocomplete
 {
-  Q_OBJECT
-public:
-  email_completer(QObject* parent);
-  virtual ~email_completer();
-  bool eventFilter(QObject *, QEvent *);
-
-  /* return the zero-based offset of the completion prefix inside 'text' when
-     the cursor is at 'cursor_pos', 'cursor_pos' being 0 when 'text' is empty.
-     return -1 if no completion prefix is found. */
-  virtual int get_prefix_pos(const QString text, int cursor_pos);
-
-  QLineEdit* lineedit;
-  QListWidget* popup;
-public slots:
-  void completion_chosen(QListWidgetItem*);
-private:
-  bool eatFocusOut;
-};
-
-class edit_address_widget: public QLineEdit
-{
-  Q_OBJECT
 public:
   edit_address_widget(QWidget* parent=NULL);
-  virtual ~edit_address_widget();
-  void show_popup();
-  void enable_completer(bool);
-public slots:
-  void check_completions(const QString&);
-  void show_completions();
-  //  void activate();
-private:
-  QListWidget* popup;
-  email_completer* completer;
-  bool m_completer_enabled;
-  QTimer* m_timer;
+  virtual QList<QString> get_completions(const QString substring);
 };
 
 #endif // INC_EDIT_ADDRESS_WIDGET_H
