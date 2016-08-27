@@ -111,6 +111,43 @@ tags_repository::names_list(std::list<uint>& id_list)
   return m.values();
 }
 
+/** Search tags by substring
+ */
+QList<QString>
+tags_repository::search_substring(QString substring)
+{
+  typedef QPair<int,QString> tag_t; // depth and full name
+  QList<tag_t*> res;
+
+  for (std::map<int,message_tag>::const_iterator it= m_tags_map.begin();
+       it != m_tags_map.end(); ++it)
+  {
+    QString fulln = hierarchy(it->second.id(), "->");
+    // DBG_PRINTF(3, "fulln=%s", fulln.toLocal8Bit().constData());
+    if (fulln.contains(substring, Qt::CaseInsensitive)) {
+      // DBG_PRINTF(3, "tag found id=%d", it->second.id());
+      tag_t* t = new tag_t(depth(it->second.id()), fulln);
+      res.append(t);
+    }
+  }
+  /* sort by hierarchy (closer to top comes first), then alphabetically */
+  qSort(res.begin(), res.end(),
+	[](const tag_t* a, const tag_t* b) -> bool {
+	  return (a->first == b->first)
+	    ? (a->second < b->second)
+	    : (a->first < b->first);
+	});
+
+  /* extract names only */
+  QList<QString> res1;
+  for (QList<tag_t*>::iterator it = res.begin(); it != res.end(); ++it) {
+    res1.append((*it)->second);
+  }
+  qDeleteAll(res);
+
+  return res1;
+}
+
 /** Search a tag by name (including hierarchy) in the repository.
  * The separator is "->" (ascii).
  * Returns the tag_id or 0 if not found
@@ -210,7 +247,7 @@ tags_repository::name(int id)
   Return the name of the tag including its parent hierarchy
 */
 QString
-tags_repository::hierarchy(int id)
+tags_repository::hierarchy(int id, QString sep)
 {
   if (!m_tags_map_fetched) {
     fetch();
@@ -223,13 +260,31 @@ tags_repository::hierarchy(int id)
   QString s;
   int parent_id = i->second.parent_id();
   if (parent_id) {
-    s = hierarchy(parent_id);
-    s.append(TAG_SEPARATOR); //"->");
+    s = hierarchy(parent_id, sep);
+    s.append(sep);
     s.append(i->second.name());
   }
   else
-    s=i->second.name();
+    s = i->second.name();
   return s;
+}
+
+int
+tags_repository::depth(int id)
+{
+  if (!m_tags_map_fetched) {
+    fetch();
+  }
+  std::map<int,message_tag>::const_iterator i;
+  i = m_tags_map.find(id);
+  if (i == m_tags_map.end())
+    return -1;
+  int parent_id = i->second.parent_id();
+  if (parent_id) {
+    return 1 + depth(parent_id);
+  }
+  else
+    return 0;
 }
 
 //static
@@ -344,6 +399,7 @@ message_tag::reload()
   }
   return result;
 }
+
 
 bool
 tags_definition_list::fetch(bool force /*=false*/)
@@ -499,6 +555,18 @@ tag_node::hierarchy() const
     p=p->parent_node();
   }
   return s;
+}
+
+int
+tag_node::depth() const
+{
+  int depth = 0;
+  tag_node* p = m_parent_node;
+  while (p) {
+    depth++;
+    p = p->parent_node();
+  }
+  return depth;
 }
 
 const tag_node*

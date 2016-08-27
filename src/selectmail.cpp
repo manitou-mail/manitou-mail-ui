@@ -51,6 +51,7 @@
 #include <QDialogButtonBox>
 #include <QCalendarWidget>
 
+
 const int
 msgs_filter::max_possible_prio=32767;
 
@@ -1199,9 +1200,7 @@ msg_select_dialog::msg_select_dialog(bool open_new/*=true*/) : QDialog(0)
   nRow++;
   QLabel* lTag = new QLabel(tr("Tag:"), this);
   gridLayout->addWidget(lTag,nRow,0);
-
-  m_qtag_sel = new tag_selector(this);
-  m_qtag_sel->init(true);
+  m_qtag_sel = new tag_line_edit_selector(this);
   gridLayout->addWidget(m_qtag_sel, nRow, 1);
 
   nRow++;

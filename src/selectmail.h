@@ -48,6 +48,7 @@ class QButtonGroup;
 class QComboBox;
 class QDialogButtonBox;
 
+class tag_line_edit_selector;
 
 // Options from the searchbox
 class fts_options
@@ -324,7 +325,7 @@ private:
   edit_address_widget* m_wcontact;
 
   QComboBox* m_wAddrType;
-  tag_selector* m_qtag_sel;
+  tag_line_edit_selector* m_qtag_sel;
   edit_address_widget* m_wto;
   QLineEdit* m_wSubject;
   QLineEdit* m_wString;

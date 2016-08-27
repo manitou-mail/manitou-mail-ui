@@ -36,7 +36,11 @@ public:
   line_edit_autocomplete(QWidget* parent=NULL);
   virtual ~line_edit_autocomplete();
   void show_popup();
+
   void enable_completer(bool);
+
+  /* time to open autocompletion popup, in milliseconds */
+  void set_popup_delay(int delay) { m_delay = delay; }
 
   /* return the completions, given the substring. Subclasses must reimplement. */
   virtual QList<QString> get_completions(const QString substring)=0;
@@ -66,6 +70,7 @@ public slots:
   void show_completions();
   //  void activate();
 private:
+  int m_delay;
   QListWidget* popup;
   dispatcher* m_merger;
   bool m_completer_enabled;

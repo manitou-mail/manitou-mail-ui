@@ -26,9 +26,9 @@
 #include <QComboBox>
 #include <QListWidget>
 #include <QListWidgetItem>
+#include "line_edit_autocomplete.h"
 
 class QStringList;
-
 
 /*
   A message_tag, also called just 'tag', is an object that can be used
@@ -94,9 +94,14 @@ public:
   static void reset();
   //  static void get_sorted_list(QStringList*);
   static QString name (int id);
-  static QString hierarchy(int id);
+  static QString hierarchy(int id, QString sep=QString(QChar(0x2192)));
+  static int depth(int id);
   /* search a tag by name (including hierarchy) in the repository */
   static int hierarchy_lookup(QString fullname);
+
+  /* search tags matching a substring */
+  static QList<QString> search_substring(QString substring);
+
 };
 
 /* Another container for a list of tags. FIXME: merge with tags_repository */
@@ -127,6 +132,7 @@ public:
   tag_node* parent_node() const {
     return m_parent_node;
   }
+  int depth() const;
   void clear();
   QString hierarchy() const;
   void get_child_tags(tags_definition_list& l);
@@ -166,6 +172,31 @@ public:
 private:
   void insert_childs(tag_node* n, int level);
   tag_node m_root;
+};
+
+class tag_line_edit_selector: public line_edit_autocomplete
+{
+  // works with "->" as tag hierarchy separator
+public:
+  tag_line_edit_selector(QWidget* parent) : line_edit_autocomplete(parent) {
+    set_popup_delay(250);
+  }
+  int current_tag_id() const {
+    return tags_repository::hierarchy_lookup(this->text().trimmed());
+  }
+  void set_current_tag_id(int id) {
+    this->setText(tags_repository::hierarchy(id, "->"));
+  }
+
+  QList<QString>
+  get_completions(const QString prefix) {
+    return tags_repository::search_substring(prefix.trimmed());
+  }
+
+  int get_prefix_pos(const QString text, int cursor_pos) {
+    Q_UNUSED(text);
+    return (cursor_pos==0) ? -1 : 0;
+  }
 };
 
 #endif // INC_TAGS_H

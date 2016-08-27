@@ -173,7 +173,7 @@ line_edit_autocomplete::check_completions(const QString& newtext)
     delete m_timer;
   m_timer = new QTimer(this);
   m_timer->setSingleShot(true);
-  m_timer->setInterval(500);
+  m_timer->setInterval(m_delay);
   connect(m_timer, SIGNAL(timeout()), this, SLOT(show_completions()));
   m_timer->start();
 }
