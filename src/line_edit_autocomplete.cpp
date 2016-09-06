@@ -27,7 +27,8 @@
 #include <QDesktopWidget>
 
 /* Generic completer. Inherit and provide an implementation for get_completions() */
-line_edit_autocomplete::line_edit_autocomplete(QWidget* parent) : QLineEdit(parent)
+line_edit_autocomplete::line_edit_autocomplete(QWidget* parent) : QLineEdit(parent),
+  m_delay(500)
 {
   m_timer=NULL;
   popup = new QListWidget();
