@@ -70,7 +70,7 @@ struct prefs_dialog::preferences_widgets {
   // identities tab
   QLineEdit* w_email;
   QLineEdit* w_name;
-  QLineEdit* w_root_tag;
+  tag_line_edit_selector* w_root_tag;
   QLineEdit* w_xface;
   QPlainTextEdit* w_signature;
   QComboBox* w_ident_cb;
@@ -716,7 +716,7 @@ prefs_dialog::ident_widget()
   }
   row++;
   {
-    QLabel* l=new QLabel(tr("Restricted"),w);
+    QLabel* l=new QLabel(tr("Restrictable"),w);
     QCheckBox* cb=new QCheckBox(w);
     grid->addWidget(l, row, 0);
     grid->addWidget(cb, row, 1);
@@ -724,11 +724,11 @@ prefs_dialog::ident_widget()
   }
   row++;
   {
-    QLabel* l=new QLabel(tr("Root tag"),w);
-    QLineEdit* ln=new QLineEdit(w);
+    QLabel* l = new QLabel(tr("Root tag"),w);
+    tag_line_edit_selector* ln = new tag_line_edit_selector(w);
     grid->addWidget(l, row, 0);
     grid->addWidget(ln, row, 1);
-    m_widgets->w_root_tag=ln;
+    m_widgets->w_root_tag = ln;
   }
   row++;
   {
@@ -1201,7 +1201,7 @@ prefs_dialog::widgets_to_ident()
   id->m_email_addr = m_widgets->w_email->text();
   id->m_signature = m_widgets->w_signature->toPlainText();
   id->m_is_default = m_widgets->w_default_identity->isChecked();
-  id->m_root_tag_id = tags_repository::hierarchy_lookup(m_widgets->w_root_tag->text());
+  id->m_root_tag_id = m_widgets->w_root_tag->current_tag_id();
   id->m_is_restricted = m_widgets->w_restricted->isChecked();
   if (id->m_is_default) {
     // if id is now the "default" identity,
