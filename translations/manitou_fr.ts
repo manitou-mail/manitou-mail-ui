@@ -3230,6 +3230,10 @@ Les messages non encore importés seront perdus.</translation>
         <source>Composing messages is not enabled for the current profile.</source>
         <translation>La composition de messages n&apos;est pas activée pour le profil en cours.</translation>
     </message>
+    <message>
+        <source>Statistics</source>
+        <translation>Statistiques</translation>
+    </message>
 </context>
 <context>
     <name>msg_select_dialog</name>
@@ -3957,6 +3961,14 @@ Expédier malgré tout?</translation>
         <source>None</source>
         <translation>Aucun</translation>
     </message>
+    <message>
+        <source>Restrictable</source>
+        <translation>Restreignable</translation>
+    </message>
+    <message>
+        <source>Root tag</source>
+        <translation>Etiquette racine</translation>
+    </message>
 </context>
 <context>
     <name>properties_dialog</name>
@@ -4143,6 +4155,10 @@ Voulez-vous le mettre à jour malgré cela?</translation>
         <source>The role could not be created.</source>
         <translation>Le rôle n&apos;a pu être créé.</translation>
     </message>
+    <message>
+        <source>Access to restricted identities:</source>
+        <translation>Accès autorisé aux identités:</translation>
+    </message>
 </context>
 <context>
     <name>save_query_box</name>
@@ -4291,6 +4307,97 @@ Etes-vous certain de vouloir l&apos;écraser?</translation>
     <message>
         <source>SQL subquery</source>
         <translation>sous-requête SQL</translation>
+    </message>
+</context>
+<context>
+    <name>stats_view</name>
+    <message>
+        <source>Mail statistics</source>
+        <translation>Statistiques mail</translation>
+    </message>
+    <message>
+        <source>All messages</source>
+        <translation>Tous les messages</translation>
+    </message>
+    <message>
+        <source>Incoming messages</source>
+        <translation>Messages entrants</translation>
+    </message>
+    <message>
+        <source>Outgoing messages</source>
+        <translation>Messages sortants</translation>
+    </message>
+    <message>
+        <source>Counted items:</source>
+        <translation>Éléments comptés:</translation>
+    </message>
+    <message>
+        <source>From:</source>
+        <translation>De:</translation>
+    </message>
+    <message>
+        <source>Until:</source>
+        <translation>Jusqu&apos;à:</translation>
+    </message>
+    <message>
+        <source>Tag:</source>
+        <translation>Etiquette:</translation>
+    </message>
+    <message>
+        <source>Change</source>
+        <translation>Changer</translation>
+    </message>
+    <message>
+        <source>Color:</source>
+        <translation>Couleur:</translation>
+    </message>
+    <message>
+        <source>Identities:</source>
+        <translation>Identités:</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>Effacer</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>Ajouter</translation>
+    </message>
+    <message>
+        <source>Export PDF</source>
+        <translation>Export PDF</translation>
+    </message>
+    <message>
+        <source>Export CSV</source>
+        <translation>Export CSV</translation>
+    </message>
+    <message>
+        <source>[All]</source>
+        <translation>[Tous]</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation>Erreur</translation>
+    </message>
+    <message>
+        <source>No data to export.</source>
+        <translation>Pas de données à exporter.</translation>
+    </message>
+    <message>
+        <source>PDF file</source>
+        <translation>FIchier PDF</translation>
+    </message>
+    <message>
+        <source>CSV file</source>
+        <translation>FIchier CSV</translation>
+    </message>
+    <message>
+        <source>Error opening file</source>
+        <translation>Erreur d&apos;ouverture du fichier</translation>
+    </message>
+    <message>
+        <source>Tag does not exist: %1</source>
+        <translation>L&apos;étiquette n&apos;existe pas: %1</translation>
     </message>
 </context>
 <context>

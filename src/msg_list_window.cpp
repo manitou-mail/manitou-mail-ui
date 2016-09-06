@@ -436,6 +436,9 @@ msg_list_window::init_menu()
   m_menu_actions[me_File_Mailing] =
     m_pMenuFile->addAction(ico_mail_merge, tr("Mailings"), this, SLOT(start_mailing()));
 
+  m_menu_actions[me_File_Stats] =
+    m_pMenuFile->addAction(UI_ICON(ICON16_STATISTICS), tr("Statistics"), this, SLOT(statistics()));
+
   m_menu_actions[me_File_Import_Mailbox] =
     m_pMenuFile->addAction(UI_ICON(ICON16_IMPORT_MBOX), tr("Import mailbox"), this, SLOT(import_mailbox()));
 
@@ -1617,6 +1620,13 @@ msg_list_window::start_mailing()
 {
   extern void open_mailing_window();
   open_mailing_window();
+}
+
+void
+msg_list_window::statistics()
+{
+  extern void open_stats_window();
+  open_stats_window();
 }
 
 void

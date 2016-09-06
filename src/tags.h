@@ -179,7 +179,7 @@ class tag_line_edit_selector: public line_edit_autocomplete
 {
   // works with "->" as tag hierarchy separator
 public:
-  tag_line_edit_selector(QWidget* parent) : line_edit_autocomplete(parent) {
+  tag_line_edit_selector(QWidget* parent=NULL) : line_edit_autocomplete(parent) {
     set_popup_delay(250);
   }
   int current_tag_id() const {

@@ -168,6 +168,7 @@ public slots:
   void edit_tags();
   void edit_filters();
   void start_mailing();
+  void statistics();
 
   // Edit menu
   void edit_copy();
@@ -308,6 +309,7 @@ private:
     me_File_Export_Messages,
     me_File_Edit_Users,
     me_File_Mailing,
+    me_File_Stats,
     me_Edit_Cut,
     me_Edit_Copy,
     me_Edit_Paste,

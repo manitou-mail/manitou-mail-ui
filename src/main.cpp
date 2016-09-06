@@ -232,6 +232,20 @@ manitou_application::cleanup()
   helper::close();
 }
 
+QString
+manitou_application::chartjs_path()
+{
+#if defined(Q_OS_UNIX)
+  QString s = QString(MANITOU_DATADIR);
+#else
+  QString s = QApplication::applicationDirPath();
+#endif
+  if (QFile::exists(s + "/web/Chart.js/dist/Chart.js")) {
+    return s;
+  }
+  return QString::null;
+}
+
 int
 main(int argc, char **argv)
 {

@@ -99,6 +99,7 @@ public:
   void setup_desktop_tray_icon();
   void desktop_notify(const QString,const QString);
   void display_warning(const QString);
+  QString chartjs_path();
 public slots:
   void cleanup();
 private:
