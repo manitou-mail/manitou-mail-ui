@@ -29,6 +29,7 @@
 #include "line_edit_autocomplete.h"
 
 class QStringList;
+class QMouseEvent;
 
 /*
   A message_tag, also called just 'tag', is an object that can be used
@@ -188,10 +189,15 @@ public:
     this->setText(tags_repository::hierarchy(id, "->"));
   }
 
-  QList<QString>
-  get_completions(const QString prefix) {
+  QList<QString> get_completions(const QString prefix) {
     return tags_repository::search_substring(prefix.trimmed());
   }
+
+  QList<QString> get_all_completions() {
+    return tags_repository::search_substring(QString::null);
+  }
+
+  virtual void mousePressEvent(QMouseEvent*);
 
   int get_prefix_pos(const QString text, int cursor_pos) {
     Q_UNUSED(text);

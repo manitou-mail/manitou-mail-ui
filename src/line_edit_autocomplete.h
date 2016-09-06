@@ -44,6 +44,8 @@ public:
 
   /* return the completions, given the substring. Subclasses must reimplement. */
   virtual QList<QString> get_completions(const QString substring)=0;
+  /* return all completions, or an empty list if impractical. */
+  virtual QList<QString> get_all_completions()=0;
 
   /* return the zero-based offset of the completion prefix inside 'text' when
      the cursor is at 'cursor_pos', 'cursor_pos' being 0 when 'text' is empty.
@@ -68,8 +70,10 @@ public slots:
   virtual void completion_chosen(QListWidgetItem*);
   void check_completions(const QString&);
   void show_completions();
+  void show_all_completions();
   //  void activate();
 private:
+  void redisplay_popup(const QList<QString>& completions);
   int m_delay;
   QListWidget* popup;
   dispatcher* m_merger;

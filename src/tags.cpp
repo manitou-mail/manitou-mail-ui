@@ -22,6 +22,7 @@
 #include "sqlstream.h"
 #include "tags.h"
 #include <QStringList>
+#include <QMouseEvent>
 
 // separator between parent and child tag
 // unicode right arrow
@@ -111,7 +112,8 @@ tags_repository::names_list(std::list<uint>& id_list)
   return m.values();
 }
 
-/** Search tags by substring
+/** Search tags by substring. Find all tags is substring is null.
+    Returns a list sorted by hierarchy first, alphabet next.
  */
 QList<QString>
 tags_repository::search_substring(QString substring)
@@ -124,7 +126,7 @@ tags_repository::search_substring(QString substring)
   {
     QString fulln = hierarchy(it->second.id(), "->");
     // DBG_PRINTF(3, "fulln=%s", fulln.toLocal8Bit().constData());
-    if (fulln.contains(substring, Qt::CaseInsensitive)) {
+    if (substring.isNull() || fulln.contains(substring, Qt::CaseInsensitive)) {
       // DBG_PRINTF(3, "tag found id=%d", it->second.id());
       tag_t* t = new tag_t(depth(it->second.id()), fulln);
       res.append(t);
@@ -582,4 +584,15 @@ tag_node::find(uint tag_id) const
     if (n) return n;
   }
   return NULL;
+}
+
+void
+tag_line_edit_selector::mousePressEvent(QMouseEvent* e)
+{
+  if (e->button() == Qt::LeftButton) {
+    if (this->text().isEmpty())
+      show_all_completions();
+  }
+  else
+    line_edit_autocomplete::mousePressEvent(e);
 }

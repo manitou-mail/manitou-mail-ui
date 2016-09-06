@@ -111,6 +111,30 @@ line_edit_autocomplete::show_popup()
 }
 
 void
+line_edit_autocomplete::show_all_completions()
+{
+  QList<QString> completions = get_all_completions();
+  redisplay_popup(completions);
+}
+
+void
+line_edit_autocomplete::redisplay_popup(const QList<QString>& completions)
+{
+  if (!completions.empty()) {
+    popup->clear();
+    QList<QString>::const_iterator iter;
+    for (iter = completions.begin(); iter != completions.end(); iter++) {
+      popup->addItem(*iter);
+    }
+    show_popup();
+  }
+  else {
+    popup->clear();
+    popup->hide();
+  }
+}
+
+void
 line_edit_autocomplete::show_completions()
 {
   if (!m_completer_enabled)
@@ -133,18 +157,7 @@ line_edit_autocomplete::show_completions()
   }
   else {
     QList<QString> completions = get_completions(prefix);
-    if (!completions.empty()) {
-      popup->clear();
-      QList<QString>::const_iterator iter;
-      for (iter = completions.begin(); iter != completions.end(); iter++) {
-	popup->addItem(*iter);
-      }
-      show_popup();
-    }
-    else {
-      popup->clear();
-      popup->hide();
-    }
+    redisplay_popup(completions);
   }
 }
 

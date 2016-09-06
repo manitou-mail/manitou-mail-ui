@@ -27,6 +27,9 @@ class edit_address_widget: public line_edit_autocomplete
 public:
   edit_address_widget(QWidget* parent=NULL);
   virtual QList<QString> get_completions(const QString substring);
+  virtual QList<QString> get_all_completions() {
+    return QList<QString>();
+  }
 };
 
 #endif // INC_EDIT_ADDRESS_WIDGET_H
