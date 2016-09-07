@@ -240,7 +240,7 @@ manitou_application::chartjs_path()
 #else
   QString s = QApplication::applicationDirPath();
 #endif
-  if (QFile::exists(s + "/web/Chart.js/dist/Chart.js")) {
+  if (QFile::exists(s + "/web/Chart.js/dist/Chart.min.js")) {
     return s;
   }
   return QString::null;
