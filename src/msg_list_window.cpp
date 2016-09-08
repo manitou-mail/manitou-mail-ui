@@ -1227,7 +1227,16 @@ void
 msg_list_window::set_title(const QString title/*=QString::null*/)
 {
   if (title.isEmpty()) {
-    QString sTitle=QString("%3: %1%4 %2").arg(m_filter->m_list_msgs.size()).arg(tr("message(s)")).arg(db_cnx::dbname(), m_filter->has_more_results()?"+":"");
+    QString sTitle;
+    /* warning: use the arg() variant with 2 args to avoid wrong
+       replacement if there are percent characters in dbname or username */
+    QString refdb = QString("%1@[%2]").arg(db_cnx::username(), db_cnx::dbname());
+
+    QString msgs = QString(tr("%1%2 message(s)"))
+      .arg(m_filter->m_list_msgs.size()).
+      arg(m_filter->has_more_results()?"+":"");
+
+    QTextStream(&sTitle) <<  refdb << " " << msgs;
     setWindowTitle(sTitle);
   }
   else

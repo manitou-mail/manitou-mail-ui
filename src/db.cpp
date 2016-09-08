@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -100,11 +100,12 @@ ConnectDb(const char* cnx_string, QString* errstr)
     pgDb.logon(cnx_string);
     db_cnx::set_connect_string(cnx_string);
     db_cnx db;
-    sql_stream s("SELECT current_database()", db);
+    sql_stream s("SELECT current_database(), current_user", db);
     if (!s.eos()) {
-      QString dbname;
-      s >> dbname;
+      QString dbname, username;
+      s >> dbname >> username;
       db_cnx::set_dbname(dbname);
+      db_cnx::set_username(username);
     }
   }
   catch(db_excpt& p) {
@@ -191,6 +192,7 @@ std::list<db_cnx_elt*> db_cnx::m_cnx_list;
 QMutex db_cnx::m_mutex;
 QString db_cnx::m_connect_string;
 QString db_cnx::m_dbname;
+QString db_cnx::m_username;
 
 // static
 void
@@ -207,10 +209,24 @@ db_cnx::set_dbname(const QString dbname)
 }
 
 // static
-const QString&
+void
+db_cnx::set_username(const QString username)
+{
+  m_username = username;
+}
+
+// static
+QString
 db_cnx::dbname()
 {
   return m_dbname;
+}
+
+// static
+QString
+db_cnx::username()
+{
+  return m_username;
 }
 
 

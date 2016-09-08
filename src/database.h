@@ -171,6 +171,7 @@ public:
   }
   static void set_connect_string(const char* cnx);
   static void set_dbname(const QString dbname);
+  static void set_username(const QString username);
   static void disconnect_all();
   static bool idle();
 
@@ -180,7 +181,8 @@ public:
   bool table_exists(const QString);
   void handle_exception(db_excpt& e);
 
-  static const QString& dbname();
+  static QString dbname();
+  static QString username();
   QString escape_string_literal(const QString);
   QString escape_identifier(const QString);
 private:
@@ -192,6 +194,7 @@ private:
   static bool m_initialized;
   static QString m_connect_string;
   static QString m_dbname;
+  static QString m_username;
 };
 
 // Transaction object. The destructor issues a rollback if commit has
