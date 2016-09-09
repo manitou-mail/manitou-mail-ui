@@ -57,6 +57,7 @@ public:
   virtual bool reconnect()=0;
   virtual QString escape_string_literal(const QString)=0;
   virtual QString escape_identifier(const QString)=0;
+  virtual bool has_row_level_security()=0;
   void end_transaction();
   int open_transactions_count() const;
   const QString& encoding() const {
@@ -135,6 +136,7 @@ public:
   QList<db_listener*> m_listeners;
   void add_listener(db_listener*);
   void remove_listener(db_listener*);
+  bool has_row_level_security();
 private:
   PGconn* m_pgConn;
   pg_notifier* m_notifier;

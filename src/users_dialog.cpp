@@ -555,7 +555,11 @@ role_perms_edit_dialog::role_perms_edit_dialog(int role_oid)
   idents.fetch();
   m_a_ids = accessible_identities(m_role_oid, &dbc);
   identities::const_iterator iter1;
-  for (iter1 = idents.begin(); iter1 != idents.end(); ++iter1) {
+  if (!dbc.m_db->datab()->has_row_level_security()) {
+    m_list_idents->addItem(tr("Row level security is unavailable on this server."));
+    m_list_idents->setEnabled(false);
+  }
+  else for (iter1 = idents.begin(); iter1 != idents.end(); ++iter1) {
     /* Only the restricted identities are shown in the list, since
        access control through RLS policies applies only with them.
        That may disconcert users, but showing non-restricted identities
@@ -671,20 +675,22 @@ role_perms_edit_dialog::set_grants()
       }
     }
 
-    QList<int> list_ids;  // list of checked private identities
-    bool ids_changed = false;	// did any checkbox switch state?
-    for (int row=0; row < m_list_idents->count(); row++) {
-      QListWidgetItem* item = m_list_idents->item(row);
-      int iid = item->data(Qt::UserRole).toInt(); // identity_id
-      if ((item->checkState() == Qt::Checked) != m_a_ids.contains(iid)) // compare 2 states
-	ids_changed = true;
-      if (item->checkState() == Qt::Checked)
-	list_ids.append(iid);
-    }
-    if (ids_changed) {
-      // call set_identity_permissions(in_oid, in_identities int[], in_perms char[] = ['A']);
-      sql_stream s("select set_identity_permissions(:o, :t, null)", *dbc.m_db);
-      s << m_role_oid << list_ids;
+    if (dbc.m_db->datab()->has_row_level_security()) {
+      QList<int> list_ids;  // list of checked private identities
+      bool ids_changed = false;	// did any checkbox switch state?
+      for (int row=0; row < m_list_idents->count(); row++) {
+	QListWidgetItem* item = m_list_idents->item(row);
+	int iid = item->data(Qt::UserRole).toInt(); // identity_id
+	if ((item->checkState() == Qt::Checked) != m_a_ids.contains(iid)) // compare 2 states
+	  ids_changed = true;
+	if (item->checkState() == Qt::Checked)
+	  list_ids.append(iid);
+      }
+      if (ids_changed) {
+	// call set_identity_permissions(in_oid, in_identities int[], in_perms char[] = ['A']);
+	sql_stream s("select set_identity_permissions(:o, :t, null)", *dbc.m_db);
+	s << m_role_oid << list_ids;
+      }
     }
     dbc.m_db->commit_transaction();
   }

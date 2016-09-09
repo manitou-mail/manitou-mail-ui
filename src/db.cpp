@@ -165,6 +165,12 @@ int database::open_transactions_count() const
   return m_open_trans_count;
 }
 
+bool
+pgConnection::has_row_level_security()
+{
+  return PQserverVersion(m_pgConn) >= 90500;
+}
+
 void
 pgConnection::add_listener(db_listener* listener)
 {
