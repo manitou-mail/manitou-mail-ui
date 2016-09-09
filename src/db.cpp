@@ -667,6 +667,7 @@ db_schema::compare_version(const QString version)
       if (v_arg != v_db[i])
 	return v_db[i] - v_arg;
   }
+  return 0;
 }
 
 //static
