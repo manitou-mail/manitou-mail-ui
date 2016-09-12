@@ -2991,10 +2991,6 @@ Les messages non encore importés seront perdus.</translation>
         <translation>Terminé.</translation>
     </message>
     <message>
-        <source>message(s)</source>
-        <translation>message(s)</translation>
-    </message>
-    <message>
         <source>The display settings have been saved in the default configuration.</source>
         <translation>Les paramètres d&apos;affichage ont été sauvées dans la configuration par défaut.</translation>
     </message>
@@ -3234,6 +3230,10 @@ Les messages non encore importés seront perdus.</translation>
         <source>Statistics</source>
         <translation>Statistiques</translation>
     </message>
+    <message>
+        <source>%1%2 message(s)</source>
+        <translation>%1%2 message(s)</translation>
+    </message>
 </context>
 <context>
     <name>msg_select_dialog</name>
@@ -3387,7 +3387,7 @@ Les messages non encore importés seront perdus.</translation>
     </message>
     <message>
         <source>Tag:</source>
-        <translation>Label:</translation>
+        <translation>Etiquette:</translation>
     </message>
     <message>
         <source>In trashcan</source>
@@ -4159,6 +4159,10 @@ Voulez-vous le mettre à jour malgré cela?</translation>
         <source>Access to restricted identities:</source>
         <translation>Accès autorisé aux identités:</translation>
     </message>
+    <message>
+        <source>Row level security is unavailable on this server.</source>
+        <translation>La sécurité niveau ligne (RLS) n&apos;est pas disponible sur ce serveur.</translation>
+    </message>
 </context>
 <context>
     <name>save_query_box</name>
@@ -4453,10 +4457,6 @@ Etes-vous certain de vouloir l&apos;écraser?</translation>
         <translation>(Racine)</translation>
     </message>
     <message>
-        <source>Inconsistant hierarchy in &apos;tags&apos; table</source>
-        <translation>Inconsistance de hiérarchie dans la table &apos;tags&apos;</translation>
-    </message>
-    <message>
         <source>Error</source>
         <translation>Erreur</translation>
     </message>
@@ -4502,6 +4502,10 @@ Save now?</source>
     <message>
         <source>This will include %1 sub-tag(s)</source>
         <translation>Cela inclura %1 sous-étiquette(s)</translation>
+    </message>
+    <message>
+        <source>Inconsistent hierarchy in &apos;tags&apos; table</source>
+        <translation>Hiérarchie d&apos;étiquettes incohérent dans la table &apos;tags&apos;</translation>
     </message>
 </context>
 <context>
