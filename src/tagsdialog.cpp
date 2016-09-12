@@ -94,6 +94,8 @@ tags_dialog::tags_dialog(QWidget* parent) : QDialog(parent)
   m_list.fetch();
   int cnt=m_list.size();
   tags_definition_list::iterator iter;
+  /* map tag_id to tag_item. If the tag exists but must be hidden (excluded),
+     tag_item* is NULL. */
   std::map<int,tag_item*> map_done;
   std::map<int,tag_item*>::iterator ip;
   int prev_cnt=cnt+1;
@@ -101,20 +103,37 @@ tags_dialog::tags_dialog(QWidget* parent) : QDialog(parent)
   while (cnt!=0 && cnt<prev_cnt) {
     prev_cnt=cnt;
     for (iter=m_list.begin(); iter!=m_list.end(); ++iter) {
-      ip = map_done.find(iter->getId());
-      if (ip==map_done.end()) {
+      int tid = iter->getId();
+      ip = map_done.find(tid);
+      if (ip == map_done.end()) {
 	if (!iter->parent_id()) {
-	  map_done[iter->getId()] = new tag_item(m_root_item, *iter);
+	  // top-level tag
+	  tag_item* new_tag;
+	  if (m_list.is_excluded_subtree(tid))
+	    new_tag = NULL;
+	  else
+	    new_tag = new tag_item(m_root_item, *iter);
+	  map_done[tid] = new_tag;
 	  cnt--;
 	}
 	else {
+	  // tag in a subtree
 	  ip = map_done.find(iter->parent_id());
-	  if (ip!=map_done.end()) {
-	    // if the parent exists, then create the child
-	    map_done[iter->getId()] = new tag_item(ip->second, *iter);
-	    ip->second->setExpanded(true);
+	  if (ip != map_done.end()) {
+	    // the parent exists
+	    if (m_list.is_excluded_subtree(tid))
+	      map_done[tid] = NULL; // tag excluded, record it but no creation of tag_item
+	    else {
+	      if (ip->second) { // parent exists and has a tag_item
+		map_done[tid] = new tag_item(ip->second, *iter);
+		ip->second->setExpanded(true);
+	      }
+	      else
+		map_done[tid] = NULL; // else record but don't create item
+	    }
 	    cnt--;
 	  }
+	  // else parent not yet created, wait for next iteration
 	}
       }
     }
@@ -122,7 +141,7 @@ tags_dialog::tags_dialog(QWidget* parent) : QDialog(parent)
   if (cnt>0) {
     DBG_PRINTF(2, "cnt=%d, prev_cnt=%d", cnt, prev_cnt);
     m_qlist->clear();
-    throw ui_error(tr("Inconsistant hierarchy in 'tags' table"));
+    throw ui_error(tr("Inconsistent hierarchy in 'tags' table"));
   }
 
   m_qlist->sortItems(0, Qt::AscendingOrder);
