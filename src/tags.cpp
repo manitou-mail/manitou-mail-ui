@@ -421,6 +421,29 @@ tags_definition_list::fetch(bool force /*=false*/)
       tag.set_parent_id(parent_id);
       push_back(tag);
     }
+
+    /* To build the list of tag_id to exclude:
+       - start with all root_tag in identities where restricted=true
+       - for each identity
+	  - for each group to which the user belongs
+	    - if the (role_id, identity_id) is in identities_permissions
+	      then remove the tag from the exclusion list
+    */
+    sql_stream s1
+	("SELECT root_tag FROM identities WHERE restricted=true"
+	 " AND identity_id NOT IN "
+	 " (SELECT identity_id FROM pg_catalog.pg_auth_members m"
+	 "  JOIN pg_catalog.pg_roles r ON (m.member = r.oid)"
+	 "  JOIN identities_permissions ip ON (ip.role_oid=m.roleid)"
+	 "  WHERE r.rolname=current_user"
+	 " )"
+	 , db);
+    int x_id;
+    while (!s1.eos()) {
+      s1 >> x_id;
+      m_excluded_by_identity.insert(x_id);
+    }
+
     m_bFetched=true;
   }
   catch (db_excpt& p) {
@@ -428,6 +451,12 @@ tags_definition_list::fetch(bool force /*=false*/)
     result=false;
   }
   return result;
+}
+
+bool
+tags_definition_list::is_excluded_subtree(int tag_id)
+{
+  return m_excluded_by_identity.contains(tag_id);
 }
 
 
@@ -472,8 +501,10 @@ tag_node::get_child_tags(tags_definition_list& l)
   tags_definition_list::iterator iter;
   for (iter=l.begin(); iter!=l.end(); ++iter) {
     if (iter->parent_id()==(int)m_id) {
+      if (l.is_excluded_subtree(iter->id()))
+	return;
       tag_node* t = new tag_node(this);
-      t->m_id = iter->getId();
+      t->m_id = iter->id();
       t->m_name = iter->getName();
       t->m_parent_id = this->m_id;
       this->m_childs.push_back(t);

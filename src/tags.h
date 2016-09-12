@@ -41,11 +41,10 @@ class QMouseEvent;
 class message_tag
 {
 public:
-  message_tag(): m_tag_id(0), m_nMsgs(-1), m_parent_id(0) {}
+  message_tag(): m_tag_id(0), m_parent_id(0) {}
   message_tag(int id, QString name) {
     m_name=name;
     m_tag_id=id;
-    m_nMsgs=-1;
     m_parent_id=0;
   }
   virtual ~message_tag() {}
@@ -59,8 +58,6 @@ public:
   void setName(const QString s) { m_name=s; }
   void set_name(const QString s) { m_name=s; }
   static int nameMaxLength() { return 300; }
-  void setNbMsgs(int i) { m_nMsgs=i; }
-  int nbMsgs() const { return m_nMsgs; }
   void set_parent_id(int id) { m_parent_id=id; }
   int parent_id() const { return m_parent_id; }
   bool store();
@@ -76,7 +73,6 @@ public:
 
 private:
   int m_tag_id;
-  int m_nMsgs;
   int m_parent_id;
   QString m_name;
   // number of tagged messages, -1 if unknown
@@ -112,8 +108,15 @@ public:
   tags_definition_list() : m_bFetched(false) {}
   virtual ~tags_definition_list() {}
   bool fetch(bool force=false);
+  /* When multi-user control access is used through Row-Level Security,
+     return the list of tag_id that the connected user should not see
+     according to identities_permissions and identities.root_tag
+     Child tags are not in that list, only the top-level tag_id of each
+     subtree to eliminate. */
+  bool is_excluded_subtree(int tag_id);
 private:
   bool m_bFetched;
+  QSet<int> m_excluded_by_identity;
 };
 
 class tag_node
