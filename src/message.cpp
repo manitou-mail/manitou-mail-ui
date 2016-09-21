@@ -818,9 +818,15 @@ void
 mail_msg::build_message_id()
 {
   QUuid uid = QUuid::createUuid();
-  QString str=uid.toString();
+  QString str = uid.toString();
   str.replace(QChar('{'), "").replace(QChar('}'), "");
-  m_header.setMessageId(str+"@mm");
+  QString domain = m_header.m_sender;
+  int atpos = domain.indexOf('@');
+  if (atpos >= 0)
+    domain = domain.mid(atpos+1);
+  m_header.setMessageId(QString("%1@%2").
+			arg(str).
+			arg(domain.isEmpty()?"mm":domain));
 }
 
 // Store the new message into the database
