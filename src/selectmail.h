@@ -188,24 +188,32 @@ private:
   void process_date_clause(sql_query& q,
 			   date_comparator comp,
 			   QString date_expr);
+
   /* Add criteria to the sql_query that correspond to a status test,
      m.status having or not having certain status bits. */
   void process_status_clause(sql_query& q,
 			     status_comparator comp,
 			     QList<QString> vals);
+
   /* Add criteria to the sql_query that correspond to a sender/recipient test */
   void process_address_clause(sql_query& q,
 			      address_type atype,
 			      QList<QString> vals);
+
   /* Add criteria to the sql_query for the tag operator */
-  void process_tag_clause(sql_query& q,
-			  QList<QString> vals);
+  void process_tag_clause(sql_query& q, QList<QString> vals);
+
   /* Add criteria to the sql_query for the filename operator */
-  void process_filename_clause(sql_query& q,
-			       QList<QString> vals);
+  void process_filename_clause(sql_query& q, QList<QString> vals);
+
   /* Add criteria to the sql_query for the filename operator */
-  void process_filesuffix_clause(sql_query& q,
-				 QList<QString> vals);
+  void process_filesuffix_clause(sql_query& q, QList<QString> vals);
+
+  /* Add criteria to the sql_query for the msgid/messageid operator */
+  void process_msgid_clause(sql_query& q, QList<QString> vals);
+
+  /* Add criteria to the sql_query for the msgid/messageid operator */
+  void process_mail_id_clause(sql_query& q, QList<QString> vals);
 
   bool m_auto_refresh;
   int add_address_selection (sql_query& q, const QString email_addr, int addr_type);

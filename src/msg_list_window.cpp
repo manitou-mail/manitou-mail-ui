@@ -82,7 +82,7 @@
 void
 msg_list_window::searchbar_search()
 {
-  QString txt = m_ql_search->text().toLower();
+  QString txt = m_ql_search->text();
   if (txt.length()<3) {
     QMessageBox::information(NULL, tr("Search"), tr("Please enter a string containing at least 3 characters"));
     return;

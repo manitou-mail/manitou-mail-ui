@@ -539,6 +539,16 @@ msgs_filter::build_query(sql_query& q)
       process_filesuffix_clause(q, m_fts.m_operators.values("filesuffix"));
     }
 
+    // Message-Id
+    if (m_fts.m_operators.contains("msgid")) {
+      process_msgid_clause(q, m_fts.m_operators.values("msgid"));
+    }
+
+    // mail_id
+    if (m_fts.m_operators.contains("id")) {
+      process_mail_id_clause(q, m_fts.m_operators.values("id"));
+    }
+
     if (!m_body_substring.isEmpty()) {
       q.add_table("body b");
       q.add_clause(QString("strpos(b.bodytext,'") + m_body_substring + QString("')>0 and m.mail_id=b.mail_id"));
@@ -552,14 +562,21 @@ msgs_filter::build_query(sql_query& q)
 	  db_word::unaccent(m_fts.m_words);
 	  db_word::unaccent(m_fts.m_exclude_words);
 	}
-      QString words_incl = db_word::format_db_string_array(m_fts.m_words, db);
-      QString words_excl = db_word::format_db_string_array(m_fts.m_exclude_words, db);
-      if (!m_fts.m_words.isEmpty()) {
+      QStringList w_incl, w_excl;
+      for (QString &s : m_fts.m_words) {
+	w_incl.append(s.toLower());
+      }
+      for (QString &s : m_fts.m_exclude_words) {
+	w_excl.append(s.toLower());
+      }
+      QString words_incl = db_word::format_db_string_array(w_incl, db);
+      QString words_excl = db_word::format_db_string_array(w_excl, db);
+      if (!w_incl.isEmpty()) {
 	q.add_clause(QString("m.mail_id in (select * from wordsearch(%1,%2))").arg(words_incl).arg(words_excl));
       }
       else {
-	for (int i=0; i<m_fts.m_exclude_words.count(); i++) {
-	  QString excl = db_word::format_db_string_array(QStringList(m_fts.m_exclude_words.at(i)), db);
+	for (QString &s : w_excl) {
+	  QString excl = db_word::format_db_string_array(QStringList(s), db);
 	  q.add_clause(QString("m.mail_id not in (select * from wordsearch(%1))").arg(excl));
 	}
       }
@@ -823,7 +840,7 @@ msgs_filter::process_address_clause(sql_query& q,
     q.add_clause(QString("ma%1.addr_type=%2").arg(cnt).arg(itype));
     q.add_clause(QString("m.mail_id=ma%1.mail_id").arg(cnt));
     q.add_clause(QString("ma%1.addr_id=a%1.addr_id").arg(cnt));
-    q.add_clause(QString("a%1.email_addr").arg(cnt), vals.at(si));
+    q.add_clause(QString("a%1.email_addr").arg(cnt), vals.at(si).toLower());
   }
 }
 
@@ -834,7 +851,7 @@ void
 msgs_filter::process_tag_clause(sql_query& q, QList<QString> vals)
 {
   for (int si=0; si < vals.size(); ++si) {
-    int tag_id = tags_repository::hierarchy_lookup(vals.at(si));
+    int tag_id = tags_repository::hierarchy_lookup(vals.at(si).toLower());
     DBG_PRINTF(7, "tag looked up: %s, found=%d", vals.at(si).toLocal8Bit().constData(),
 	       tag_id);
     if (tag_id) {
@@ -885,6 +902,35 @@ msgs_filter::process_filesuffix_clause(sql_query& q, QList<QString> vals)
 		 arg(seq).arg(like_clause));
   }
 }
+
+/*
+  Create SQL clauses to filter on the Message-Id header.
+*/
+void
+msgs_filter::process_msgid_clause(sql_query& q, QList<QString> vals)
+{
+  for (int si=0; si < vals.size(); ++si) {
+    QString msgid;
+    if (vals.at(si).startsWith("<") && vals.at(si).endsWith(">"))
+      msgid = vals.at(si).mid(1, vals.at(si).length()-2);
+    else
+      msgid = vals.at(si);
+    DBG_PRINTF(5, "msgid=%s", msgid.toLocal8Bit().constData());
+    q.add_clause("m.message_id", msgid, "=");
+  }
+}
+
+/*
+  Create SQL clauses to filter on mail_id
+*/
+void
+msgs_filter::process_mail_id_clause(sql_query& q, QList<QString> vals)
+{
+  for (int si=0; si < vals.size(); ++si) {
+    q.add_clause(QString("m.mail_id=%1").arg(mail_msg::id_from_string(vals.at(si))));
+  }
+}
+
 
 /*
   Return values: same as build_query()
