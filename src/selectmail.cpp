@@ -64,7 +64,6 @@ void
 msgs_filter::init()
 {
   m_order=(get_config().get_msgs_sort_order()==Qt::AscendingOrder)?1:-1;
-  m_mailId=0;
   m_tag_id=0;
   m_thread_id=0;
   m_status=-1;
@@ -591,10 +590,6 @@ msgs_filter::build_query(sql_query& q)
       }
     }
 
-    if (m_mailId) {
-      //sWhere.sprintf(" WHERE mail_id=%d", m_mailId);
-      q.add_clause("mail_id", (int)m_mailId);
-    }
     if (m_newer_than) {
       QString s;
       s.sprintf("(msg_date>=date_trunc('days',now()-interval '%d days'))", m_newer_than);

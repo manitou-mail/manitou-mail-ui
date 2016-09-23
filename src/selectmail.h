@@ -112,7 +112,6 @@ public:
     rAny
   };
   // search criteria
-  uint m_mailId;
   int m_nAddrType;
   QString m_sAddress;
   QString m_subject;

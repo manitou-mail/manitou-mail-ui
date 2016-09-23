@@ -648,7 +648,7 @@ mail_listview::popup_ctxt_menu(const QPoint& pos)
   }
   else if (action == action_thread) {
     if (!(filter.m_thread_id=msg->threadId())) {
-      filter.m_mailId=msg->GetId();
+      filter.m_sql_stmt = QString("%1").arg(msg->get_id()); // will produce: mail_id IN (%1)
     }
     action_opens_page =true;
   }
