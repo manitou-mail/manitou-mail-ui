@@ -235,7 +235,7 @@ manitou_application::cleanup()
 QString
 manitou_application::chartjs_path()
 {
-#if defined(Q_OS_UNIX)
+#if defined(Q_OS_UNIX) && !defined(Q_OS_MAC)
   QString s = QString(MANITOU_DATADIR);
 #else
   QString s = QApplication::applicationDirPath();
