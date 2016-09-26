@@ -147,12 +147,6 @@ message_view::~message_view()
 {
 }
 
-static inline int max(int a, int b)
-{
-  return a>b?a:b;
-}
-
-
 void
 message_view::keyPressEvent(QKeyEvent* event)
 {
