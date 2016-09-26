@@ -26,7 +26,7 @@ manitou_SOURCES = main.cpp main.h msg_list_window.cpp db.cpp \
  body_edit.h body_edit.cpp browser.h browser.cpp prog_chooser.cpp \
  prog_chooser.h sql_editor.h sql_editor.cpp errors.h errors.cpp \
  mime_msg_viewer.h mime_msg_viewer.cpp mail_displayer.h \
- mail_displayer.cpp bitvector.h bitvector.cpp message_port.cpp \
+ mail_displayer.cpp message_port.cpp \
  message_port.h msgs_page_list.h msgs_page_list.cpp sha1.cpp sha1.h \
  attachment_listview.h attachment_listview.cpp filter_log.cpp filter_log.h \
  message_view.h message_view.cpp \

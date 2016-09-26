@@ -29,7 +29,6 @@
 #include "helper.h"
 #include "icons.h"
 #include "sql_editor.h"
-#include "words.h"
 
 #include <QLineEdit>
 #include <QComboBox>

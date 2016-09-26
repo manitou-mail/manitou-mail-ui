@@ -22,7 +22,6 @@
 
 #include <map>
 #include <QString>
-#include "bitvector.h"
 #include "dbtypes.h"
 
 class db_word
@@ -39,14 +38,6 @@ public:
   // fetch the word_id
   bool fetch_id();
 
-  // fetch the inverted index entries related to the word
-  bool fetch_vectors();
-
-  const bit_vector* vector_part(uint part_no) const;
-
-  const std::map<uint,bit_vector*>* vectors() const {
-    return &m_vectors;
-  }
 
   static QString format_db_string_array(const QStringList& words, db_cnx& db);
   static QString unaccent(const QString);
@@ -55,35 +46,10 @@ private:
   // the word
   QString m_text;
 
-  /* vector of mails containing this word, fetchable from the inverted index
-     the map index is the partno column (number of partition) of
-     inverted_word_index */
-  std::map<uint,bit_vector*> m_vectors;
-
   // wordtext.word_id
   uint m_word_id;
 };
 
-//
-// Results of word searches combined by logical operators
-//
-/* Currently, this class is not used due to this logic having moved server-side */
-class wordsearch_resultset
-{
-public:
-  wordsearch_resultset();
-  ~wordsearch_resultset();
-  void get_result_bits(std::list<mail_id_t>& l,
-		       mail_id_t limit,
-		       int direction, // -1,+1 or 0
-		       uint max_results);
-  void and_word(const db_word& dbw);
-  void insert_word(const db_word& dbw);
-private:
-  void clear();
-  std::map<uint,bit_vector*> m_vect;
-  static int m_partsize;
-};
 
 class progressive_wordsearch
 {
