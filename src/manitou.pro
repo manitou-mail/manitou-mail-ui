@@ -1,9 +1,9 @@
 TEMPLATE = app
 TARGET = manitou
 DEPENDPATH += . xface
-CONFIG += release
+CONFIG += release c++11
 INCLUDEPATH += . .. xface /usr/local/pgsql/include
-QT += network webkit
+QT += network webkit webkitwidgets gui widgets printsupport
 DEFINES += WITH_PGSQL
 LIBS += -L/usr/local/pgsql/lib -lpq
 ICON = ../icons/manitou.icns
@@ -39,7 +39,9 @@ HEADERS += about.h \
            dragdrop.h \
            edit_address_widget.h \
            edit_rules.h \
+           export_window.h \
            errors.h \
+           fetch_thread.h \
            filter_log.h \
            filter_rules.h \
            headers_groupview.h \
@@ -47,7 +49,8 @@ HEADERS += about.h \
            html_editor.h \
            icons.h \
            identities.h \
-           import_window.h \ 
+           import_window.h \
+           line_edit_autocomplete.h \
            login.h \
            mail_displayer.h \
            mail_listview.h \
@@ -99,7 +102,8 @@ HEADERS += about.h \
            xface/compface.h \
            xface/data.h \
            xface/vars.h \
-           xface/xface.h
+           xface/xface.h \
+           statistics.h
 SOURCES += about.cpp \
            filter_eval.cpp \
            filter_results_window.cpp \
@@ -120,7 +124,9 @@ SOURCES += about.cpp \
            db_listener.cpp \
            edit_address_widget.cpp \
            edit_rules.cpp \
+           export_window.cpp \
            errors.cpp \
+           fetch_thread.cpp \
            filter_log.cpp \
            filter_rules.cpp \
            getopt.cpp \
@@ -130,6 +136,7 @@ SOURCES += about.cpp \
            html_editor.cpp \
            identities.cpp \
            import_window.cpp \ 
+           line_edit_autocomplete.cpp \
            login.cpp \
            log_window.cpp \
            mail_displayer.cpp \
@@ -164,6 +171,7 @@ SOURCES += about.cpp \
            sql_editor.cpp \
            sqlquery.cpp \
            sqlstream.cpp \
+           statistics.cpp \
            tags.cpp \
            tagsbox.cpp \
            tagsdialog.cpp \
