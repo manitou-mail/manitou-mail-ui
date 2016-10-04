@@ -47,7 +47,9 @@ attch_lvitem::fill_columns()
   QString sSize;
   if (m_type==type_attachment) {
     setText(0, m_attach.mime_type());
-    setText(1, m_attach.filename());
+    QFileInfo fi(m_attach.filename());
+    setText(1, fi.fileName());
+    setToolTip(1, m_attach.filename());
     sSize = m_attach.human_readable_size();
   }
   else if (m_type==type_note) {
