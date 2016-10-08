@@ -3034,7 +3034,6 @@ msg_list_window::quick_query_selection(QTreeWidgetItem* qt_item, int column)
   case query_lvitem::tree_node:
     break;			// nothing to do
   default:
-    QMessageBox::warning(this, APP_NAME, tr("Not implemented yet!"));
     break;
   }
 }
