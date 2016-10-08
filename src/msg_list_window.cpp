@@ -1024,6 +1024,10 @@ msg_list_window::remove_msg(mail_msg* msg, bool auto_select_next)
   m_qlist->remove_msg(msg, auto_select_next);
   // remove from our list
   m_filter->m_list_msgs.remove(msg);
+  if (msg == m_pCurrentItem) {
+    m_pCurrentItem = NULL;
+    m_msgview->set_mail_item(NULL);
+  }
 }
 
 void
