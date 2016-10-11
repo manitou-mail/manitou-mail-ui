@@ -845,16 +845,22 @@ void
 msgs_filter::process_tag_clause(sql_query& q, QList<QString> vals)
 {
   for (int si=0; si < vals.size(); ++si) {
-    int tag_id = tags_repository::hierarchy_lookup(vals.at(si).toLower());
-    DBG_PRINTF(7, "tag looked up: %s, found=%d", vals.at(si).toLocal8Bit().constData(),
-	       tag_id);
-    if (tag_id) {
-      q.add_table(QString("mail_tags mt%1").arg(++m_alias_sequence));
-      q.add_clause(QString("mt%1.mail_id=m.mail_id AND mt%1.tag=%2").
-		   arg(m_alias_sequence).arg(tag_id));
+    if (vals.at(si).isEmpty()) {
+      /* searching for an empty tag means searching for untagged messages. */
+      q.add_clause("NOT EXISTS (SELECT 1 FROM mail_tags WHERE mail_id=m.mail_id)");
     }
     else {
-      q.add_clause("false");
+      int tag_id = tags_repository::hierarchy_lookup(vals.at(si).toLower());
+      DBG_PRINTF(7, "tag looked up: %s, found=%d", vals.at(si).toLocal8Bit().constData(),
+		 tag_id);
+      if (tag_id) {
+	q.add_table(QString("mail_tags mt%1").arg(++m_alias_sequence));
+	q.add_clause(QString("mt%1.mail_id=m.mail_id AND mt%1.tag=%2").
+		     arg(m_alias_sequence).arg(tag_id));
+      }
+      else {
+	q.add_clause("false");
+      }
     }
   }
 }
