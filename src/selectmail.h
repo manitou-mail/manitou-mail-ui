@@ -128,7 +128,15 @@ public:
   int m_status_unset;		// bitmask: OR'ed bits that have to be 0 in mail.status
 
   int m_newer_than;		/* newer than or N days old */
+
+  /* String associated to the combobox in the query dialog
+     (see m_date_cb initialization).
+     Can be "range" or a negative number of days as a string,
+     or "today", "yesterday" ... */
   QString m_date_clause;
+
+  /* Date selectors for the search bar */
+  QString m_date_exact_clause;
   QString m_date_before_clause;
   QString m_date_after_clause;
 

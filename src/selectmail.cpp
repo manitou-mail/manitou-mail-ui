@@ -72,6 +72,7 @@ msgs_filter::init()
   m_newer_than=0;
   m_has_progress_bar = false;
   m_date_clause = QString::null;
+  m_date_exact_clause = QString::null;
   m_date_before_clause = QString::null;
   m_date_after_clause = QString::null;
   m_max_results=get_config().get_number("max_msgs_per_selection");
@@ -473,14 +474,14 @@ msgs_filter::build_query(sql_query& q)
 
     // <date clause>
     if (!m_date_min.isNull() && m_date_min.isValid()) {
-      QString date_clause;
+      QString str_clause;
       if (!m_date_max.isNull() && m_date_max.isValid()) {
-	date_clause = QString("msg_date >= '%1'::date and msg_date<'%2'::date+1::int").arg(m_date_min.toString("yyyy/M/d")).arg(m_date_max.toString("yyyy/M/d"));
+	str_clause = QString("msg_date >= '%1'::date and msg_date<'%2'::date+1::int").arg(m_date_min.toString("yyyy/M/d")).arg(m_date_max.toString("yyyy/M/d"));
       }
       else {
-	date_clause = QString("msg_date>='%1'::date").arg(m_date_min.toString("yyyy/M/d"));
+	str_clause = QString("msg_date>='%1'::date").arg(m_date_min.toString("yyyy/M/d"));
       }
-      q.add_clause(date_clause);
+      q.add_clause(str_clause);
     }
     else if (!m_date_max.isNull() && m_date_max.isValid()) {
       q.add_clause(QString("msg_date<'%1'::date+1::int").arg(m_date_max.toString("yyyy/M/d")));
@@ -489,18 +490,16 @@ msgs_filter::build_query(sql_query& q)
     /* The date from the search bar is ignored if a date clause already exists.
        It shouldn't normally happen that both are specified. */
     if (m_date_clause.isEmpty()) {
-      m_date_clause = m_fts.m_operators["date"];
+      m_date_exact_clause = m_fts.m_operators["date"];
       m_date_before_clause = m_fts.m_operators["before"];
       m_date_after_clause = m_fts.m_operators["after"];
+      if (!m_date_exact_clause.isEmpty())
+	process_date_clause(q, date_equal, m_date_exact_clause);
+      if (!m_date_before_clause.isEmpty())
+	process_date_clause(q, date_before, m_date_before_clause);
+      if (!m_date_after_clause.isEmpty())
+	process_date_clause(q, date_after, m_date_after_clause);
     }
-
-    if (!m_date_clause.isEmpty())
-      process_date_clause(q, date_equal, m_date_clause);
-    if (!m_date_before_clause.isEmpty())
-      process_date_clause(q, date_before, m_date_before_clause);
-    if (!m_date_after_clause.isEmpty())
-      process_date_clause(q, date_after, m_date_after_clause);
-      
     // </date clause>
 
     // status clause through is:status and isnot:status
@@ -1487,6 +1486,7 @@ msg_select_dialog::to_filter(msgs_filter* filter)
   }
   else {
     filter->m_date_clause = QString::null;
+    filter->m_date_exact_clause = QString::null;
     filter->m_date_before_clause = QString::null;
     filter->m_date_after_clause = QString::null;
     filter->m_date_min = QDate();
