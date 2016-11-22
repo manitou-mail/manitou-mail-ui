@@ -228,6 +228,7 @@ public slots:
   void save_body();
   void edit_body();
   //  void save_to_mbox();
+  void select_all_in_threads();
   void msg_print();
   void msg_trash();
   void msg_untrash();
@@ -443,6 +444,8 @@ private:
   QAction* m_action_msg_untrash;
   QAction* m_action_msg_forward;
   QAction* m_action_msg_print;
+  QAction* m_action_select_thread;
+
   QAction* m_action_find_text;
   QAction* m_action_msg_sender_details;
   QAction* m_action_cycle_headers;

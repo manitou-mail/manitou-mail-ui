@@ -223,6 +223,12 @@ msg_list_window::create_actions()
   connect(m_action_find_text, SIGNAL(triggered()),
 	  this, SLOT(find_text()));
 
+  m_action_select_thread = new QAction(tr("Select threads"), this);
+  m_action_select_thread->setShortcut(Qt::CTRL+Qt::Key_T);
+  connect(m_action_select_thread, SIGNAL(triggered()),
+	  this, SLOT(select_all_in_threads()));
+  this->addAction(m_action_select_thread);
+
   m_action_msg_print = new QAction(FT_MAKE_ICON(FT_ICON16_PRINT),
 				   tr("Print"), this);
   connect(m_action_msg_print, SIGNAL(triggered()),
@@ -1271,6 +1277,7 @@ msg_list_window::enable_commands()
     m_action_msg_trash->setEnabled(can_trash);
     m_action_msg_untrash->setEnabled(!can_trash);
     m_action_msg_delete->setEnabled(true);
+    m_action_select_thread->setEnabled(true);
     m_action_msg_archive->setEnabled(true);
 
     m_action_msg_print->setEnabled(true);
@@ -1284,6 +1291,7 @@ msg_list_window::enable_commands()
     m_action_reply_list->setEnabled(false);
     m_action_msg_forward->setEnabled(false);
     m_action_msg_archive->setEnabled(false);
+    m_action_select_thread->setEnabled(false);
 
     m_action_msg_trash->setEnabled(false);
     m_action_msg_untrash->setEnabled(false);
@@ -1300,6 +1308,7 @@ msg_list_window::enable_commands()
     m_action_reply_list->setEnabled(false);
     m_action_msg_forward->setEnabled(false);
     m_action_msg_archive->setEnabled(true);
+    m_action_select_thread->setEnabled(true);
     m_action_msg_trash->setEnabled(true);
     m_action_msg_untrash->setEnabled(true);
     m_action_msg_delete->setEnabled(true);
@@ -2591,6 +2600,36 @@ msg_list_window::sender_properties()
     }
   }
 }
+
+void
+msg_list_window::select_all_in_threads()
+{
+  std::vector<mail_msg*> v_sel;
+  QSet<uint> threads;
+  int msg_cnt = 0;
+
+  m_qlist->get_selected(v_sel);
+  DBG_PRINTF(4, "select_all_in_threads() sel=%d", v_sel.size());
+
+  // collect the distinct threads
+  for (auto const &pmsg : v_sel) {
+    if (pmsg->thread_id() != 0)
+      threads.insert(pmsg->thread_id());
+    else {
+      /* each already-selected message outside of any thread is counted, even
+	 if it's not added to threads. This is for the count displayed to the
+	 user to reflect the total number of selected messages in the list. */
+      msg_cnt++;
+    }
+  }
+
+  msg_cnt += m_qlist->select_threads(threads);
+
+  if (msg_cnt > 0) {
+    statusBar()->showMessage(tr("%1 message(s) selected.").arg(msg_cnt), 3000);
+  }
+}
+
 
 void
 msg_list_window::msg_print()

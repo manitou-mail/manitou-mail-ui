@@ -27,6 +27,8 @@
 #include <QHeaderView>
 #include <QMenu>
 #include <QMessageBox>
+#include <QItemSelection>
+#include <QItemSelectionModel>
 
 flag_item::flag_item(const QIcon& icon) : QStandardItem(icon, "")
 {
@@ -344,7 +346,7 @@ mail_item_model::insertion_point(QList<QStandardItem*>& new_row,
 }
 
 /* 
-  Update the contents the message pointed to by 'msg', if it's in the
+  Update the contents for the message pointed to by 'msg', if it's in the
   model, otherwise ignore the request.  Currently the contents are the
   status (icon) and the priority. Other changes such as in the subject
   or the date could be visually reflected by this function if the UI
@@ -805,6 +807,41 @@ mail_listview::select_msg(const mail_msg* msg)
   }
 }
 
+/*
+  Select all messages from a set of threads (passed as a set of mail.thread_id).
+  Return the number of selected messages.
+*/
+int
+mail_listview::select_threads(const QSet<uint>& threads)
+{
+  if (threads.empty())
+    return 0;
+
+  int cnt=0;
+
+  QStandardItem* item = model()->first_top_level_item();
+  QItemSelectionModel* sel = this->selectionModel();
+
+  while (item) {
+    QVariant v = item->data(mail_item_model::mail_msg_role);
+    mail_msg* msg = v.value<mail_msg*>();
+    QModelIndex index = item->index();
+    if (threads.contains(msg->thread_id())) {
+      DBG_PRINTF(4, "selecting index for mail_id=%d", msg->get_id());
+      sel->select(index, QItemSelectionModel::Select|QItemSelectionModel::Rows);
+      cnt++;
+    }
+    // next item
+    QModelIndex index_below  = indexBelow(index);
+    if (index_below.isValid()) {
+      item = model()->itemFromIndex(index_below);
+    }
+    else
+      item=NULL;
+  }
+  return cnt;
+}
+
 void
 mail_listview::select_below(const mail_msg* msg)
 {
@@ -953,7 +990,7 @@ mail_listview::empty() const
 {
   return (model()->first_top_level_item()==NULL);
 }
-  
+
 
 void
 mail_listview::add_msg(mail_msg* msg)

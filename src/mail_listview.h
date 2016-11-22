@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2013 Daniel Verite
+/* Copyright (C) 2004-2016 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -153,6 +153,9 @@ public:
   void select_below(const mail_msg* msg);
   void select_above(const mail_msg* msg);
   void select_msg(const mail_msg* msg);
+
+  // select all messages from a set of threads (passed as a set of mail.thread_id)
+  int select_threads(const QSet<uint>&);
 
   void insert_list(std::list<mail_msg*>& list);
   void swap_sender_recipient(bool);
