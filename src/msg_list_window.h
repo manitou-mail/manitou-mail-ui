@@ -122,6 +122,10 @@ public:
   void set_title(const QString title=QString::null);
   void clear_quick_query_selection();
 
+  mail_listview* current_list() {
+    return m_qlist;
+  }
+
 /*
   int nb_messages() const {
     return m_filter->m_list_msgs.size();

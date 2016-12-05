@@ -616,6 +616,10 @@ mail_listview::popup_ctxt_menu(const QPoint& pos)
 
   QMenu qmenu(this);
   QString s;
+  /* when a new resultset gets displayed, allow for preselecting a
+     message. Used by action_thread to set focus/selection on the
+     message that originates the action in the previous page. */
+  mail_id_t preselected_id = 0;
 
   // Same thread
   if (msg->thread_id()) {
@@ -649,6 +653,7 @@ mail_listview::popup_ctxt_menu(const QPoint& pos)
     return;
   }
   else if (action == action_thread) {
+    preselected_id = msg->get_id();
     if (!(filter.m_thread_id=msg->threadId())) {
       filter.m_sql_stmt = QString("%1").arg(msg->get_id()); // will produce: mail_id IN (%1)
     }
@@ -687,7 +692,21 @@ mail_listview::popup_ctxt_menu(const QPoint& pos)
   if (action_opens_page && m_msg_window) {
     m_msg_window->add_msgs_page(&filter,true);
     m_msg_window->clear_quick_query_selection();
+    if (preselected_id > 0) {
+      m_msg_window->current_list()->select_message(preselected_id, true);
+    }
   }
+}
+
+void
+mail_listview::select_message(mail_id_t id, bool ensure_visible)
+{
+  QStandardItem* item = model()->item_from_id(id);
+  if (!item)
+    return;
+  setCurrentIndex(item->index());
+  if (ensure_visible)
+    scrollTo(item->index());
 }
 
 // slot

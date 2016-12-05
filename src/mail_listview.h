@@ -154,6 +154,9 @@ public:
   void select_above(const mail_msg* msg);
   void select_msg(const mail_msg* msg);
 
+  // select the message and scroll to it if ensure_visible is true
+  void select_message(mail_id_t id, bool ensure_visible);
+
   // select all messages from a set of threads (passed as a set of mail.thread_id)
   int select_threads(const QSet<uint>&);
 
