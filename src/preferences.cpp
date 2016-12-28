@@ -50,22 +50,6 @@
 #include "ui_controls.h"
 #include "icons.h"
 
-class mt_dialog : public QDialog
-{
-public:
-  mt_dialog();
-  ~mt_dialog();
-};
-
-mt_dialog::mt_dialog() : QDialog(NULL)
-{
-  
-}
-
-mt_dialog::~mt_dialog()
-{
-}
-
 struct prefs_dialog::preferences_widgets {
   // identities tab
   QLineEdit* w_email;
