@@ -32,6 +32,7 @@
 #include "sqlquery.h"
 #include "addresses.h"
 #include "db_listener.h"
+#include "db_error_dialog.h"
 
 //static PGconn *pgconn;
 pgConnection pgDb;
@@ -45,23 +46,29 @@ PGconn* GETDB()
 void DBEXCPT(PGconn* c)
 {
   //  std::cerr << PQerrorMessage(c);
-  QString err=PQerrorMessage(c);
-  QMessageBox::warning(NULL, QObject::tr("Database error"), err);
+  QString err = PQerrorMessage(c);
+  db_error_dialog dlg(err);
+  dlg.exec();
+  //  QMessageBox::warning(NULL, QObject::tr("Database error"), err);
 }
 
 void DBEXCPT(db_excpt& p)
 {
   //  std::cerr << p.query() << ":" << p.errmsg() << std::endl;
-  QString err = p.query();
-  if (err.isEmpty()) {
+  QString err = p.errmsg();
+
+  QString q = p.query();
+  if (q.isEmpty()) {
     if (p.errcode() == QString::fromLocal8Bit(db_excpt::client_assertion)) {
-      err = "Client assertion";
+      err.append("\nClient assertion");
     }
   }
-  if (!err.isEmpty())
-    err.append(":\n");
-  err.append(p.errmsg());
-  QMessageBox::warning(NULL, QObject::tr("Database error"), err);
+  else
+    err.append(QString("\nQUERY:\n%1").arg(q));
+
+  db_error_dialog dlg(err);
+  dlg.exec();
+  //  QMessageBox::warning(NULL, QObject::tr("Database error"), err);
 }
 
 db_excpt::db_excpt(const QString query,
