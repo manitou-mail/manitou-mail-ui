@@ -500,6 +500,9 @@ msgs_filter::build_query(sql_query& q)
       if (!m_date_after_clause.isEmpty())
 	process_date_clause(q, date_after, m_date_after_clause);
     }
+    else {
+      process_date_clause(q, date_equal, m_date_clause);
+    }
     // </date clause>
 
     // status clause through is:status and isnot:status
@@ -711,6 +714,8 @@ msgs_filter::process_date_clause(sql_query& q, date_comparator comp, QString dat
 	q.add_clause(QString("msg_date>=now()-'%1 days'::interval").arg(days));
       }
     }
+    /* TODO: comparators date_before and date_after are not supported for
+       this number-of-days syntax but they should, for consistency */
   }
   else {
     QRegExp rx("^\\d{4}$");
