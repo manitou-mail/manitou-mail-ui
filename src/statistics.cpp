@@ -1,4 +1,4 @@
-/* Copyright (C) 2016 Daniel Verite
+/* Copyright (C) 2016-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -411,7 +411,7 @@ stats_view::run_query()
   if (!m_tag->text().trimmed().isEmpty()) {
     tag_id = m_tag->current_tag_id();
     if (tag_id > 0) {
-      main_table = QString("(SELECT mail.msg_date FROM mail JOIN mail_tags USING(mail_id) WHERE tag=%1) AS m").arg(tag_id);
+      main_table = QString("(SELECT mail.mail_id,mail.msg_date,mail.status FROM mail JOIN mail_tags USING(mail_id) WHERE tag=%1) AS m").arg(tag_id);
     }
     else {
       QMessageBox::critical(this, tr("Error"), tr("Tag does not exist: %1").arg(m_tag->text().trimmed()));
