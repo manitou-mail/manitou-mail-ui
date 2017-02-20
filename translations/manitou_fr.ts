@@ -3234,6 +3234,14 @@ Les messages non encore importés seront perdus.</translation>
         <source>%1%2 message(s)</source>
         <translation>%1%2 message(s)</translation>
     </message>
+    <message>
+        <source>Select threads</source>
+        <translation>Sélectionne fils de discussion</translation>
+    </message>
+    <message>
+        <source>%1 message(s) selected.</source>
+        <translation>%1 message(s) sélectionnés.</translation>
+    </message>
 </context>
 <context>
     <name>msg_select_dialog</name>
@@ -4535,7 +4543,7 @@ Save now?</source>
     </message>
     <message>
         <source>Edit a database user</source>
-        <translation>Editer un utilisateur de le base</translation>
+        <translation>Editer un utilisateur de la base</translation>
     </message>
     <message>
         <source>Current database: &lt;b&gt;%1&lt;/b&gt;</source>
