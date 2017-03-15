@@ -1,3 +1,18 @@
+ v1.6.0, March 2017
+--------------------------
+user interface:
+- searchbar operators on message senders, recipients, status, dates, attachments, tags.
+- exportable statistics and graphs of mail activity.
+- restricted identities for multiple user with different privileges.
+- improved tag selector for large number of tags.
+- configurable start query
+
+manitou-mdx:
+- more bugfixes on invalid utf-8
+- per-identity deduplication and tags migrations in the no_duplicate plugin
+- new init_status plugin
+- use the improved concurrent insertion of postgresql 9.5 when available
+
  v1.5.0, May 2016
 --------------------------
 user interface:
