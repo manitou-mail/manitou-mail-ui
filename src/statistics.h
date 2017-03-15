@@ -1,4 +1,4 @@
-/* Copyright (C) 2016 Daniel Verite
+/* Copyright (C) 2016-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -23,6 +23,7 @@
 #include <QWidget>
 #include <QMainWindow>
 #include <QList>
+#include <QStringList>
 #include <QWebView>
 #include <QColor>
 
@@ -68,7 +69,7 @@ public slots:
   void clear_graph();
 private:
   struct results {
-    QList<QString> dates;
+    QStringList dates;
     QList<int> values;
   } m_last_results;
 
