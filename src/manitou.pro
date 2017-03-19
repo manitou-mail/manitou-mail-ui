@@ -26,7 +26,6 @@ HEADERS += about.h \
            app_config.h \
            attachment.h \
            attachment_listview.h \
-           bitvector.h \
            body_edit.h \
            body_view.h \
            browser.h \
@@ -34,6 +33,7 @@ HEADERS += about.h \
            database.h \
            date.h \
            db.h \
+           db_error_dialog.h \
            db_listener.h \
            dbtypes.h \
            dragdrop.h \
@@ -114,7 +114,6 @@ SOURCES += about.cpp \
            app_config.cpp \
            attachment.cpp \
            attachment_listview.cpp \
-           bitvector.cpp \
            body_edit.cpp \
            body_view.cpp \
            browser.cpp \
@@ -122,6 +121,7 @@ SOURCES += about.cpp \
            date.cpp \
            db.cpp \
            db_listener.cpp \
+           db_error_dialog.cpp \
            edit_address_widget.cpp \
            edit_rules.cpp \
            export_window.cpp \
