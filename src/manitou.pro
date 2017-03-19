@@ -17,6 +17,9 @@ mac {
     HelpFiles.path = Contents/MacOS
     TranslationFiles.path = Contents/MacOS/translations
     QMAKE_BUNDLE_DATA += HelpFiles TranslationFiles
+# try commenting out the following line for Qt5.5 with macOS Sierra/XCode
+# if you have compilation errors (also use macx-clang for QMAKESPEC)
+#    QMAKE_MAC_SDK = macosx10.12
 }
 
 # Input
