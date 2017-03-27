@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -57,25 +57,6 @@ class attch_listview;
 class message_view;
 class attch_lvitem;
 class attachment;
-
-class newmail_button: public QPushButton
-{
-  Q_OBJECT
-public:
-  newmail_button(QString txt, QWidget* parent);
-  virtual ~newmail_button();
-  void enable(bool enable=true);
-  void set_number(int n) {
-    m_number=n;
-  }
-  void update_font(QFont f);
-private:
-  int m_number;
-public slots:
-  void trayicon_click();
-signals:
-  void show_new_mail();
-};
 
 class msg_list_window;
 
@@ -382,7 +363,6 @@ private:
   QAction* m_menu_actions[me_NumberOfEntries];
   QMenuBar* init_menu();
   QToolBar* m_toolbar;
-  newmail_button* m_new_mail_btn;
   QPushButton* m_abort_button;
   bool m_abort;
 

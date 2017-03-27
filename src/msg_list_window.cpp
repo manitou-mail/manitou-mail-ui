@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -822,15 +822,6 @@ msg_list_window::msg_list_window (const msgs_filter* filter, display_prefs* dpre
   enable_forward_backward();
   init_fonts();
 
-  m_new_mail_btn = new newmail_button(tr("New mail !"), statusBar());
-  statusBar()->addPermanentWidget(m_new_mail_btn);
-  m_new_mail_btn->enable(false);
-  /* Hide the new mail button. This button has somehow become obsolete
-     since new messages can be incorporated automatically into the
-     list */
-  m_new_mail_btn->hide();
-  connect(m_new_mail_btn, SIGNAL(clicked()), this, SLOT(sel_refresh()));
-  connect(m_new_mail_btn, SIGNAL(show_new_mail()), this, SLOT(raise_refresh()));
   m_timer_idle = new QTimer(this);
   m_timer_idle->start(3000);
   connect(m_timer_idle, SIGNAL(timeout()), this, SLOT(timer_idle()));
@@ -1408,8 +1399,6 @@ msg_list_window::change_font(QAction* which)
       if (m_ql_search) m_ql_search->setFont(f);
       if (m_toolbar) m_toolbar->setFont(f);
       statusBar()->setFont(f);
-      if (m_new_mail_btn)
-	m_new_mail_btn->update_font(f);
       conf.set_string("display/font/menus", f.toString());
     }
     if (which==all) {
@@ -1843,8 +1832,8 @@ void
 msg_list_window::enable_interaction(bool b)
 {
   QWidget* w[] = {
-    m_qAttch, menuBar(), m_toolbar, m_new_mail_btn,
-    m_tags_box, m_query_lv, m_qlist, m_ql_search, m_msgview
+    m_qAttch, menuBar(), m_toolbar, m_tags_box, m_query_lv, m_qlist,
+    m_ql_search, m_msgview
   };
   QAction* actions[] = {
     m_action_search  // search toolbar
@@ -1975,7 +1964,6 @@ msg_list_window::progress_aborted()
 void
 msg_list_window::install_progressbar(QString msg)
 {
-  m_new_mail_btn->hide();
   m_progress_bar = new QProgressBar(this);
   statusBar()->addPermanentWidget(m_progress_bar);
   if (!msg.isEmpty())
@@ -2015,7 +2003,6 @@ msg_list_window::uninstall_progressbar()
     m_progress_bar=NULL;
   }
   statusBar()->clearMessage();
-  m_new_mail_btn->show();
 }
 
 void
@@ -2091,7 +2078,6 @@ msg_list_window::sel_filter(const msgs_filter& f)
   }
 
   setCursor(Qt::WaitCursor);
-//  m_new_mail_btn->hide();
 
   m_loading_filter = filter;
 
@@ -2252,7 +2238,7 @@ void
 msg_list_window::fetch_more()
 {
   setCursor(Qt::WaitCursor);
-//  m_new_mail_btn->hide();
+
   show_abort_button();
   enable_interaction(false);
   statusBar()->showMessage(tr("Querying database..."));
@@ -2343,7 +2329,6 @@ msg_list_window::sel_refresh_list()
   m_filter->fetch(m_qlist);
   set_title();
   if (m_filter->auto_refresh()) {
-//    m_new_mail_btn->enable(false);
     statusBar()->clearMessage();
   }
 }
@@ -3109,12 +3094,9 @@ msg_list_window::check_new_mail()
       }
     }
     if (!m_auto_refresh_results.empty()) {
-//      m_new_mail_btn->set_number(m_auto_refresh_results.size());
-//      m_new_mail_btn->enable(true);
       statusBar()->showMessage(tr("New mail is available."));
     }
     else {
-//      m_new_mail_btn->enable(false);
       statusBar()->showMessage(tr("No new mail."), 3000);
     }
   }
@@ -3188,8 +3170,6 @@ msg_list_window::timer_func()
     else
       hide_abort_button();
 
-//    m_new_mail_btn->show();
-
     if (!m_thread.m_cancelled) {
       double exec_time = m_thread.m_exec_time/1000.0; // in seconds
       statusBar()->showMessage(tr("Query executed in %1 s.").arg(exec_time, 0, 'f', 2),3000);
@@ -3250,53 +3230,6 @@ msg_list_window::timer_idle()
     }
   }
 }
-
-void
-newmail_button::update_font(QFont f)
-{
-  int ps=f.pointSize();
-  f.setPointSize((ps*80)/100); // reduce the font size by 1/5
-  setFont(f);
-}
-
-newmail_button::newmail_button(QString txt, QWidget* parent) :
-  QPushButton(txt, parent)
-{
-  update_font(font());
-  QIcon ico(FT_MAKE_ICON(FT_ICON16_INBOX));
-  setIcon(ico);
-}
-
-newmail_button::~newmail_button()
-{
-}
-
-void
-newmail_button::trayicon_click()
-{
-  emit show_new_mail();
-}
-
-void
-newmail_button::enable(bool enable)
-{
-  if (enable) {
-    QIcon ico(FT_MAKE_ICON(FT_ICON16_INBOX));
-    //    setPixmap(FT_MAKE_ICON(FT_ICON16_INBOX));
-    setWindowIcon(ico);
-    if (m_number>0)
-      setText(QString("%1").arg(m_number));
-    else
-      setText("");
-    setEnabled(true);
-  }
-  else {
-    //    setPixmap(QPixmap());	// empty pixmap
-    setEnabled(false);
-    setText(tr("New mail !"));
-  }
-}
-
 
 //static
 void
