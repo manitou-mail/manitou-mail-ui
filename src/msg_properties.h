@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -21,6 +21,7 @@
 #include "message.h"
 
 class QSpinBox;
+class QDateTimeEdit;
 class select_status_box;
 
 class properties_dialog : public QDialog
@@ -38,4 +39,5 @@ private:
   mail_id_t m_mail_id;
   uint m_last_known_status;
   QSpinBox* m_spinbox;
+  QDateTimeEdit* m_send_datetime;
 };

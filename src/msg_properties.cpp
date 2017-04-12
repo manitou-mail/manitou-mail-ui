@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2008 Daniel Vérité
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -23,46 +23,58 @@
 
 #include <QPushButton>
 #include <QLayout>
+#include <QFormLayout>
 #include <QLabel>
 #include <QFrame>
 #include "users.h"
 #include <QMessageBox>
 #include <QSpinBox>
+#include <QDateTimeEdit>
 
-properties_dialog::properties_dialog(mail_msg* i, QWidget* parent) :
+properties_dialog::properties_dialog(mail_msg* msg, QWidget* parent) :
   QDialog (parent)
 {
   setWindowTitle(tr("Properties"));
   QVBoxLayout* topLayout = new QVBoxLayout (this);
 
   QHBoxLayout* hb0 = new QHBoxLayout();
-  hb0->addWidget(new QLabel(QString("mail_id:%1").arg(i->GetId())));
-  if (i->thread_id()) {
-    hb0->addWidget(new QLabel(QString("thread_id:%1").arg(i->thread_id())));
+  hb0->addWidget(new QLabel(QString("mail_id:%1").arg(msg->GetId())));
+  if (msg->thread_id()) {
+    hb0->addWidget(new QLabel(QString("thread_id:%1").arg(msg->thread_id())));
   }
   topLayout->addLayout(hb0);
 
   m_status_box = new select_status_box (false, this);
 
-  i->fetch_status();
-  m_last_known_status = i->status();
+  msg->fetch_status();
+  m_last_known_status = msg->status();
 
-  m_status_box->set_mask(i->status(), (~(i->status()))&(mail_msg::statusMax*2-1));
+  m_status_box->set_mask(msg->status(), (~(msg->status()))&(mail_msg::statusMax*2-1));
   m_status_box->setFrameStyle(QFrame::Box | QFrame::Sunken);
   m_status_box->setLineWidth (1);
 
   topLayout->addWidget(m_status_box);
 
-  QHBoxLayout* hb1=new QHBoxLayout();
+  QFormLayout* hb1=new QFormLayout;
   topLayout->addLayout(hb1);
   hb1->setMargin(10);
   hb1->setSpacing(4);
-  hb1->addWidget(new QLabel(tr("Priority:")));
   m_spinbox = new QSpinBox(this);
-  hb1->addWidget(m_spinbox);
+  hb1->addRow(tr("Priority:"), m_spinbox);
   m_spinbox->setMinimum(-32768);
   m_spinbox->setMaximum(32767);
-  m_spinbox->setValue(i->priority());
+  m_spinbox->setValue(msg->priority());
+
+  if (msg->status() & mail_msg::statusScheduled) {
+    QDateTime dt = msg->get_send_datetime();
+    if (dt.isValid()) {
+      m_send_datetime = new QDateTimeEdit;
+      hb1->addRow(tr("Send after:"), m_send_datetime);
+      m_send_datetime->setDateTime(dt);
+    }
+  }
+  else
+    m_send_datetime = NULL;
 
   QHBoxLayout* hbox=new QHBoxLayout();
   topLayout->addLayout(hbox);
@@ -77,13 +89,16 @@ properties_dialog::properties_dialog(mail_msg* i, QWidget* parent) :
   connect(wcancel, SIGNAL(clicked()), this, SLOT(reject()));
 
   //  resize (200, 200);
-  m_mail_id = i->GetId();
+  m_mail_id = msg->GetId();
   topLayout->addStretch(1);
 }
 
 void properties_dialog::ok()
 {
   mail_msg m;
+  bool success;
+  bool pri_ok;
+  int pri;
   m.SetId(m_mail_id);
   m.fetch_status();
   if (m.status() != m_last_known_status) {
@@ -95,14 +110,45 @@ void properties_dialog::ok()
     int res = QMessageBox::warning (this, APP_NAME, msg, tr("OK"), tr("Cancel"), 0, 0, 1);
     if (res==1) return;		// cancel
   }
-  m.setStatus(m_status_box->status());
-  m.update_status(true);
-  bool ok;
-  int pri = m_spinbox->text().toInt(&ok);
-  if (ok) {
-    m.set_priority(pri);
-    m.update_priority();
+
+  db_ctxt dbc;
+  dbc.propagate_exceptions = true;
+  try {
+    dbc.m_db->begin_transaction();
+
+    m.setStatus(m_status_box->status());
+    m.update_status(true, &dbc);
+    pri = m_spinbox->text().toInt(&pri_ok);
+    if (pri_ok) {
+      m.set_priority(pri);
+      m.update_priority();
+    }
+
+    // send later
+    if (m_send_datetime != NULL) {
+      if (m.status() & mail_msg::statusScheduled) {
+	QDateTime dt = m_send_datetime->dateTime();
+	m.store_send_datetime(dt, &dbc);
+      }
+      else if (m_last_known_status & mail_msg::statusScheduled) {
+	/* if the scheduled bit was set, set an empty datetime to suppress
+	   the send job. */
+	m.store_send_datetime(QDateTime(), &dbc);
+      }
+    }
+    success = true;
+    dbc.m_db->commit_transaction();
   }
-  emit change_status_request(m_mail_id, m_status_box->status(), pri);
-  accept();
+  catch(db_excpt& p) {
+    DBG_PRINTF(3, "exception caugth");
+    dbc.m_db->rollback_transaction();
+    success = false;
+    DBEXCPT (p);
+  }
+  if (success && pri_ok) {
+    emit change_status_request(m_mail_id, m_status_box->status(), pri);
+    accept();
+  }
+  else
+    reject();
 }

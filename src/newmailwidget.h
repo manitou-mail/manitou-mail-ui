@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -34,6 +34,7 @@
 #include <QKeyEvent>
 #include <QPushButton>
 #include <QUrl>
+#include <QDateTime>
 
 #include <map>
 
@@ -54,6 +55,7 @@ class QLabel;
 class QToolBar;
 class QStackedWidget;
 class QProgressBar;
+class QDateTimeEdit;
 
 class new_mail_widget : public QMainWindow
 {
@@ -88,7 +90,9 @@ public:
   void format_plain_text();
 public slots:
   void print();
-  void send();
+
+  void send_now();
+  void send_later();
   void cancel();
   void keep();
   void closeEvent(QCloseEvent*);
@@ -119,6 +123,10 @@ signals:
 /*  void change_status_request (uint id, uint mask_set, uint mask_unset);*/
   void refresh_request (mail_id_t m_id);
 private:
+  /* tests that must be done before storing the new message into the database */
+  bool check_validity();
+  /* called by send_now() or send_later() after validity is checked */
+  void send();
   void set_wrap_mode();
   void join_address_lines (QString&);
   QString check_addresses(const QString addresses,
@@ -152,6 +160,7 @@ private:
   QString m_from;		// email only (no name, has to match an identity)
   QString m_other_identity_email;
   QString m_other_identity_name;
+  QDateTime m_send_datetime;	// empty = send immediately
   identities m_ids;
   void make_toolbars();
   void create_actions();
@@ -160,6 +169,7 @@ private:
   void display_note();
 
   QAction* m_action_send_msg;
+  QAction* m_action_send_later;
   QAction* m_action_attach_file;
   QAction* m_action_insert_file;
   QAction* m_action_edit_note;
@@ -175,6 +185,14 @@ private:
   QProgressBar* m_progress_bar;
 public:
   static QString m_last_attch_dir;
+};
+
+class schedule_delivery_dialog : public QDialog
+{
+  Q_OBJECT
+public:
+  schedule_delivery_dialog(QWidget* parent=NULL);
+  QDateTimeEdit* m_send_datetime;
 };
 
 #endif

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -1376,7 +1376,7 @@ msg_select_dialog::str_status_mask()
     {QT_TR_NOOP("T"), mail_msg::statusTrashed},
     {QT_TR_NOOP("A"), mail_msg::statusArchived},
     {QT_TR_NOOP("O"), mail_msg::statusOutgoing},
-    {QT_TR_NOOP("C"), mail_msg::statusComposed},
+    {QT_TR_NOOP("C"), mail_msg::statusScheduled},
     {QT_TR_NOOP("S"), mail_msg::statusSent}
   };
 
@@ -1686,7 +1686,7 @@ select_status_box::st_status select_status_box::m_status_tab[] = {
   {QT_TR_NOOP("Archived"), mail_msg::statusArchived},
   {QT_TR_NOOP("Outgoing"), mail_msg::statusOutgoing},
   {QT_TR_NOOP("Sent"), mail_msg::statusSent},
-  {QT_TR_NOOP("Composed"), mail_msg::statusComposed}
+  {QT_TR_NOOP("Scheduled"), mail_msg::statusScheduled}
 };
 
 select_status_box::select_status_box(bool either, QWidget* parent):

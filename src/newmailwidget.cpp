@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -60,10 +60,10 @@
 #include <QRegExp>
 #include <QStatusBar>
 #include <QProgressBar>
+#include <QDialogButtonBox>
+#include <QFormLayout>
+#include <QDateTimeEdit>
 
-/***********************/
-/* new_mail_widget     */
-/***********************/
 
 QString
 new_mail_widget::m_last_attch_dir;
@@ -73,7 +73,11 @@ new_mail_widget::create_actions()
 {
   m_action_send_msg = new QAction(FT_MAKE_ICON(FT_ICON16_SEND),
 				  tr("Send mail"), this);
-  connect(m_action_send_msg, SIGNAL(triggered()), this, SLOT(send()));
+  connect(m_action_send_msg, SIGNAL(triggered()), this, SLOT(send_now()));
+
+  m_action_send_later = new QAction(UI_ICON(ICON16_CLOCK),
+				  tr("Schedule delivery"), this);
+  connect(m_action_send_later, SIGNAL(triggered()), this, SLOT(send_later()));
 
   m_action_attach_file = new QAction(FT_MAKE_ICON(FT_ICON16_ATTACH),
 				     tr("Attach file"), this);
@@ -270,6 +274,7 @@ new_mail_widget::new_mail_widget(mail_msg* msg, QWidget* parent)
   QIcon ico_close(FT_MAKE_ICON(FT_ICON16_CLOSE_WINDOW));
 
   pMsg->addAction(m_action_send_msg);
+  pMsg->addAction(m_action_send_later);
   pMsg->addAction(m_action_attach_file);
   pMsg->addAction(m_action_insert_file);
   //  pMsg->addAction(tr("Keep for later"), this, SLOT(keep()));
@@ -717,14 +722,11 @@ new_mail_widget::keep()
   // TODO
 }
 
-void
-new_mail_widget::send()
+bool
+new_mail_widget::check_validity()
 {
-  if (m_wtags)
-    m_wtags->get_selected(m_msg.get_tags());
-
   // collect the addresses from the header field editors
-  QMap<QString,QString> addresses;  
+  QMap<QString,QString> addresses;
   QListIterator<header_field_editor*> iter(m_header_editors);
   QStringList bad_addresses;
 
@@ -735,7 +737,7 @@ new_mail_widget::send()
     QString value = check_addresses(ed->get_value(), bad_addresses, &errparse);
     if (errparse) {
       QMessageBox::critical(NULL, tr("Syntax error"), tr("Invalid syntax in email addresses:")+"<br><i>"+ed->get_value()+"</i>", QMessageBox::Ok, Qt::NoButton);
-      return;
+      return false;
     }
     if (!field_name.isEmpty() && !value.isEmpty()) {
       if (addresses.contains(field_name)) {
@@ -756,24 +758,70 @@ new_mail_widget::send()
       msg = tr("Invalid email address:")+"<br><i>"+bad_addresses.at(0)+"</i>";
     QMessageBox::critical(this, tr("Address error"), msg,
 			  QMessageBox::Ok, Qt::NoButton);
-    return;
+    return false;
   }
 
   if (!addresses.contains("To") && !addresses.contains("Bcc")) {
     QMessageBox::critical(this, tr("Error"), tr("The To: and Bcc: field cannot be both empty"), QMessageBox::Ok, Qt::NoButton);
-    return;
+    return false;
   }
 
   if (m_ids.empty()) {
     QMessageBox::critical(this, tr("Error"), tr("The message has no sender (create an e-mail identity in the Preferences)"), QMessageBox::Ok, Qt::NoButton);
-    return;
+    return false;
   }
 
   if (m_wSubject->text().isEmpty()) {
     int res=QMessageBox::warning(this, tr("Warning"), tr("The message has no subject.\nSend nonetheless?"), QMessageBox::Ok, QMessageBox::Cancel|QMessageBox::Default, Qt::NoButton);
 
     if (res!=QMessageBox::Ok)
+      return false;
+  }
+
+  return true;
+}
+
+/* Bound to the "Send" action in the menu */
+void
+new_mail_widget::send_now()
+{
+  if (!check_validity())
+    return;
+  m_send_datetime = QDateTime();
+  this->send();
+}
+
+
+void
+new_mail_widget::send()
+{
+  if (m_wtags)
+    m_wtags->get_selected(m_msg.get_tags());
+
+  // collect the addresses from the header field editors
+  QMap<QString,QString> addresses;
+  QListIterator<header_field_editor*> iter(m_header_editors);
+  QStringList bad_addresses;
+
+  while (iter.hasNext()) {
+    header_field_editor* ed = iter.next();
+    QString field_name = ed->get_field_name();
+    bool errparse;
+    QString value = check_addresses(ed->get_value(), bad_addresses, &errparse);
+    /* errpase should be always false, since addresses must be tested
+       by check_validity() */
+    if (errparse)
       return;
+
+    if (!field_name.isEmpty() && !value.isEmpty()) {
+      if (addresses.contains(field_name)) {
+	// append the value
+	addresses[field_name].append(QString(", %1").arg(value));
+      }
+      else {
+	addresses.insert(field_name, value);
+      }
+    }
   }
 
   /* Collect attachments from the listview */
@@ -882,6 +930,23 @@ new_mail_widget::send()
 }
 
 void
+new_mail_widget::send_later()
+{
+  if (!check_validity())
+    return;
+
+  schedule_delivery_dialog dlg;
+  int r = dlg.exec();
+  if (r == QDialog::Accepted) {
+    m_send_datetime = dlg.m_send_datetime->dateTime();
+    this->send();
+  }
+  else
+    m_send_datetime = QDateTime();
+}
+
+
+void
 new_mail_widget::attach_files()
 {
   if (m_last_attch_dir.isEmpty())
@@ -963,9 +1028,10 @@ new_mail_widget::insert_file()
 void
 new_mail_widget::make_message(const QMap<QString,QString>& user_headers)
 {
-  mail_header& h=m_msg.header();
+  mail_header& h = m_msg.header();
 
   m_msg.set_note(m_note);
+
   QTextDocument* doc = m_bodyw->document();
   if (m_edit_mode == plain_mode) {
     m_msg.set_body_text(doc->toPlainText());
@@ -1018,7 +1084,8 @@ new_mail_widget::make_message(const QMap<QString,QString>& user_headers)
   h.m_cc = user_headers.value("Cc");
   h.m_replyTo = user_headers.value("ReplyTo");
   h.m_bcc = user_headers.value("Bcc");
-  m_msg.setStatus(mail_msg::statusOutgoing + mail_msg::statusRead);
+
+  m_msg.set_send_datetime(m_send_datetime);
 }
 
 QString
@@ -1306,4 +1373,20 @@ new_mail_widget::run_edit_action(const char* action_keyword)
   else if (m_edit_mode == html_mode) {
     m_html_edit->run_edit_action(action_keyword);
   }
+}
+
+schedule_delivery_dialog::schedule_delivery_dialog(QWidget* parent) : QDialog(parent)
+{
+  setWindowTitle(tr("Schedule for later delivery"));
+  QVBoxLayout* top = new QVBoxLayout(this);
+  QFormLayout* layout = new QFormLayout;
+  top->addLayout(layout);
+  m_send_datetime = new QDateTimeEdit;
+  m_send_datetime->setMinimumDateTime(QDateTime::currentDateTime());
+  layout->addRow(tr("Send after:"), m_send_datetime);
+  QDialogButtonBox* btns = new QDialogButtonBox(QDialogButtonBox::Ok
+						| QDialogButtonBox::Cancel);
+  connect(btns, SIGNAL(accepted()), this, SLOT(accept()));
+  connect(btns, SIGNAL(rejected()), this, SLOT(reject()));
+  top->addWidget(btns);
 }

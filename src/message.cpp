@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -645,20 +645,23 @@ mail_msg::get_tags()
 
 // update the message status in the database
 bool
-mail_msg::update_status(bool force/*=false*/)
+mail_msg::update_status(bool force/*=false*/, db_ctxt* dbc)
 {
+  db_cnx db0;
+  db_cnx* db = dbc ? dbc->m_db : &db0;
   bool result = true;
   if (force || m_db_status != m_status) {
-    db_cnx db;
     try {
       const char* query = "UPDATE mail SET status=:p1,mod_user_id=:o WHERE mail_id=:p2";
-      sql_stream s(query, db);
+      sql_stream s(query, *db);
       s << m_status << user::current_user_id() << getId();
       m_db_status = m_status;
       msg_status_cache::update(get_id(), m_status);
     }
     catch(db_excpt& p) {
-      DBEXCPT (p);
+      if (dbc && dbc->propagate_exceptions)
+	throw p;
+      DBEXCPT(p);
       result = false;
     }
   }
@@ -761,18 +764,20 @@ mail_msg::set_or_with_status(std::set<mail_msg*>& s, uint or_mask)
 }
 
 bool
-mail_msg::update_priority()
+mail_msg::update_priority(db_ctxt* dbc)
 {
   bool result = true;
-  db_cnx db;
+  db_cnx db0;
+  db_cnx* db = dbc ? dbc->m_db : &db0;
+
   try {
-    const char* query;
-    query="UPDATE mail SET priority=:p1 WHERE mail_id=:p2";
-    sql_stream s(query, db);
+    sql_stream s("UPDATE mail SET priority=:p1 WHERE mail_id=:p2", *db);
     s << m_pri << get_id();
   }
   catch(db_excpt& p) {
-    DBEXCPT (p);
+    if (dbc && dbc->propagate_exceptions)
+      throw p;
+    DBEXCPT(p);
     result = false;
   }
   return result;
@@ -889,7 +894,11 @@ mail_msg::store(ui_feedback* ui)
 	sr << statusFwded+statusArchived << v[ifwd];
       }
     }
-    fields.add("status", statusRead + statusOutgoing);
+    int msg_status = statusRead + statusOutgoing;
+    if (!m_send_datetime.isNull())
+      msg_status = msg_status | statusScheduled;
+    fields.add("status", msg_status);
+
     if (m_identity_id != 0)
       fields.add("identity_id", m_identity_id);
 
@@ -908,7 +917,7 @@ mail_msg::store(ui_feedback* ui)
     if (res)
       PQclear(res);
 
-    msg_status_cache::update(get_id(), statusRead + statusOutgoing);
+    msg_status_cache::update(get_id(), msg_status);
 
     if (m_body_html.isEmpty()) {
       // plain text only
@@ -932,6 +941,12 @@ mail_msg::store(ui_feedback* ui)
     }
     m_Attachments.setMailId(m_nMailId);
     result=(result && m_Attachments.store(&dbc, ui));
+
+    if (result) {
+      // process scheduled sending
+      if (!m_send_datetime.isNull())
+	result = store_send_datetime(m_send_datetime, &dbc);
+    }
     if (result)
       db.commit_transaction();
     else {
@@ -1360,5 +1375,76 @@ mail_msg::get_sender_timestamp(time_t* t)
     DBEXCPT(p);
     return false;
   }
-  return true;  
+  return true;
+}
+
+bool
+mail_msg::fetch_send_datetime(QDateTime* dt)
+{
+  if (!get_id())
+    return false;
+  *dt = QDateTime();		// null and invalid
+  db_cnx db;
+  try {
+    sql_stream s("SELECT job_args FROM jobs_queue WHERE mail_id=:p1 AND job_type='send_mail'", db);
+    s << get_id();
+    if (!s.eos()) {
+      QString str_epoch;
+      s >> str_epoch;
+      bool ok;
+      qint64 secs = str_epoch.toLongLong(&ok);
+      if (ok)
+	dt->setMSecsSinceEpoch(secs*1000);
+    }
+  }
+  catch (db_excpt p) {
+    DBEXCPT(p);
+    return false;
+  }
+  return true;		  	// positive result if no database error
+}
+
+QDateTime
+mail_msg::get_send_datetime()
+{
+  if (m_send_datetime.isNull())
+    fetch_send_datetime(&m_send_datetime);
+  return m_send_datetime;
+}
+
+/* Instantiate, update or delete the job in the database to send the message at a later date. */
+bool
+mail_msg::store_send_datetime(QDateTime dt, db_ctxt* dbc)
+{
+  db_cnx db0;
+  db_cnx* db = dbc ? dbc->m_db : &db0;
+
+  try {
+    sql_stream sj
+      ("DO $$ DECLARE id int:= :id; ts text:= :ts;\n"
+       "BEGIN\n"
+       "IF ts IS NOT null THEN "
+       " UPDATE jobs_queue SET job_args=ts WHERE mail_id=id AND job_type='send_mail';"
+       " IF NOT FOUND THEN "
+       "  INSERT INTO jobs_queue(mail_id, job_type, job_args) "
+       "  VALUES(id, 'send_mail', ts);"
+       " END IF;"
+       " NOTIFY job_request;"
+       " ELSE"
+       "   DELETE FROM jobs_queue WHERE mail_id=id AND job_type='send_mail';"
+       " END IF;"
+       "END $$ language plpgsql", *db);
+    sj << this->get_id();
+    if (dt.isNull())
+      sj << sql_null();
+    else
+      sj << (quint64)(999+dt.toMSecsSinceEpoch())/1000;
+  }
+  catch(db_excpt& p) {
+    if (dbc && dbc->propagate_exceptions)
+      throw p;
+    DBEXCPT(p);
+    return false;
+  }
+  return true;
 }

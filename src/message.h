@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -23,6 +23,7 @@
 #include "dbtypes.h"
 #include "time.h"
 #include <QString>
+#include <QDateTime>
 
 #include "addresses.h"
 #include "mailheader.h"
@@ -154,6 +155,14 @@ public:
   const date& msg_date() const { return m_cDate; }
   bool get_msg_age(const QString unit, int*); // unit="days" or "hours" or "minutes"
   bool get_sender_timestamp(time_t*);
+
+  /* Scheduled delivery. Instantiate, update or delete the job in the
+     database to send the message at a later date. */
+  bool store_send_datetime(QDateTime qt, db_ctxt* dbc=NULL);
+  bool fetch_send_datetime(QDateTime*);
+  QDateTime get_send_datetime();
+  void set_send_datetime(QDateTime d) { m_send_datetime = d; }
+
   void set_note(const QString& s) {
     m_mail_note=s;
   }
@@ -190,9 +199,9 @@ public:
   // even if the value in memory is the same as the new
   // value, overwriting the change another user may have done
   // in the meantime in the database
-  bool update_status(bool force=false);
+  bool update_status(bool force=false, db_ctxt* dbc=NULL);
 
-  bool update_priority();
+  bool update_priority(db_ctxt* dbc=NULL);
 
   bool store(ui_feedback* ui=NULL);
   bool mdelete();
@@ -226,7 +235,7 @@ public:
     statusOutgoing=128,
     statusSent=256,
     statusReplying=512,
-    statusComposed=1024,
+    statusScheduled=1024,
     statusAttached=2048,		// internal
     statusMax=2048
   } status_t;
@@ -269,6 +278,7 @@ private:
   int m_pri;			// priority
   int m_identity_id;
   date m_cDate;
+  QDateTime m_send_datetime;
   bool m_body_fetched;
   bool m_body_html_fetched;
   int m_body_fetched_length;

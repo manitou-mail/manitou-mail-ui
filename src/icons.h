@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -105,6 +105,7 @@ extern QString gl_xpm_path;
 #define ICON16_STATISTICS "statistics.png"
 
 #define ICON16_TRAYICON "mail-trayicon.png"
+#define ICON16_CLOCK "clock.png"
 
 #define FT_MAKE_ICON(name) QPixmap(gl_xpm_path+"/"+name)
 #define UI_ICON(name) QIcon(gl_xpm_path+"/"+name)

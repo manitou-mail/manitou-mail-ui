@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -127,8 +127,9 @@ mail_item_model::icon_status(uint status)
   static QIcon* iarchived;
   static QIcon* isent;
   static QIcon* itosend;
+  static QIcon* isendlater;
 
-  // the order of each test is relevant: the "preferred" icons come first
+  // the order of tests does matter: the "preferred" icons come first
   if (status & mail_msg::statusTrashed) {
     if (!itrashed)
       itrashed = new STATUS_ICON(FT_ICON16_STATUS_TRASHED);
@@ -153,6 +154,13 @@ mail_item_model::icon_status(uint status)
     if (!iarchived)
       iarchived = new STATUS_ICON(FT_ICON16_STATUS_PROCESSED);
     return iarchived;
+  }
+  else if ((status & (mail_msg::statusOutgoing|mail_msg::statusScheduled)) ==
+	   (mail_msg::statusOutgoing|mail_msg::statusScheduled))
+  {
+    if (!isendlater)
+      isendlater = new STATUS_ICON(ICON16_CLOCK);
+    return isendlater;
   }
   else if (status & mail_msg::statusOutgoing) {
     if (!itosend)
