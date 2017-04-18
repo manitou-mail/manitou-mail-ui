@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -198,12 +198,11 @@ manitou_application::start_new_mail(const mail_header& header)
 void
 manitou_application::setup_desktop_tray_icon()
 {
-  m_tray_icon=NULL;
-
   if (get_config().get_string("display/notifications/new_mail")=="system") {
     if (QSystemTrayIcon::isSystemTrayAvailable()) {
       QIcon icon(UI_ICON(ICON16_TRAYICON));
-      m_tray_icon = new QSystemTrayIcon(icon);
+      if (!m_tray_icon)
+	m_tray_icon = new QSystemTrayIcon(icon);
       m_tray_icon->show();
     }
   }

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -341,6 +341,9 @@ app_config::apply()
 	gl_xpm_path = s;
       }
     }
+  }
+  if (get_string("display/notifications/new_mail") == "system") {
+    gl_pApplication->setup_desktop_tray_icon();
   }
   msg_list_window::apply_conf_all_windows();
 }

@@ -115,7 +115,8 @@ msg_status_cache::db_new_mail_notif()
       count++;
       DBG_PRINTF(5, "Seen mail_id %d with status %d", mail_id, status);
       if (!(status & mail_msg::statusRead)) {
-	gl_pApplication->desktop_notify(tr("New mail"), QString("From: %1\nSubject: %2").arg(sender_fullname.isEmpty()?sender:sender_fullname).arg(subject));
+	if (get_config().get_string("display/notifications/new_mail") != "none")
+	  gl_pApplication->desktop_notify(tr("New mail"), QString("From: %1\nSubject: %2").arg(sender_fullname.isEmpty()?sender:sender_fullname).arg(subject));
       }
       update(mail_id, status);
       message_port::instance()->broadcast_new_mail(mail_id);
