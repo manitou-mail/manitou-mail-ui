@@ -1037,6 +1037,38 @@ Cette pièce jointe doit être supprimé du message en cours de composition.</tr
     </message>
 </context>
 <context>
+    <name>db_error_dialog</name>
+    <message>
+        <source>Database error</source>
+        <translation>Erreur de la base de données</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Continuer</translation>
+    </message>
+    <message>
+        <source>Try to reconnect</source>
+        <translation>Tenter une reconnection</translation>
+    </message>
+    <message>
+        <source>Quit application</source>
+        <translation>Quitter l&apos;application</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translatorcomment>OK</translatorcomment>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Copier</translation>
+    </message>
+    <message>
+        <source>The message has been copied to the clipboard.</source>
+        <translation>Le message a été copié dans le presse-papiers.</translation>
+    </message>
+</context>
+<context>
     <name>double_file_input</name>
     <message>
         <source>File for html part:</source>
@@ -1974,6 +2006,10 @@ Les messages non encore importés seront perdus.</translation>
     <message>
         <source>Last messages from &apos;%1&apos;</source>
         <translation>Derniers messages de &apos;%1&apos;</translation>
+    </message>
+    <message>
+        <source>Pr&amp;operties</source>
+        <translation>Pr&amp;opriétés</translation>
     </message>
 </context>
 <context>
@@ -2975,10 +3011,6 @@ Les messages non encore importés seront perdus.</translation>
         <translation>Analyse des entêtes</translation>
     </message>
     <message>
-        <source>New mail !</source>
-        <translation>Nouveau message !</translation>
-    </message>
-    <message>
         <source>Trashing messages: %1 of %2</source>
         <translation>Mise en corbeille: %1 sur %2</translation>
     </message>
@@ -3041,10 +3073,6 @@ Les messages non encore importés seront perdus.</translation>
     <message>
         <source>Please select a message to print</source>
         <translation>Veuillez sélectionner un message à imprimer</translation>
-    </message>
-    <message>
-        <source>Not implemented yet!</source>
-        <translation>Pas encore implanté!</translation>
     </message>
     <message>
         <source>Checking for new mail...</source>
@@ -3651,12 +3679,9 @@ Expédier malgré tout?</translation>
         <source>Send failed.</source>
         <translation>Echec de l&apos;envoi.</translation>
     </message>
-</context>
-<context>
-    <name>newmail_button</name>
     <message>
-        <source>New mail !</source>
-        <translation>Nouveau message(s) !</translation>
+        <source>Schedule delivery</source>
+        <translation>Programme l&apos;envoi</translation>
     </message>
 </context>
 <context>
@@ -4006,6 +4031,10 @@ Voulez-vous le mettre à jour malgré cela?</translation>
         <source>Properties</source>
         <translation>Propriétés</translation>
     </message>
+    <message>
+        <source>Send after:</source>
+        <translation>Envoie après:</translation>
+    </message>
 </context>
 <context>
     <name>qassistant</name>
@@ -4210,6 +4239,17 @@ Etes-vous certain de vouloir l&apos;écraser?</translation>
     </message>
 </context>
 <context>
+    <name>schedule_delivery_dialog</name>
+    <message>
+        <source>Schedule for later delivery</source>
+        <translation>Programme pour envoi ultérieur</translation>
+    </message>
+    <message>
+        <source>Send after:</source>
+        <translation>Envoie après:</translation>
+    </message>
+</context>
+<context>
     <name>search_box</name>
     <message>
         <source>Search within the current list</source>
@@ -4298,8 +4338,8 @@ Etes-vous certain de vouloir l&apos;écraser?</translation>
         <translation>Envoyé</translation>
     </message>
     <message>
-        <source>Composed</source>
-        <translation>Ecrit</translation>
+        <source>Scheduled</source>
+        <translation>Envoi différé</translation>
     </message>
 </context>
 <context>
