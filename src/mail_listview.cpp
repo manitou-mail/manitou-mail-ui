@@ -604,9 +604,10 @@ mail_listview::popup_ctxt_menu_headers(const QPoint& pos)
 void
 mail_listview::popup_ctxt_menu(const QPoint& pos)
 {
-  QAction* action_thread=NULL;
-  QAction* action_same_from=NULL;
-  QAction* action_more_results=NULL;
+  QAction* action_thread;
+  QAction* action_same_from;
+  QAction* action_more_results;
+  QAction* action_properties;
 
   QModelIndex index = indexAt(pos);
   if (!index.isValid())
@@ -633,6 +634,12 @@ mail_listview::popup_ctxt_menu(const QPoint& pos)
   if (msg->thread_id()) {
     action_thread = qmenu.addAction(tr("Show thread on new page"));
   }
+  else
+    action_thread = NULL;
+
+  // Message properties
+  action_properties = qmenu.addAction(tr("Pr&operties"));
+  action_properties->setEnabled(selection_size()==1);
 
   // More results
   action_more_results = qmenu.addAction(tr("More results"));
@@ -641,6 +648,8 @@ mail_listview::popup_ctxt_menu(const QPoint& pos)
     s=tr("Last messages from '%1'").arg(msg->From());
     action_same_from = qmenu.addAction(s);
   }
+  else
+    action_same_from = NULL;
 
   /* For each tag currently assigned to the message, a menu entry is added
      to select 'All messages tagged as ...this_tag' */
@@ -656,7 +665,7 @@ mail_listview::popup_ctxt_menu(const QPoint& pos)
   msgs_filter filter;
   bool action_opens_page = false;
 
-  QAction* action=qmenu.exec(mapToGlobal(pos));
+  QAction* action = qmenu.exec(mapToGlobal(pos));
   if (action==NULL) {
     return;
   }
@@ -667,8 +676,11 @@ mail_listview::popup_ctxt_menu(const QPoint& pos)
     }
     action_opens_page =true;
   }
+  else if (action == action_properties) {
+    if (m_msg_window)
+      m_msg_window->msg_properties();
+  }
   else if (action == action_more_results) {
-    // FIXME: postprocess should be done here
     if (m_msg_window) {
       m_msg_window->fetch_more();
       m_msg_window->set_title();
