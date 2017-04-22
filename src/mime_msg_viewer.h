@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -39,7 +39,7 @@ public:
 private:
   /* Appends to 'html_output' an html representation of 'body' which is
      the body of a raw rfc822 message */
-  void format_body(QString& html_output, const char* body, const display_prefs& prefs);
+  void format_body(QString& html_output, const char* body, display_prefs& prefs);
 
   QString m_encoding;
   message_view* m_view;

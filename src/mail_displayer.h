@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -28,6 +28,7 @@
 class mail_msg;
 class body_view;
 class message_view;
+class QTextCodec;
 
 class display_prefs {
 public:
@@ -40,6 +41,8 @@ public:
   bool m_clickable_urls;
   bool m_show_filters_trace;
   bool m_show_tags_in_headers;
+  bool m_decode_qp;		/* decode quoted-printable hex sequences */
+  QTextCodec* m_codec;		/* source encoding, if specified */
   //    bool m_body_fixed_font;
 };
 
@@ -59,7 +62,11 @@ public:
 				    mail_msg* msg);
   static QString htmlize(QString);
 private:
-
+  QString consume_qp(const QString& line,
+		     int* ppos,
+		     int len,
+		     const display_prefs& prefs);
+  int hex_code_qp(QChar c1, QChar c2);
 };
 
 #endif // INC_MAIL_DISPLAYER_H

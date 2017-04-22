@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -26,6 +26,7 @@
 #include "tags.h"
 #include "xface/xface.h"
 #include <QRegExp>
+#include <QTextCodec>
 #include "filter_log.h"
 #include <list>
 
@@ -64,16 +65,18 @@ QString
 mail_displayer::expand_body_line(const QString& line,
 				 const display_prefs& prefs)
 {
-  uint len=line.length();
+  int len = line.length();
   const int tabsize=8;
   QString exp_s;
   static const QChar tab = QChar('\t');
   static const QChar lbracket = QChar('<');
   static const QChar rbracket = QChar('>');
+  static const QChar equal_sign = QChar('=');
   static const QChar amp = QChar('&');
   static const QChar ctrl_92 = QChar((ushort)0x92);
   int col = 0;			// current column
-  int word_cols = 0;		//
+  int incr = 0;			// increment in source to next character
+  int pos = 0; 			// position in the source
   QChar last_src_char;
   // positions of the occurrences of a searched text within the original string
   std::list<uint> hilight_list;
@@ -90,48 +93,20 @@ mail_displayer::expand_body_line(const QString& line,
   else
     cur_url = std::pair<int,int>(-1,-1);
 
-  for (uint i=0; i<len; i++) {
-    if (i==(uint)cur_url.first) {
-      exp_s.append(QString("<a href=\"%1\">").arg(line.mid(i, cur_url.second)));
+  while (pos < len) {
+    incr = 1;			// default increment in the source
+
+    // TODO: accelerate the most common case by processing first [a-zA-Z0-9] chars
+
+    if (pos == cur_url.first) {
+      /* TODO: adjust cur_url.second for the delta of sequences that expand
+	 or shrink between source and destination */
+      exp_s.append(QString("<a href=\"%1\">").arg(line.mid(pos, cur_url.second)));
     }
     // contents
-    const QChar c=line.at(i);
-    if (c == tab) {
-      int j;
-      for (j=0; j<(int)(tabsize-(col%tabsize)); j++)
-	exp_s.append("&nbsp;");
-      col += j;
-      word_cols=0;
-    }
-    else if (c == lbracket) {
-      exp_s.append("&lt;");
-      col++;
-      word_cols++;
-    }
-    else if (c == rbracket) {
-      exp_s.append("&gt;");
-      col++;
-      word_cols++;
-    }
-    else if (c == amp) {
-      exp_s.append("&amp;");
-      col++;
-      word_cols++;
-    }
-    else if (c == ctrl_92) {
-      // Unicode 0x92 is not displayed by QTextBrowser but is produced
-      // by Outlook so we replace it by a basic simple quote
-      exp_s.append(QChar(0x27));
-      col++;
-      word_cols++;
-    }
-    else if (c.unicode()>=(ushort)0x80 && c.unicode()<=(ushort)0x9F) {
-      /* Unicode characters from the "other, Control category" and
-	 whose codes are higher than 0x80 are expressed as HTML codes
-	 because QTextBrowser doesn't render them correctly */
-      exp_s.append(QString("&#x%1;").arg(c.unicode(), 0, 16));
-    }
-    else if (c == ' ') {
+    const QChar c = line.at(pos);
+
+    if (c == ' ') {
       // repeated spaces are ignored as in html, so we use &nbsp; instead
       // (but only in the case of repeated spaces to limit the overhead)
       if (last_src_char==QChar(' ') || last_src_char==tab) {
@@ -140,20 +115,60 @@ mail_displayer::expand_body_line(const QString& line,
       else {
 	exp_s.append(c);
       }
-      word_cols = 0;
       col++;
     }
     else if (c=='\n') {
       exp_s.append("<br>");
       col=0;
-      word_cols=0;
+    }
+    else if (c == tab) {
+      int j;
+      for (j=0; j<(int)(tabsize-(col%tabsize)); j++)
+	exp_s.append("&nbsp;");
+      col += j;
+    }
+    else if (c == lbracket) {
+      exp_s.append("&lt;");
+      col++;
+    }
+    else if (c == rbracket) {
+      exp_s.append("&gt;");
+      col++;
+    }
+    else if (c == amp) {
+      exp_s.append("&amp;");
+      col++;
+    }
+    else if (c == ctrl_92) {
+      // Unicode 0x92 is not displayed by QTextBrowser but is produced
+      // by Outlook so we replace it by a basic simple quote
+      exp_s.append(QChar(0x27));
+      col++;
+    }
+    else if (c.unicode()>=(ushort)0x80 && c.unicode()<=(ushort)0x9F) {
+      /* Unicode characters from the "other, Control category" and
+	 whose codes are higher than 0x80 are expressed as HTML codes
+	 because QTextBrowser doesn't render them correctly */
+      exp_s.append(QString("&#x%1;").arg(c.unicode(), 0, 16));
     }
     else {
-      exp_s.append(c);
-      col++;
-      word_cols++;
+      // check for quoted printable =XY sequence
+      if (prefs.m_decode_qp && (c == equal_sign)) {
+	QString decoded_qp = consume_qp(line, &pos, len, prefs);
+	if (!decoded_qp.isEmpty()) {
+	  exp_s.append(decoded_qp);
+	  col += decoded_qp.length();
+	  incr = 0;		// pos has already been adjusted by consume_qp
+	}
+      }
+      else {
+	// default case
+	exp_s.append(c);
+	col++;
+      }
     }
-    if (i==(uint)(cur_url.first+cur_url.second-1)) {
+
+    if (pos == (cur_url.first+cur_url.second-1)) {
       exp_s.append("</a>");
       if (!urls.empty()) {
 	cur_url = urls.front();	// next URL
@@ -162,9 +177,71 @@ mail_displayer::expand_body_line(const QString& line,
       else
 	cur_url = std::pair<int,int>(-1,-1);
     }
-    last_src_char=c;
+    last_src_char = c;
+    pos += incr;
   }
   return exp_s;
+}
+
+/* Convert quoted-printable section into a QString.
+   Returns the decode string and advance *ppos by the number of chars
+   consumed in the line, possibly zero.
+   As input, line[ppos] is at the equal sign potentially starting a section.
+*/
+QString
+mail_displayer::consume_qp(const QString& line,
+			   int* ppos,
+			   int len,
+			   const display_prefs& prefs)
+{
+  int pos = *ppos;
+  QByteArray bytes;
+
+  if (pos+1 < len && line.at(pos+1) == '\n') {
+    /* soft line break: ignore it. RFC2045 says: An equal sign as the
+       last character on a encoded line indicates such a
+       non-significant ("soft") line break in the encoded text */
+    pos += 2; 		// consume LF in addition to equal
+  }
+  else if (pos+2 < len && line.at(pos+1) == '\r' && line.at(pos+2) == '\n') {
+    pos += 3;		// ignore CR,LF soft line break
+  }
+  else if (pos+2 < len) {
+    /* Consume successive encoded bytes until it ends */
+    int hex;
+    do {
+      hex = hex_code_qp(line.at(pos+1), line.at(pos+2)); // returns -1 if invalid hexadecimal
+      if (hex >= 0) {
+	bytes.append((char)hex);
+	pos += 3;		// consume equal sign and hex code
+      }
+      // continue until we find something that is not QP
+    } while (hex >= 0 && (pos+2 < len) && line.at(pos) == '=');
+  }
+  *ppos = pos;
+  // Convert the bytes into a string, according to the source encoding
+  return prefs.m_codec->toUnicode(bytes);
+}
+
+
+int
+mail_displayer::hex_code_qp(QChar c1, QChar c2)
+{
+  int n = 0;
+  if (c1>='0' && c1<='9')
+    n = c1.toLatin1()-'0';
+  else if (c1>='A' && c1<='F')
+    n = c1.toLatin1()-'A'+10;
+  else
+    return -1;
+
+  if (c2>='0' && c2<='9')
+    n = (n*16) + c2.toLatin1()-'0';
+  else if (c2>='A' && c2<='F')
+    n = (n*16) + (c2.toLatin1()-'A')+10;
+  else
+    return -1;
+  return n;
 }
 
 QString
@@ -461,4 +538,6 @@ display_prefs::init()
   m_clickable_urls=get_config().get_bool("body_clickable_urls", true);
   m_show_filters_trace = get_config().get_bool("display/filters_trace");
   m_show_tags_in_headers = get_config().get_bool("display/tags_in_headers", true);
+  m_decode_qp = false;
+  m_codec = NULL;
 }
