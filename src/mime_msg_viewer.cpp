@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -88,10 +88,10 @@ mime_msg_viewer::mime_msg_viewer(const char* msg, const display_prefs& prefs)
       int l = rx.matchedLength();
       QStringList params = field.mid(l).split(";");
       if (params.size() >= 1) {
-	QRegExp rx("charset=\"?([a-z_-]+)\"?", Qt::CaseInsensitive);
+	QRegExp rx("charset=\"?([a-z_0-9-]+)\"?", Qt::CaseInsensitive);
 	for (int i=0; i<params.size(); i++) {
 	  if (rx.indexIn(params.at(i)) != -1) {
-	    set_encoding(rx.cap(0));
+	    set_encoding(rx.cap(1));
 	    break;
 	  }
 	}
@@ -99,8 +99,17 @@ mime_msg_viewer::mime_msg_viewer(const char* msg, const display_prefs& prefs)
     }
   }
 
+  display_prefs disp = prefs;
+
+  QStringList cte = mh.get_header("Content-Transfer-Encoding");
+  if (cte.size() >= 1) {
+    if (cte.at(0) == "quoted-printable") {
+      disp.m_decode_qp = true;
+    }
+  }
+
   QString body_html;
-  format_body(body_html, msg+hlen, prefs);
+  format_body(body_html, msg+hlen, disp);
   body_html.prepend("<html><body><div id=\"manitou-body\">");
   body_html.append("</div></body></html>");
   m_view->set_html_contents(body_html, 1); // content-type=text
@@ -121,15 +130,20 @@ mime_msg_viewer::edit_copy()
 void
 mime_msg_viewer::format_body(QString& output,
 			     const char* body,
-			     const display_prefs& prefs)
+			     display_prefs& prefs)
 {
   QString b;
   int startline=0;
   int endline;
+  QTextCodec* codec = NULL;
 
   if (!m_encoding.isEmpty()) {
-    QTextCodec* codec = QTextCodec::codecForName(m_encoding.toLocal8Bit());
-    if (codec) {
+    codec = QTextCodec::codecForName(m_encoding.toLocal8Bit());
+    /* If quoted-printable, we expect ASCII and including QP sequences
+       to decode with the codec in the displayer.
+       If not (FIXME: base64), we expect that the bytes represent
+       the characters of the target body (without any other intermediate layer) */
+    if (codec && !prefs.m_decode_qp) {
       b = codec->toUnicode(body);
     }
     else
@@ -141,17 +155,18 @@ mime_msg_viewer::format_body(QString& output,
 
   mail_displayer disp;
 
+  /* Choose an arbitrary monobyte encoding if none specified.
+     US-ASCII could do in theory, use latin1 to be nice. */
+  prefs.m_codec = codec ? codec : QTextCodec::codecForName("ISO-8859-1");
+
   do {
     endline = b.indexOf('\n', startline);
-    if (endline<0) {
+    if (endline < 0) {
       endline = b.length();
     }
     QString html_line = disp.expand_body_line(b.mid(startline, endline-startline+1),
-					    prefs);
-    //    b2.append();
-    //    b2.append("<br>");
+					      prefs);
     output.append(html_line);
-//    output.append("<br>");
     startline = endline+1;
   } while (startline < b.length());
 }
