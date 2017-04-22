@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -441,7 +441,7 @@ mail_header::header_length(const char* rawmsg)
     if (c=='\n') {
       if (last_c=='\n')
 	return p-rawmsg;	// \n\n => end of header
-      if (last_c=='\r' && idx>3 && *(p-2)=='\n' && *(p-3)=='\r') {
+      if (last_c=='\r' && idx>3 && *(p-3)=='\n' && *(p-4)=='\r') {
 	// \r\n\r\n => end of header
 	return p-rawmsg;
       }
