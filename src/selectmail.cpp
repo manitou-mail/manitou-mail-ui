@@ -835,7 +835,17 @@ msgs_filter::process_address_clause(sql_query& q,
     q.add_clause(QString("ma%1.addr_type=%2").arg(cnt).arg(itype));
     q.add_clause(QString("m.mail_id=ma%1.mail_id").arg(cnt));
     q.add_clause(QString("ma%1.addr_id=a%1.addr_id").arg(cnt));
-    q.add_clause(QString("a%1.email_addr").arg(cnt), vals.at(si).toLower());
+    QString email_addr = vals.at(si).toLower();
+    if (email_addr.contains('@')) {
+      // fully qualified address: exact match
+      q.add_clause(QString("a%1.email_addr").arg(cnt), vals.at(si).toLower());
+    }
+    else {
+      // address without domain part: exact match on local part, matches any domain
+      db_cnx db;
+      QString like = QString("%1@%").arg(db.escape_like_arg(vals.at(si).toLower()));
+      q.add_clause(QString("a%1.email_addr LIKE '%2'").arg(cnt).arg(like));
+    }
   }
 }
 
