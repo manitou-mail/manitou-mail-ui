@@ -599,6 +599,15 @@ db_cnx::escape_identifier(const QString str)
   return m_cnx->escape_identifier(str);
 }
 
+QString
+db_cnx::escape_like_arg(const QString s)
+{
+  QString r = s;
+  r.replace('_', "\\_");
+  r.replace('%', "\\%");
+  return this->escape_string_literal(r);
+}
+
 pg_notifier::pg_notifier(pgConnection* cnx)
 {
   m_pgcnx = cnx;

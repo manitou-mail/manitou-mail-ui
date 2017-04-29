@@ -335,11 +335,8 @@ msgs_filter::parse_search_string(QString s, fts_options& opt)
 QString
 msgs_filter::quote_like_arg(const QString& s)
 {
-  QString r=s;
-  r.replace('_', "\\_");
-  r.replace('%', "\\%");
   db_cnx db;
-  return db.escape_string_literal(r);
+  return db.escape_like_arg(s);
 }
 
 // static
@@ -465,7 +462,7 @@ msgs_filter::build_query(sql_query& q)
       q.add_clause(QString("mq.mail_id=m.mail_id and mq.tag=%1").arg(m_tag_id));
     }
     if (!m_subject.isEmpty()) {
-      QString qs = QString("%%1%").arg(quote_like_arg(m_subject));
+      QString qs = QString("%%1%").arg(db.escape_like_arg(m_subject));
       q.add_clause("subject", qs, " ILIKE ");
     }
     if (m_thread_id) {

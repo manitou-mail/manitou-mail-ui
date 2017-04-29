@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -130,6 +130,7 @@ public:
   bool ping();
   QString escape_string_literal(const QString);
   QString escape_identifier(const QString);
+
   PGconn* connection() {
     return m_pgConn;
   }
@@ -187,6 +188,7 @@ public:
   static QString username();
   QString escape_string_literal(const QString);
   QString escape_identifier(const QString);
+  QString escape_like_arg(const QString);
 private:
   pgConnection* m_cnx;
   bool m_alerts_enabled;
