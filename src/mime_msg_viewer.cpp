@@ -105,6 +105,10 @@ mime_msg_viewer::mime_msg_viewer(const char* msg, const display_prefs& prefs)
   if (cte.size() >= 1) {
     if (cte.at(0) == "quoted-printable") {
       disp.m_decode_qp = true;
+      m_cte = cte_quoted_printable;
+    }
+    else if (cte.at(0) == "base64") {
+      m_cte = cte_base64;
     }
   }
 
@@ -133,31 +137,50 @@ mime_msg_viewer::format_body(QString& output,
 			     display_prefs& prefs)
 {
   QString b;
-  int startline=0;
-  int endline;
   QTextCodec* codec = NULL;
-
-  if (!m_encoding.isEmpty()) {
-    codec = QTextCodec::codecForName(m_encoding.toLocal8Bit());
-    /* If quoted-printable, we expect ASCII and including QP sequences
-       to decode with the codec in the displayer.
-       If not (FIXME: base64), we expect that the bytes represent
-       the characters of the target body (without any other intermediate layer) */
-    if (codec && !prefs.m_decode_qp) {
-      b = codec->toUnicode(body);
-    }
-    else
-      b = QString::fromLatin1(body);
-  }
-  else {
-    b = QString::fromLatin1(body);
-  }
-
-  mail_displayer disp;
 
   /* Choose an arbitrary monobyte encoding if none specified.
      US-ASCII could do in theory, use latin1 to be nice. */
-  prefs.m_codec = codec ? codec : QTextCodec::codecForName("ISO-8859-1");
+  if (!m_encoding.isEmpty())
+    codec = QTextCodec::codecForName(m_encoding.toLocal8Bit());
+  else
+    codec = QTextCodec::codecForName("ISO-8859-1");
+
+  if (m_cte == cte_base64) {
+    // Iterate over the base64 lines
+    const char* p_endline;
+    int start_offset = 0;
+    int end_offset;
+    do {
+      p_endline = strchr(body+start_offset, '\n');
+      if (p_endline != NULL)
+	end_offset = p_endline - body;
+      else
+	end_offset = start_offset + strlen(body+start_offset);
+
+      QByteArray ba_b64 = QByteArray::fromRawData(body+start_offset,
+						  end_offset-start_offset);
+      QByteArray ba = QByteArray::fromBase64(ba_b64);
+      b.append(codec->toUnicode(ba));
+      start_offset = end_offset + 1;
+    } while (p_endline != NULL);
+  }
+  else if (m_cte == cte_quoted_printable) {
+    /* If quoted-printable, we expect body in ASCII and included QP
+       sequences are going to be decoded by mail_displayer according to
+       the codec. */
+      b = QString::fromLatin1(body);
+  }
+  else {
+    /* No 7-bit conversion layer in the source. Characters are encoded
+       as advertised in the Content-Type charset */
+    b = codec->toUnicode(body);
+  }
+
+  mail_displayer disp;
+  prefs.m_codec = codec;
+  int startline=0;
+  int endline;
 
   do {
     endline = b.indexOf('\n', startline);

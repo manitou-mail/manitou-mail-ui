@@ -46,6 +46,14 @@ private:
   attch_listview* m_attchview;
   QString m_header;
 
+  enum content_transfer_encoding {
+    cte_none,
+    cte_base64,
+    cte_quoted_printable
+  };
+
+  enum content_transfer_encoding m_cte;
+
 private slots:
   void edit_copy();
 };
