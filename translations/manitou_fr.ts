@@ -3681,7 +3681,7 @@ Expédier malgré tout?</translation>
     </message>
     <message>
         <source>Schedule delivery</source>
-        <translation>Programme l&apos;envoi</translation>
+        <translation>Programmer l&apos;envoi</translation>
     </message>
 </context>
 <context>
