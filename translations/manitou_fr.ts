@@ -4242,7 +4242,7 @@ Etes-vous certain de vouloir l&apos;écraser?</translation>
     <name>schedule_delivery_dialog</name>
     <message>
         <source>Schedule for later delivery</source>
-        <translation>Programme pour envoi ultérieur</translation>
+        <translation>Programmer pour envoi ultérieur</translation>
     </message>
     <message>
         <source>Send after:</source>
