@@ -498,7 +498,8 @@ msgs_filter::build_query(sql_query& q)
 	process_date_clause(q, date_after, m_date_after_clause);
     }
     else {
-      process_date_clause(q, date_equal, m_date_clause);
+      if (m_date_clause != "range") // "range" is handled above with m_date_min and m_date_max.
+	process_date_clause(q, date_equal, m_date_clause);
     }
     // </date clause>
 

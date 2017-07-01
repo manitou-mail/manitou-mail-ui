@@ -442,7 +442,7 @@
     </message>
     <message>
         <source>Unable to parse date expression.</source>
-        <translation>Expression signifiant une date.incorrecte.</translation>
+        <translation>Echec d'analyse de la date.</translation>
     </message>
 </context>
 <context>
