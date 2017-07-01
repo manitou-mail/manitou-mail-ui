@@ -1088,16 +1088,17 @@ new_mail_widget::make_message(const QMap<QString,QString>& user_headers)
   m_msg.set_send_datetime(m_send_datetime);
 }
 
+/* Return normalized addresses */
 QString
 new_mail_widget::check_addresses(const QString addresses,
 				 QStringList& bad_addresses,
 				 bool* unparsable /*=NULL*/)
 {
+  if (unparsable)
+    *unparsable=false;
   if (addresses.isEmpty())
     return QString("");
 
-  if (unparsable)
-    *unparsable=false;
   QList<QString> emails_list;
   QList<QString> names_list;
   int err = mail_address::ExtractAddresses(addresses, emails_list, names_list);
