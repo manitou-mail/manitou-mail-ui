@@ -104,7 +104,7 @@ msg_status_cache::db_new_mail_notif()
   DBG_PRINTF(5, "We have NEW MAIL!");
   db_cnx db;
   try {
-    sql_stream s("SELECT ms.mail_id,ms.status,sender,sender_fullname,subject,recipients FROM mail m JOIN mail_status ms USING(mail_id) WHERE ms.mail_id>:p1", db);
+    sql_stream s("SELECT mail_id,status,sender,sender_fullname,subject,recipients FROM mail WHERE status&status_mask('archived')=0 AND mail_id>:p1", db);
     s << m_max_mail_id;
     mail_id_t mail_id;
     int status;

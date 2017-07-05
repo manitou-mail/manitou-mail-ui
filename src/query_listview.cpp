@@ -467,8 +467,12 @@ query_listview::fetch_tag_map()
 {
   db_cnx db;
   try {
-    int mask = mail_msg::statusTrashed + mail_msg::statusArchived + mail_msg::statusSent;
-    sql_stream s(QString("SELECT ms.mail_id,mt.tag,ms.status,m.priority FROM (mail m JOIN mail_status ms USING (mail_id)) LEFT OUTER JOIN mail_tags mt ON mt.mail_id=ms.mail_id WHERE ms.status&%1=0").arg(mask), db); // status is not (sent OR archived OR trashed)
+    // status is current (=NOT(sent OR archived OR trashed))
+    sql_stream s(QString("SELECT m.mail_id,mt.tag,m.status,m.priority "
+			 "FROM mail m LEFT OUTER JOIN mail_tags mt ON mt.mail_id=m.mail_id "
+			 "WHERE m.status&status_mask('archived')=0 AND m.status&%1=0")
+		 .arg(mail_msg::statusSent|mail_msg::statusTrashed),
+		 db);
     mail_id_t mail_id;
     unsigned int tag, status;
     int pri;
