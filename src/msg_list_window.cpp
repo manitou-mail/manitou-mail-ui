@@ -335,7 +335,6 @@ msg_list_window::tag_toggled(int tag_id, bool checked)
       show_progress(1+step);
     }
     uninstall_progressbar();
-    statusBar()->showMessage(tr("%1 message(s) processed.").arg(processed), 3000);
   }
   else for (idx=0; idx < v.size(); idx++) {
     mail_msg* p = v[idx];
@@ -361,6 +360,8 @@ msg_list_window::tag_toggled(int tag_id, bool checked)
     // redisplay the body
     display_body();
   }
+  QString msg_result = checked ? tr("%1 message(s) tagged.") : tr("%1 message(s) untagged.");
+  statusBar()->showMessage(msg_result.arg(idx), 3000);
 }
 
 /*
@@ -2825,7 +2826,9 @@ msg_list_window::mails_selected()
   else {
     m_msgview->clear();
     m_qAttch->hide();
+    statusBar()->showMessage(tr("%1 messages selected.").arg(v.size()), 3000);
   }
+
   enable_commands();
 }
 
