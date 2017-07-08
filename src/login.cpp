@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -24,6 +24,7 @@
 #include <QLineEdit>
 #include <QComboBox>
 #include <QPushButton>
+#include <QCheckBox>
 #include <QLabel>
 #include <QMessageBox>
 #include <QVBoxLayout>
@@ -69,6 +70,10 @@ login_dialog::login_dialog() : QDialog(0)
   grid->addWidget(m_params, row, 1);
   row++;
 
+  m_tls = new QCheckBox(tr("Encrypted session"));
+  m_tls->setTristate();
+  grid->addWidget(m_tls, row, 1);
+
   QHBoxLayout* hbox = new QHBoxLayout();
   top_layout->addLayout(hbox);
 
@@ -103,6 +108,11 @@ login_dialog::init_settings()
   set_dbname(settings.value("dbname").toString());
   set_host(settings.value("host").toString());
   set_params(settings.value("params").toString());
+  bool ok=false;
+  // serialized tri-state value corresponding to Qt::CheckState
+  int tls_state = settings.value("tls").toInt(&ok);
+  if (ok && tls_state>=0 && tls_state<=2)
+    set_tls((Qt::CheckState)tls_state);
 }
 
 void
@@ -137,6 +147,12 @@ login_dialog::connect_string()
   if (!m_params->text().isEmpty()) {
     res.append(" " + m_params->text());
   }
+  if (m_tls->checkState()==Qt::Checked)
+    res.append(" sslmode=require");
+  else if (m_tls->checkState()==Qt::Unchecked)
+    res.append(" sslmode=disable");
+  /* if Qt::PartiallyChecked, do not specify sslmode. The user can
+     direct it through m_params */
   return res.trimmed();
 }
 
@@ -184,6 +200,12 @@ void
 login_dialog::set_host(const QString host)
 {
   m_host->setText(host);
+}
+
+void
+login_dialog::set_tls(Qt::CheckState state)
+{
+  m_tls->setCheckState(state);
 }
 
 // focus on the password if login is set
@@ -244,6 +266,7 @@ login_dialog::db_connect()
     settings.setValue("dbname", dbnames()); // stringlist
     settings.setValue("host", host());
     settings.setValue("params", params());
+    settings.setValue("tls", m_tls->checkState());
     accept();
   }
 }

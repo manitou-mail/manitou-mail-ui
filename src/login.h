@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -25,6 +25,7 @@
 
 class QLineEdit;
 class QComboBox;
+class QCheckBox;
 
 class login_dialog: public QDialog
 {
@@ -37,6 +38,7 @@ public:
   void set_dbname(const QString dbname); // list of values separated by ';'
   void set_params(const QString params);
   void set_host(const QString host);
+  void set_tls(Qt::CheckState);
   void set_focus(); // focus on the password if login is set
   QString login() const;
   QString dbnames() const;
@@ -52,6 +54,7 @@ private:
   QLineEdit* m_password;
   QLineEdit* m_host;
   QLineEdit* m_params;
+  QCheckBox* m_tls;
 private slots:
   void db_connect();
   void ok();
