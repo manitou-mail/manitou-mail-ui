@@ -925,7 +925,7 @@ This attachment must be removed from the mail being composed.</source>
         <translation>Le contenu de la pièce jointe référencée:
 %1
 n&apos;est plus accessible dans la base.
-Cette pièce jointe doit être supprimé du message en cours de composition.</translation>
+Cette pièce jointe doit être supprimée du message en cours de composition.</translation>
     </message>
 </context>
 <context>
@@ -971,7 +971,7 @@ Cette pièce jointe doit être supprimé du message en cours de composition.</tr
     </message>
     <message>
         <source>Display as text</source>
-        <translation>Affiche en tant que texte</translation>
+        <translation>Afficher en tant que texte</translation>
     </message>
     <message>
         <source>Attachment as text</source>
