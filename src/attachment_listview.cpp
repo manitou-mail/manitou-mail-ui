@@ -20,6 +20,8 @@
 #include "attachment_listview.h"
 #include "app_config.h"
 #include "main.h"
+#include "image_viewer.h"
+
 #include <QAction>
 #include <QFile>
 #include <QFileInfo>
@@ -167,14 +169,25 @@ attch_listview::popup_ctxt_menu(const QPoint& pos)
   QAction* action_open_app = NULL;
   if (!app_name.isEmpty())
     action_open_app = menu.addAction(tr("Open with: %1").arg(app_name));
+
   QAction* action_save = menu.addAction(tr("Save to disk"));
+  QAction* action_view_image = menu.addAction(tr("View image"));
   QAction* action_view_text = menu.addAction(tr("Display as text"));
+
+  if (pa->mime_type().startsWith("image/")) {
+    action_view_image->setEnabled(true);
+    action_view_text->setEnabled(false);
+  }
+  else {
+    action_view_image->setEnabled(false);
+    action_view_text->setEnabled(true);
+  }
 
   QAction* action = menu.exec(mapToGlobal(pos));
   if (action==NULL) {
     return;
   }
-  else if (action==action_view_text) {
+  else if (action == action_view_text) {
     const char* contents = pa->get_contents();
     if (contents) {
       QPlainTextEdit* v = new QPlainTextEdit(NULL);
@@ -185,7 +198,11 @@ attch_listview::popup_ctxt_menu(const QPoint& pos)
       v->show();
     }
   }
-  else if (action==action_open_app) {
+  else if (action == action_view_image) {
+    image_viewer* imgview = new image_viewer();
+    imgview->show_attachment(pa);
+  }
+  else if (action == action_open_app) {
     QString tmpname = pa->get_temp_location();
     emit init_progress(tr("Downloading attached file: %1").arg(tmpname));
     m_abort=false;

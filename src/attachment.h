@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -164,6 +164,27 @@ public:
 			   QObject* parent);
   virtual ~attachment_network_reply();
   qint64 readData(char* data, qint64 size);
+  void abort();
+  qint64 bytesAvailable() const;
+  bool atEnd() const;
+  bool isSequential() const;
+private:
+  attachment* m_a;
+  int already_read;
+private slots:
+  void go();
+  void go_ready_read();
+  void go_finished();
+};
+
+class attachment_iodevice: public QIODevice
+{
+  Q_OBJECT
+public:
+  attachment_iodevice(attachment* a, QObject* parent);
+  virtual ~attachment_iodevice();
+  qint64 readData(char* data, qint64 size);
+  qint64 writeData(const char* data, qint64 maxsize);
   void abort();
   qint64 bytesAvailable() const;
   bool atEnd() const;

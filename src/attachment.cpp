@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -1043,4 +1043,88 @@ attachment_network_reply::go_ready_read()
 {
   DBG_PRINTF(7, "go_ready_read");
   emit readyRead(); 
+}
+
+attachment_iodevice::attachment_iodevice(attachment* a, QObject* parent) : QIODevice(parent)
+{
+  m_a = a;
+  if (!a->open()) {
+    DBG_PRINTF(2, "error in opening attachment (attachment_id=%d)", a->getId());
+  }
+  else {
+    open(QIODevice::ReadOnly/* | QIODevice::Unbuffered*/);
+  }
+  QTimer::singleShot(0, this, SLOT(go()));
+}
+
+attachment_iodevice::~attachment_iodevice()
+{
+}
+
+qint64
+attachment_iodevice::readData(char* data, qint64 size)
+{
+  if (m_a->eof()) {
+    return -1;
+  }
+  qint64 res=m_a->read(size, data);
+  if (!m_a->eof() && res==size) {
+    QTimer::singleShot(0, this, SLOT(go_ready_read())); // emit readyRead();
+  }
+  if (m_a->eof()) {
+    QTimer::singleShot(0, this, SLOT(go_finished())); //emit finished();
+  }
+  return res;
+}
+
+qint64
+attachment_iodevice::writeData(const char* data, qint64 maxsize)
+{
+  Q_UNUSED(data);
+  Q_UNUSED(maxsize);
+  // not implemented, read-only
+  return 0;
+}
+
+bool
+attachment_iodevice::atEnd() const
+{
+  return m_a->eof();
+}
+
+/* The base QIODevice::isSequential() returns false. */
+bool
+attachment_iodevice::isSequential() const
+{
+  return true;
+}
+
+void
+attachment_iodevice::abort()
+{
+  m_a->close();
+}
+
+
+qint64
+attachment_iodevice::bytesAvailable() const
+{
+  return (!m_a->eof()?32768:0) + QIODevice::bytesAvailable();
+}
+
+void attachment_iodevice::go()
+{
+  emit readyRead();
+}
+
+void
+attachment_iodevice::go_finished()
+{
+  emit readChannelFinished();
+}
+
+void
+attachment_iodevice::go_ready_read()
+{
+  emit readyRead();
 }
