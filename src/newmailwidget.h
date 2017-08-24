@@ -32,9 +32,10 @@
 #include <QMap>
 #include <QCloseEvent>
 #include <QKeyEvent>
-#include <QPushButton>
+#include <QProcess>
 #include <QUrl>
 #include <QDateTime>
+#include <QTemporaryFile>
 
 #include <map>
 
@@ -43,19 +44,20 @@ class attch_listview;
 class edit_address_widget;
 class html_editor;
 
-class QComboBox;
-class QGridLayout;
-class QMenu;
-class QCloseEvent;
-class QLineEdit;
-class QResizeEvent;
 class QAction;
 class QActionGroup;
-class QLabel;
-class QToolBar;
-class QStackedWidget;
-class QProgressBar;
+class QCloseEvent;
+class QComboBox;
 class QDateTimeEdit;
+class QGridLayout;
+class QLabel;
+class QLineEdit;
+class QMenu;
+class QProgressBar;
+class QPushButton;
+class QResizeEvent;
+class QStackedWidget;
+class QToolBar;
 
 class new_mail_widget : public QMainWindow
 {
@@ -101,6 +103,7 @@ public slots:
   void attach_files();
   void insert_file();
   void change_identity();
+  void launch_external_editor();
   //  void tag_selected(int);
   void toggle_edit_source(bool);
   void toggle_wrap(bool);
@@ -122,7 +125,23 @@ public slots:
 signals:
 /*  void change_status_request (uint id, uint mask_set, uint mask_unset);*/
   void refresh_request (mail_id_t m_id);
+
+private slots:
+  void external_editor_finished(int,QProcess::ExitStatus);
+  void external_editor_error(QProcess::ProcessError error);
+  void external_editor_cleanup();
+  void abort_external_editor();
+
 private:
+  struct external_edit {
+    QProcess* process = NULL;	// reinstantiated for each edit session
+    QTemporaryFile tmpf;	// removed after each edit session
+    bool active = false;	// waiting for the editor to finish
+    bool inserted = false;	/* whether contents from the editor
+				   have been imported at least once */
+    QPushButton* m_abort_button = NULL;
+  } m_external_edit;
+
   /* tests that must be done before storing the new message into the database */
   bool check_validity();
   /* called by send_now() or send_later() after validity is checked */
@@ -173,6 +192,7 @@ private:
   QAction* m_action_attach_file;
   QAction* m_action_insert_file;
   QAction* m_action_edit_note;
+  QAction* m_action_external_editor;
   QAction* m_action_identity_other;
   QAction* m_action_edit_other;
   QAction* m_action_add_header;

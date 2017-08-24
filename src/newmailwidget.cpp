@@ -36,12 +36,14 @@
 #include <QCloseEvent>
 #include <QComboBox>
 #include <QCursor>
-#include <QDropEvent>
+#include <QDateTimeEdit>
+#include <QDialogButtonBox>
 #include <QFileDialog>
 #include <QFontDialog>
+#include <QFormLayout>
 #include <QGridLayout>
-#include <QInputDialog>
 #include <QHBoxLayout>
+#include <QInputDialog>
 #include <QKeyEvent>
 #include <QLabel>
 #include <QList>
@@ -50,19 +52,19 @@
 #include <QMessageBox>
 #include <QPrintDialog>
 #include <QPrinter>
-#include <QToolButton>
-#include <QSplitter>
-#include <QTextDocument>
-#include <QTreeWidgetItem>
-#include <QToolBar>
-#include <QVBoxLayout>
-#include <QStackedWidget>
-#include <QRegExp>
-#include <QStatusBar>
+#include <QProcess>
 #include <QProgressBar>
-#include <QDialogButtonBox>
-#include <QFormLayout>
-#include <QDateTimeEdit>
+#include <QPushButton>
+#include <QRegExp>
+#include <QSplitter>
+#include <QStackedWidget>
+#include <QStatusBar>
+#include <QTextDocument>
+#include <QTextStream>
+#include <QToolBar>
+#include <QToolButton>
+#include <QTreeWidgetItem>
+#include <QVBoxLayout>
 
 
 QString
@@ -319,6 +321,10 @@ new_mail_widget::new_mail_widget(mail_msg* msg, QWidget* parent)
 	  &QAction::triggered,
 	  this,
 	  [this]{ run_edit_action("redo"); });
+  pEdit->addSeparator();
+  m_action_external_editor = pEdit->addAction(tr("External editor"),
+					      this,
+					      SLOT(launch_external_editor()));
 
   m_ident_menu = new QMenu(tr("Identity"), this);
   load_identities(m_ident_menu);
@@ -696,15 +702,158 @@ new_mail_widget::show_tags()
   m_wtags->set_tags(m_msg.get_tags());
 }
 
+/*
+  Steps for external edit:
+   Save text in temp file.
+   Instantiate external program.
+   Block text input in window until external program has quit.
+   Reload text from temp file.
+*/
+void
+new_mail_widget::launch_external_editor()
+{
+  QString app = get_config().get_string("composer/external_editor");
+  if (app.isEmpty()) {
+    QMessageBox::critical(this, APP_NAME, tr("No external editor is defined."));
+    return;
+  }
+
+  /* Create temp file */
+  QString tmpl_fname = QDir::tempPath()+"/manitou-edit-XXXXXX";
+  tmpl_fname.append(m_edit_mode == html_mode ? ".html" : ".txt");
+  m_external_edit.tmpf.setFileTemplate(tmpl_fname);
+  m_external_edit.tmpf.setAutoRemove(false);
+  QTextStream out(&m_external_edit.tmpf);
+  if (m_external_edit.tmpf.open()) {
+    if (m_edit_mode == html_mode) {
+      out << m_html_edit->html_text();
+    }
+    else if (m_edit_mode == plain_mode) {
+      out << m_bodyw->document()->toPlainText();
+    }
+    m_external_edit.tmpf.close();
+  }
+  else {
+    QMessageBox::critical(this, APP_NAME, tr("Unable to open temporary file for editor:\n%1")
+			  .arg(m_external_edit.tmpf.errorString()));
+    return;
+  }
+
+  /* Run process */
+  m_external_edit.process = new QProcess(this);
+  m_external_edit.active = true;
+
+  m_external_edit.m_abort_button = new QPushButton(tr("Abort editor"), this);
+  m_external_edit.m_abort_button->setIcon(UI_ICON(ICON16_CANCEL));
+  statusBar()->addPermanentWidget(m_external_edit.m_abort_button);
+  connect(m_external_edit.m_abort_button, SIGNAL(clicked()), this, SLOT(abort_external_editor()));
+
+  /* Avoid these actions until the external edition is finished:
+     - change text or html body
+     - switch between text and html formats
+     - launch another external editor */
+  m_bodyw->setEnabled(false);
+  m_html_edit->page()->setContentEditable(false);
+  m_html_edit->setEnabled(false);
+
+  m_action_plain_text->setEnabled(false);
+  m_action_html_text->setEnabled(false);
+  m_action_external_editor->setEnabled(false);
+
+  QStringList args;
+  args << m_external_edit.tmpf.fileName();
+  m_external_edit.process->start(app, args);
+  connect(m_external_edit.process, SIGNAL(finished(int,QProcess::ExitStatus)),
+	  this, SLOT(external_editor_finished(int,QProcess::ExitStatus)));
+  connect(m_external_edit.process, SIGNAL(error(QProcess::ProcessError)),
+	  this, SLOT(external_editor_error(QProcess::ProcessError)));
+
+}
+
+void
+new_mail_widget::abort_external_editor()
+{
+  disconnect(m_external_edit.process, SIGNAL(finished(int,QProcess::ExitStatus)),
+	     this, SLOT(external_editor_finished(int,QProcess::ExitStatus)));
+  disconnect(m_external_edit.process, SIGNAL(error(QProcess::ProcessError)),
+	     this, SLOT(external_editor_error(QProcess::ProcessError)));
+
+  m_external_edit.process->terminate();
+  external_editor_cleanup();
+}
+
+void
+new_mail_widget::external_editor_finished(int code, QProcess::ExitStatus exit_status)
+{
+  Q_UNUSED(code);
+  Q_UNUSED(exit_status);
+  QTextStream in(&m_external_edit.tmpf);
+  if (m_external_edit.tmpf.open()) {
+    if (m_edit_mode == plain_mode) {
+      m_bodyw->setPlainText(in.readAll());
+      m_bodyw->document()->setModified(true);
+    }
+    else if (m_edit_mode == html_mode) {
+      QString contents = in.readAll();
+      m_html_edit->set_html_text(contents);
+      /* there is no html_editor::setModified, but
+	 m_external_edit.inserted will do */
+    }
+    m_external_edit.inserted = true;
+  }
+  else {
+    QMessageBox::critical(this, APP_NAME,
+			  tr("Unable to open temporary file after edit:\n%1")
+			  .arg(m_external_edit.tmpf.errorString()));
+  }
+
+  external_editor_cleanup();
+}
+
+void
+new_mail_widget::external_editor_error(QProcess::ProcessError error)
+{
+  Q_UNUSED(error);
+  QMessageBox::critical(this, APP_NAME, tr("Failed to run external editor:\n%1")
+			.arg(m_external_edit.process->errorString()));
+  external_editor_cleanup();
+}
+
+void
+new_mail_widget::external_editor_cleanup()
+{
+  /* do not delete m_external_edit.process, its parent object will do it */
+  m_bodyw->setEnabled(true);
+  m_external_edit.tmpf.close();
+  m_external_edit.tmpf.remove();
+  /* re-enable actions disabled by launch_external_editor() */
+  m_html_edit->setEnabled(true);
+  m_action_plain_text->setEnabled(true);
+  m_action_html_text->setEnabled(true);
+  m_external_edit.active = false;
+  m_action_external_editor->setEnabled(true);
+
+  if (m_external_edit.m_abort_button) {
+    delete m_external_edit.m_abort_button;
+    m_external_edit.m_abort_button = NULL;
+  }
+}
 
 void
 new_mail_widget::closeEvent(QCloseEvent* e)
 {
   int res=QMessageBox::Ok;
-  if (m_close_confirm && (m_bodyw->document()->isModified() || m_html_edit->isModified())) {
-    res=QMessageBox::warning(this, APP_NAME, tr("The message you are composing in this window will be lost if you confirm."), QMessageBox::Ok, QMessageBox::Cancel|QMessageBox::Default, Qt::NoButton);
+  if (m_close_confirm && (m_bodyw->document()->isModified() ||
+			  m_html_edit->isModified() ||
+			  m_external_edit.inserted))
+  {
+    res = QMessageBox::warning(this, APP_NAME,
+			     tr("The message you are composing in this window will be lost if you confirm."),
+			     QMessageBox::Ok,
+			     QMessageBox::Cancel|QMessageBox::Default,
+			     Qt::NoButton);
   }
-  if (res==QMessageBox::Ok)
+  if (res == QMessageBox::Ok)
     e->accept();
   else
     e->ignore();

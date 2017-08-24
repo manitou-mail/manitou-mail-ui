@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -105,6 +105,7 @@ struct prefs_dialog::preferences_widgets {
   button_group* w_composer_format_new_mail;
   button_group* w_composer_format_replies;
   button_group* w_composer_address_check;
+  QLineEdit* w_composer_ext_editor;
 
   // search tab
   button_group* w_search_accents;
@@ -482,6 +483,15 @@ prefs_dialog::composer_widget()
     m_widgets->w_composer_address_check = g;
   }
   row++;
+
+  {
+    grid->addWidget(new QLabel(tr("External editor")), row, 0);
+    QLineEdit* le = new QLineEdit();
+    grid->addWidget(le, row, 1);
+    m_widgets->w_composer_ext_editor = le;
+  }
+  row++;
+
   top_layout->addStretch(1);
   return w1;
 }
@@ -1013,6 +1023,8 @@ prefs_dialog::conf_to_widgets(app_config& conf)
       else
 	m_widgets->w_composer_address_check->setButton(0);
     }
+
+    m_widgets->w_composer_ext_editor->setText(conf.get_string("composer/external_editor"));
   }
 
   // search
@@ -1143,6 +1155,9 @@ prefs_dialog::widgets_to_conf(app_config& conf)
     conf.set_string("composer/address_check",
 		    m_widgets->w_composer_address_check->selected_code());
   }
+
+  conf.set_string("composer/external_editor",
+		  m_widgets->w_composer_ext_editor->text());
 
   // search
   if (m_widgets->w_search_accents->selected()) {
