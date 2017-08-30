@@ -422,6 +422,7 @@ private:
   QAction* m_action_reply_sender;
   QAction* m_action_reply_all;
   QAction* m_action_reply_list;
+  QAction* m_action_copy_link;
   QAction* m_action_msg_archive;
   QAction* m_action_msg_delete;
   QAction* m_action_msg_trash;

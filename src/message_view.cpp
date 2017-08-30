@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -93,7 +93,14 @@ message_view::display_link(const QString& link)
 {
   if (m_parent && link.indexOf("#manitou-")!=0) {
     m_parent->show_status_message(link);
+    m_hovered_link = link;
   }
+}
+
+void
+message_view::copy_link_clipboard()
+{
+  m_bodyv->page()->triggerAction(QWebPage::CopyLinkToClipboard);
 }
 
 void

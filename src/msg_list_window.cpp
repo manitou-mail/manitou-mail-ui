@@ -171,6 +171,9 @@ msg_list_window::create_actions()
   connect(m_action_reply_list, SIGNAL(triggered()),
 	  this, SLOT(mail_reply_list()));
 
+  m_action_copy_link = new QAction(FT_MAKE_ICON(FT_ICON16_EDIT_COPY),
+				    tr("Copy link"), this);
+
   m_action_msg_archive = new QAction(FT_MAKE_ICON(FT_ICON16_STATUS_PROCESSED),
 				     tr("Archive"), this);
   m_action_msg_archive->setShortcut(Qt::Key_A);
@@ -2846,6 +2849,7 @@ msg_list_window::body_menu()
     m_action_reply_all,
     m_action_reply_list
   };
+
   for (unsigned int i=0; i<sizeof(actions)/sizeof(actions[0]); i++) {
     qmenu.addAction(actions[i]);
   }
@@ -2853,8 +2857,17 @@ msg_list_window::body_menu()
 
   qmenu.addAction(m_action_msgview_select_all);
   qmenu.addAction(m_menu_actions[me_Edit_Copy]);
+  /* grey out Copy Link when no hovering occurs */
+  m_action_copy_link->setEnabled(!m_msgview->hovered_link().isEmpty());
+  qmenu.addAction(m_action_copy_link);
+  /* m_msgview depends on the current page so we dynamically connect
+     to it rather than keeping a permanent signal/slot connection */
+  connect(m_action_copy_link, SIGNAL(triggered()),
+	  m_msgview, SLOT(copy_link_clipboard()));
 
   qmenu.exec(QCursor::pos());
+  disconnect(m_action_copy_link, SIGNAL(triggered()),
+	     m_msgview, SLOT(copy_link_clipboard()));
 }
 
 /* Display body and attachments */

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -58,12 +58,16 @@ public:
   QString selected_html_fragment();
   QString body_as_text();
   void prepend_body_fragment(const QString& fragment);
+  QString hovered_link() const {
+    return m_hovered_link;
+  }
 protected:
   void keyPressEvent(QKeyEvent*);
 public slots:
   void select_all_text();
 //  void wheel_body(QWheelEvent* );
   void link_clicked(const QUrl&);
+  void copy_link_clipboard();
   void allow_external_contents();
   void ask_for_external_contents();
   void page_down();
@@ -91,6 +95,7 @@ private:
   bool m_ext_contents;
   bool m_has_text_part;
   bool m_has_html_part;
+  QString m_hovered_link;
   qreal m_zoom_factor;
   std::list<searched_text> m_highlight_words;
   int m_content_type_shown;
