@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -178,6 +178,17 @@ private:
   tag_node m_root;
 };
 
+
+/* Reflects a change in tags_counters */
+class tag_counter_transition
+{
+public:
+  tag_counter_transition() : tag_id(0), count_change(0) {}
+  tag_counter_transition(int id, int c) : tag_id(id), count_change(c) {}
+  int tag_id;
+  int count_change; // positive or negative
+};
+
 class tag_line_edit_selector: public line_edit_autocomplete
 {
   // works with "->" as tag hierarchy separator
@@ -207,5 +218,6 @@ public:
     return (cursor_pos==0) ? -1 : 0;
   }
 };
+
 
 #endif // INC_TAGS_H

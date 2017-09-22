@@ -111,12 +111,30 @@ void properties_dialog::ok()
     if (res==1) return;		// cancel
   }
 
+  uint new_status = m_status_box->status();
+
   db_ctxt dbc;
   dbc.propagate_exceptions = true;
+  QList<tag_counter_transition> cnt_tags_changed;
+
   try {
     dbc.m_db->begin_transaction();
 
-    m.setStatus(m_status_box->status());
+    m.set_status(new_status);
+
+    // Handle the transition in tags_counters (but don't update the status in db yet)
+    if (db_manitou_config::has_tags_counters()) {
+      sql_stream s("SELECT id,c FROM transition_status_tags(:id, :status) as t(id,c)", *dbc.m_db);
+      s << m.get_id() << new_status;
+
+      while (!s.eos()) {
+	int tag_id, cnt;
+	s >> tag_id >> cnt;
+	cnt_tags_changed.append(tag_counter_transition(tag_id, cnt));
+      }
+    }
+
+    // Update in database
     m.update_status(true, &dbc);
     pri = m_spinbox->text().toInt(&pri_ok);
     if (pri_ok) {
@@ -140,13 +158,15 @@ void properties_dialog::ok()
     dbc.m_db->commit_transaction();
   }
   catch(db_excpt& p) {
-    DBG_PRINTF(3, "exception caugth");
+    DBG_PRINTF(3, "exception caught");
     dbc.m_db->rollback_transaction();
     success = false;
     DBEXCPT (p);
   }
   if (success && pri_ok) {
     emit change_status_request(m_mail_id, m_status_box->status(), pri);
+    if (cnt_tags_changed.size() > 0)
+      emit tags_counters_changed(cnt_tags_changed);
     accept();
   }
   else

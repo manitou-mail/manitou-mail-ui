@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -58,25 +58,6 @@ tags_repository::fetch()
     DBEXCPT(p);
   }
 }
-
-
-//static
-/*
-void
-tags_repository::get_sorted_list(QStringList* taglist)
-{
-  if (!m_tags_map_fetched) {
-    fetch();
-  }
-  std::map<int,QString>::const_iterator iter;
-  for (iter=tags_repository::m_tags_map.begin();
-       iter!=tags_repository::m_tags_map.end();
-       ++iter) {
-    taglist->push_front(iter->second);
-  }
-  taglist->sort();
-}
-*/
 
 /* Empty the cache */
 void

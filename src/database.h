@@ -265,4 +265,13 @@ public:
   static int* version();
 };
 
+class db_manitou_config
+{
+public:
+  static bool init();
+  static bool has_tags_counters();
+private:
+  static bool m_has_tags_counters;
+};
+
 #endif // INC_DATABASE_H

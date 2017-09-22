@@ -33,10 +33,14 @@ public:
 private slots:
     void ok();
 signals:
-  void change_status_request(mail_id_t id, uint status, int priority);
+    void change_status_request(mail_id_t id,
+			       uint status,
+			       int priority);
+    void tags_counters_changed(QList<tag_counter_transition>);
 private:
   select_status_box* m_status_box;
   mail_id_t m_mail_id;
+  int m_initial_priority;
   uint m_last_known_status;
   QSpinBox* m_spinbox;
   QDateTimeEdit* m_send_datetime;

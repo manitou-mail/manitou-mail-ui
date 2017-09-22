@@ -38,6 +38,7 @@
 #include "tagsdialog.h"
 #include "addressbook.h"
 #include "mail_displayer.h"
+#include "message.h"
 #include "tags.h"
 #include "filter_log.h"
 #include "notepad.h"
@@ -303,8 +304,8 @@ msg_list_window::make_toolbar()
 
 
 /*
-  Called when a tag is switched on or off: applies the change
-  to the selected mail(s)
+  Slot called when a tag is switched on or off in the tags_box_widget:
+  applies the change to the selected mail(s)
 */
 void
 msg_list_window::tag_toggled(int tag_id, bool checked)
@@ -319,11 +320,14 @@ msg_list_window::tag_toggled(int tag_id, bool checked)
   uint size = nb_msg;
   uint nsteps = (size+batch_size-1)/batch_size;
   if (nsteps>1) {
-    uint processed=0;
+    result_msgs_tagging res_tag;
+    int processed=0;
     install_progressbar();
     show_progress(-nsteps);
 
+
     std::set<mail_msg*> mset;
+
     for (uint step=0; step < nsteps && !progress_aborted(); step++) {
       mset.clear();
       for (uint ivec=0; idx<size && ivec<batch_size; ivec++) {
@@ -333,7 +337,17 @@ msg_list_window::tag_toggled(int tag_id, bool checked)
       }
       // process in database
       if (!mset.empty()) {
-	processed += mail_msg::toggle_tags_set(mset, tag_id, checked);
+	res_tag = mail_msg::toggle_tags_set(mset, tag_id, checked);
+	processed += mset.size();
+	// reflect the changes to the quick selection panel
+	if (db_manitou_config::has_tags_counters() && m_query_lv) {
+	  if (res_tag.count_notagleft > 0)
+	    m_query_lv->archive_tag_changed(0, res_tag.count_notagleft);
+	  if (res_tag.count_archived_assigned > 0)
+	    m_query_lv->archive_tag_changed(tag_id, res_tag.count_archived_assigned);
+	  if (res_tag.count_archived_unassigned > 0)
+	    m_query_lv->archive_tag_changed(tag_id, -1*res_tag.count_archived_unassigned);
+	}
       }
       show_progress(1+step);
     }
@@ -345,18 +359,21 @@ msg_list_window::tag_toggled(int tag_id, bool checked)
       // put the tag if it's not already on
       if (!p->hasTag(tag_id)) {
 	p->set_tag(tag_id, true);
-	m_tags_box->set_tag(tag_id);
+	// m_tags_box->set_tag(tag_id);
       }
     }
     else {
-      // take the tag off
+      // remove the tag
       p->set_tag(tag_id, false);
-      m_tags_box->unset_tag(tag_id);
+      // m_tags_box->unset_tag(tag_id);
     }
     // update the tags counters in the quick selection view
     DBG_PRINTF(5, "mail_id=%d current=%d, status=%d", p->get_id(), p->is_current(), p->status());
-    if (m_query_lv && p->is_current()) {
-      m_query_lv->mail_tag_changed(*p, (uint)tag_id, checked);
+    if (m_query_lv) {
+      if (p->is_current())
+	m_query_lv->mail_tag_changed(*p, (uint)tag_id, checked);
+      else if (!p->is_trashed() && db_manitou_config::has_tags_counters())
+	m_query_lv->archive_tag_changed(tag_id, checked?1:-1);
     }
   }
   if (m_pCurrentItem) {
@@ -838,8 +855,8 @@ msg_list_window::msg_list_window (const msgs_filter* filter, display_prefs* dpre
   connect(this, SIGNAL(mail_chg_status(int,mail_msg*)),
 	  SLOT(change_mail_status(int,mail_msg*)));
 
-  connect(this, SIGNAL(mail_multi_chg_status(int,std::vector<mail_msg*>*)),
-	  SLOT(change_multi_mail_status(int,std::vector<mail_msg*>*)));
+  /*  connect(this, SIGNAL(mail_multi_chg_status(int,std::vector<mail_msg*>*)),
+      SLOT(change_multi_mail_status(int,std::vector<mail_msg*>*))); */
 
   // subscribe to refresh requests
   message_port::connect_receiver(SIGNAL(list_refresh_request()),
@@ -991,30 +1008,60 @@ msg_list_window::propagate_status(mail_msg* item, int code/*=0*/)
   current.
 */
 void
-msg_list_window::change_mail_status (int status_mask, mail_msg* msg)
+msg_list_window::change_mail_status(int status_mask, mail_msg* msg)
 {
   DBG_PRINTF(8, "change_mail_status(mask=%d, mail_id=%d)", status_mask, msg->get_id());
   if (!user::has_permission("update"))
     return;
   msg->set_status(msg->status()|status_mask);
-  if (msg->update_status()) {
-    DBG_PRINTF(5, "status of mail %d updated", msg->get_id());
-    if (status_mask & (int)mail_msg::statusTrashed) {
-      propagate_status(msg, 0);
-      remove_msg(msg);
-      set_title();
+
+  db_cnx db;
+  try {
+    QList<tag_counter_transition> cnt_tags_changed;
+    db.begin_transaction();
+
+    if (db_manitou_config::has_tags_counters()) {
+      sql_stream s("SELECT id,c FROM transition_status_tags(:id, :status) as t(id,c)", db);
+      s << msg->get_id() << msg->status();
+
+      while (!s.eos()) {
+	int tag_id, cnt;
+	s >> tag_id >> cnt;
+	cnt_tags_changed.append(tag_counter_transition(tag_id, cnt));
+      }
     }
-    else if (status_mask & (int)mail_msg::statusArchived) {
-      m_qlist->update_msg(msg);
-      m_qlist->select_below(msg); // FIXME: should move this call somewhere else
-      propagate_status(msg);
+
+    bool change_ok = msg->update_status();
+
+    if (change_ok) {
+      db.commit_transaction();
+      DBG_PRINTF(5, "status of mail %d updated", msg->get_id());
+      if (cnt_tags_changed.size() > 0)
+	m_query_lv->change_archive_counts(cnt_tags_changed);
+
+      if (status_mask & (int)mail_msg::statusTrashed) {
+	propagate_status(msg, 0);
+	remove_msg(msg);
+	set_title();
+      }
+      else if (status_mask & (int)mail_msg::statusArchived) {
+	m_qlist->update_msg(msg);
+	m_qlist->select_below(msg); // FIXME: should move this call somewhere else
+	propagate_status(msg);
+      }
+      else {
+	m_qlist->update_msg(msg);
+	propagate_status(msg);
+      }
+
     }
-    else {
-      m_qlist->update_msg(msg);
-      propagate_status(msg);
-    }
+    else
+      db.rollback_transaction();
   }
-  // else database error in status update. TODO
+  catch(db_excpt& p) {
+    db.rollback_transaction();
+    DBEXCPT (p);
+  }
 }
 
 void
@@ -1040,6 +1087,9 @@ msg_list_window::msg_properties()
     properties_dialog* w = new properties_dialog (v[0], NULL);
     m_qlist->connect(w, SIGNAL(change_status_request(mail_id_t,uint,int)),
 		     m_qlist, SLOT(force_msg_status(mail_id_t,uint,int)));
+    if (m_query_lv)
+      m_query_lv->connect(w, SIGNAL(tags_counters_changed(QList<tag_counter_transition>)),
+			  m_query_lv, SLOT(change_archive_counts(QList<tag_counter_transition>)));
     w->show();
   }
 }
@@ -1051,9 +1101,9 @@ msg_list_window::msg_delete()
   DBG_PRINTF(8, "msg_delete()");
   if (!user::has_permission("delete")) {
     statusBar()->showMessage(tr("No permission to delete messages."));
-    return;
   }
-  remove_selected_msgs(1);
+  else
+    remove_selected_msgs(1);
 }
 
 void
@@ -1062,9 +1112,9 @@ msg_list_window::msg_trash()
   DBG_PRINTF(8, "msg_trash()");
   if (!user::has_permission("trash")) {
     statusBar()->showMessage(tr("No permission to trash messages."));
-    return;
   }
-  remove_selected_msgs(0);
+  else
+    remove_selected_msgs(0);
 }
 
 /*
@@ -1078,17 +1128,22 @@ msg_list_window::remove_selected_msgs(int action)
   const QCursor cursor(Qt::WaitCursor);
   QApplication::setOverrideCursor(cursor);
 
-  uint removed=0;
+  bool act_trash = (action==0); // otherwise delete
+  QString done_msg = act_trash ? tr("%1 message(s) trashed.") : tr("%1 message(s) deleted.");
+  uint removed = 0;
   std::vector<mail_msg*> v;
-  m_qlist->get_selected (v);
+  m_qlist->get_selected(v);
 
-  const uint batch_size=20;
-  uint idx=0;
+  const uint batch_size = 20;
+  uint idx = 0;
   uint nb_msg = v.size();
   DBG_PRINTF(6, "# of msgs to trash/delete = %d", nb_msg);
-  uint size = nb_msg;
-  uint nsteps = (size+batch_size-1)/batch_size;
+  uint nsteps = (nb_msg+batch_size-1)/batch_size;
   m_ignore_selection_change = true;
+
+  db_ctxt dbc;
+  // dbc.propagate_exceptions = true; // later
+
   if (nsteps > 1 && action==0) {
     // massive trash, do it in batches
     install_progressbar();
@@ -1097,94 +1152,161 @@ msg_list_window::remove_selected_msgs(int action)
     std::set<mail_msg*> mset;
     for (uint step=0; step < nsteps && !progress_aborted(); step++) {
       mset.clear();
-      std::set<mail_msg*> imset;
-      for (uint ivec=0; idx<size && ivec<batch_size; ivec++) {
-	imset.insert(v[idx]);
+      for (uint ivec=0; idx<nb_msg && ivec<batch_size; ivec++) {
 	mset.insert(v[idx++]);
       }
       // process in database
       if (!mset.empty()) {
-	mail_msg::trash_set(mset);
+	QList<tag_counter_transition> cnt_tags_changed;
+
+	if (db_manitou_config::has_tags_counters()) {
+	  cnt_tags_changed = mail_msg::multi_trash(mset, &dbc);
+	  if (cnt_tags_changed.size() > 0)
+	    m_query_lv->change_archive_counts(cnt_tags_changed);
+	}
+	else {
+	  mail_msg::trash_set(mset);
+	}
 	removed += mset.size();
       }
       // propagate
-      std::set<mail_msg*>::iterator it = imset.begin();
-      for (unsigned int cnt=1; it!=imset.end(); ++it,++cnt) {
+      std::set<mail_msg*>::iterator it = mset.begin();
+      for (unsigned int cnt=1; it!=mset.end(); ++it,++cnt) {
 	propagate_status(*it);
 	// auto-select next one only for the last message
-	remove_msg(*it, (cnt==imset.size()));
+	remove_msg(*it, (cnt==mset.size()));
       }
       show_progress(1+step);
     }
-    if (nsteps > 1)
-      uninstall_progressbar();
+    uninstall_progressbar();
   }
   else for (uint i=0; i<nb_msg; i++) {
-    // small update
-    if (action==0) {
-      statusBar()->showMessage(QString(tr("Trashing messages: %1 of %2")).arg(i+1).arg(nb_msg));
-      statusBar()->repaint();
-      QApplication::flush();
-      if (v[i]->trash()) {
-	propagate_status(v[i]);
-	remove_msg(v[i], (i==nb_msg-1));
-	removed++;
-      }
+    // small batch or delete, process one by one
+    QString status_msg;
+    if (act_trash) {
+      status_msg = tr("Trashing messages: %1 of %2");
     }
-    else if (action==1) {
-      statusBar()->showMessage(QString(tr("Deleting messages: %1 of %2")).arg(i+1).arg(nb_msg));
-      statusBar()->repaint();
-      QApplication::flush();
-      if (v[i]->mdelete()) {
-	propagate_status(v[i], -1);
+    else {
+      status_msg = tr("Deleting messages: %1 of %2");
+    }
+
+    statusBar()->showMessage(status_msg.arg(i+1).arg(nb_msg));
+    statusBar()->repaint();
+    QApplication::flush();
+    QList<tag_counter_transition> cnt_tags_changed;
+    try {
+      dbc.m_db->begin_transaction();
+      if (db_manitou_config::has_tags_counters()) {
+	sql_stream s("SELECT * FROM transition_status_tags(:id, :status)", *dbc.m_db);
+	s << v[i]->get_id();
+	if (act_trash)
+	  s << (v[i]->status() | mail_msg::statusTrashed) ;
+	else
+	  s << -1;
+	while (!s.eos()) {
+	  int tag_id, cnt;
+	  s >> tag_id >> cnt;
+	  cnt_tags_changed.append(tag_counter_transition(tag_id, cnt));
+	}
+      }
+
+      bool success = act_trash ? v[i]->trash(&dbc) : v[i]->mdelete();
+      if (success) {
+	dbc.m_db->commit_transaction();
+	propagate_status(v[i], act_trash?0:(-1));
 	remove_msg(v[i], (i==nb_msg-1));
 	removed++;
+	if (cnt_tags_changed.size() > 0)
+	  m_query_lv->change_archive_counts(cnt_tags_changed);
       }
+      else
+	dbc.m_db->rollback_transaction();
+    }
+    catch(db_excpt& p) {
+	dbc.m_db->rollback_transaction();
+	DBEXCPT(p);
     }
   }
+
   m_ignore_selection_change = false;
   mails_selected();
   set_title();
   QApplication::restoreOverrideCursor();
-  if (action==0)
-    statusBar()->showMessage(tr("%1 message(s) trashed.").arg(removed), 3000);
-  else
-    statusBar()->showMessage(tr("%1 message(s) deleted.").arg(removed), 3000);
+  statusBar()->showMessage(done_msg.arg(removed), 3000);
 }
 
 void
 msg_list_window::msg_untrash()
 {
   std::vector<mail_msg*> v;
+  QList<tag_counter_transition> cnt_tags_changed;
+
   m_qlist->get_selected (v);
-  for (uint j=0; j < v.size(); j++) {
-    mail_msg* msg = v[j];
-    if (msg->status() & mail_msg::statusTrashed) {
-      if (msg->untrash()) {
-	m_qlist->update_msg(msg);
-	propagate_status(msg);
+  if (!v.size())
+    return;
+
+  db_ctxt dbc;
+  dbc.propagate_exceptions = true;
+
+  try {
+    dbc.m_db->begin_transaction();
+    for (uint j=0; j < v.size(); j++) {
+      mail_msg* msg = v[j];
+      if (msg->status() & mail_msg::statusTrashed) {
+	if (db_manitou_config::has_tags_counters()) {
+	  sql_stream s("SELECT id,c FROM transition_status_tags(:id, :status) as t(id,c)", *dbc.m_db);
+	  s << msg->get_id() << (msg->status() & (~mail_msg::statusTrashed));
+
+	  while (!s.eos()) {
+	    int tag_id, cnt;
+	    s >> tag_id >> cnt;
+	    cnt_tags_changed.append(tag_counter_transition(tag_id, cnt));
+	  }
+	}
+
+	if (msg->untrash()) {
+	  m_qlist->update_msg(msg);
+	  propagate_status(msg);
+	  if (cnt_tags_changed.size() > 0)
+	    m_query_lv->change_archive_counts(cnt_tags_changed);
+	}
+	// else database error in status update should have thrown an exception
       }
-      // else database error in status update.
     }
+  }
+  catch(db_excpt& p) {
+    DBG_PRINTF(3, "exception caught");
+    dbc.m_db->rollback_transaction();
+    DBEXCPT(p);
   }
 }
 
 /*
-  (slot) Called to change the status of a message
+  Called to change the status of several messages.
+  It's meant to be more efficient than looping over change_mail_status()
+  by grouping updates in the database.
   Reflects the change in the listview.
-  Can also remove the message(s) from the listview and make it non longer
+  Can also remove the messages from the listview and make it non longer
   current.
 */
 void
-msg_list_window::change_multi_mail_status(int statusMask,
+msg_list_window::change_multi_mail_status(enum status_transition_type transition,
 					  std::vector<mail_msg*>* v)
 {
   const QCursor cursor(Qt::WaitCursor);
   QApplication::setOverrideCursor(cursor);
 
-  const uint batch_size=20;
+  int statusMask;
+  const uint batch_size=50;
   uint idx=0;
   uint size=v->size();
+
+  if (transition == archive)
+    statusMask = mail_msg::statusArchived + mail_msg::statusRead;
+  else if (transition == trash) // not used for now
+    statusMask = mail_msg::statusArchived + mail_msg::statusRead + mail_msg::statusTrashed;
+  else
+    statusMask = 0;
 
   statusBar()->showMessage(tr("Updating messages..."));
   uint nsteps = (size+batch_size-1)/batch_size;
@@ -1193,25 +1315,37 @@ msg_list_window::change_multi_mail_status(int statusMask,
     show_progress(-nsteps);
   }
 
+  db_ctxt dbc;
+  // dbc.propagate_exceptions = true; // later
+
   DBG_PRINTF(5, "nsteps=%d, size=%d", nsteps, size);
   std::set<mail_msg*> mset;
   for (uint step=0; step < nsteps && !progress_aborted(); step++) {
     mset.clear();
-    std::set<mail_msg*> imset;
     for (uint ivec=0; idx<size && ivec<batch_size; ivec++) {
-      imset.insert((*v)[idx]);
       mset.insert((*v)[idx++]);
     }
     // set in database
     if (!mset.empty()) {
-      mail_msg::set_or_with_status(mset, statusMask);
-    }
-    // propagate
-    std::set<mail_msg*>::iterator it = imset.begin();
-    for (; it!=imset.end(); ++it) {
-      if (statusMask & (int)mail_msg::statusArchived) {
-	m_qlist->update_msg(*it);
-	propagate_status(*it);
+      if (transition == archive) {
+	if (db_manitou_config::has_tags_counters()) {
+	  QList<tag_counter_transition> cnt_tags_changed = mail_msg::multi_archive(mset, &dbc);
+	  if (cnt_tags_changed.size() > 0)
+	    m_query_lv->change_archive_counts(cnt_tags_changed);
+	}
+	else
+	  mail_msg::set_or_with_status(mset, statusMask);
+      }
+      else
+	mail_msg::set_or_with_status(mset, statusMask);
+
+      // propagate
+      std::set<mail_msg*>::iterator it = mset.begin();
+      for (; it!=mset.end(); ++it) {
+	if (statusMask & (int)mail_msg::statusArchived) {
+	  m_qlist->update_msg(*it);
+	  propagate_status(*it);
+	}
       }
     }
     // report progress
@@ -2983,7 +3117,7 @@ msg_list_window::msg_archive()
   }
   else {
     DBG_PRINTF(5,"%d mails selected", v.size());
-    emit mail_multi_chg_status(mail_msg::statusArchived+mail_msg::statusRead, &v);
+    change_multi_mail_status(msg_list_window::archive, &v);
   }
 }
 

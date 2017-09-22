@@ -1762,7 +1762,7 @@ select_status_box::set_mask (int mask_yes, int mask_no)
 int
 select_status_box::status() const
 {
-  return m_mask_set;
+  return (uint)m_mask_set;
 }
 
 int

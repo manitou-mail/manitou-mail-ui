@@ -388,6 +388,7 @@ main(int argc, char **argv)
     printf("Configuration used: %s\n", conf_name.toLocal8Bit().constData());
   }
 
+  db_manitou_config::init();
   global_conf.set_name(conf_name);
   global_conf.init();
   global_conf.apply();

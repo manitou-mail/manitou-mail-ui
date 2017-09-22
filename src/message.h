@@ -22,12 +22,15 @@
 
 #include "dbtypes.h"
 #include "time.h"
-#include <QString>
+
 #include <QDateTime>
+#include <QString>
+#include <QVector>
 
 #include "addresses.h"
 #include "mailheader.h"
 #include "attachment.h"
+#include "tags.h"
 //#include "ui_feedback.h"
 
 class ui_feedback;
@@ -48,6 +51,19 @@ public:
   QString m_sender_name;
   uint m_flags;
   QString m_recipients;
+};
+
+class result_msgs_tagging
+{
+public:
+  int count_notagleft = 0;
+
+  // count of messages that are archived and not trashed, to which a tag has been added
+  int count_archived_assigned = 0;
+
+  int count_unassigned = 0;
+
+  int count_archived_unassigned = 0;
 };
 
 class mail_msg
@@ -182,6 +198,9 @@ public:
   bool is_current() const {
     return (m_status&(statusArchived|statusTrashed))==0;
   }
+  bool is_trashed() const {
+    return (m_status&statusTrashed)!=0;
+  }
 
   // fetch the status. Use this to know if it has changed
   void fetch_status ();
@@ -205,8 +224,9 @@ public:
 
   bool store(ui_feedback* ui=NULL);
   bool mdelete();
-  bool trash();
-  bool untrash();
+  bool trash(db_ctxt* dbc=NULL);
+  bool untrash(db_ctxt* dbc=NULL);
+  static QList<tag_counter_transition> multi_trash(std::set<mail_msg*>& s, db_ctxt*);
   bool bounce();
   bool store_note();
   bool fetchNote();
@@ -246,15 +266,29 @@ public:
   } msg_flags_t;
 
   static bool set_or_with_status(std::set<mail_msg*>& s, uint or_mask);
+  static QList<tag_counter_transition> multi_archive(std::set<mail_msg*>& s, db_ctxt*);
   static bool trash_set(std::set<mail_msg*>& mset);
-  static int toggle_tags_set(std::set<mail_msg*>& mset,
-			     uint tag_id, bool on);
+  static result_msgs_tagging toggle_tags_set(std::set<mail_msg*>& mset,
+					     uint tag_id, bool on);
 
 private:
-  static void mail_id_to_select_in(const std::set<mail_msg*>& s,
-				   QString& dest);
+  static void mail_id_to_list(const std::set<mail_msg*>& s,
+			      QString& dest);
   static void mail_id_to_sql_array(const std::set<mail_msg*>& s,
 				   QString& dest);
+  static void mail_id_to_sql_array(const std::set<mail_id_t>& s,
+				   QString& dest);
+#if defined(DB_MAIL_ID_32)
+  static quint32 str_to_mail_id(const QString s) {
+    return s.toInt();	// hopefully 32-bit
+  }
+#elif defined(DB_MAIL_ID_64)
+  static quint64 str_to_mail_id(const QString s) {
+    return s.toLongLong(); // hopefully 64-bit
+  }
+#endif
+  static void str_to_vector(const QString str, QVector<mail_id_t>& vect);
+
   bool store_tags();
   bool storeHeader();
   bool store_addresses();

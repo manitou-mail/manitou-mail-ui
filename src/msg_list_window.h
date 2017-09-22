@@ -112,6 +112,10 @@ public:
     return m_filter->m_list_msgs.size();
   }
 */
+  enum status_transition_type {
+    archive=1,
+    trash
+  };
 
 public slots:
   void fill_fetch(msgs_filter*);
@@ -233,7 +237,7 @@ public slots:
 
   void search_generic(const QString& text, int where, int options);
   void change_mail_status(int status,mail_msg*);
-  void change_multi_mail_status (int statusMask, std::vector<mail_msg*>*);
+
 
   // help
   void about();
@@ -252,6 +256,8 @@ protected:
   virtual void closeEvent(QCloseEvent*);
 
 private:
+  void change_multi_mail_status(enum status_transition_type, std::vector<mail_msg*>*);
+
   void check_new_mail();
 
   // reflect state of abort button during a progress-controlled operation
@@ -460,7 +466,7 @@ private:
   msgs_page_list* m_pages;
 signals:
   void mail_chg_status(int, mail_msg*);
-  void mail_multi_chg_status(int, std::vector<mail_msg*>*);
+  //  void mail_multi_chg_status(int, std::vector<mail_msg*>*);
   void progress(int);
   void abort_progress();
 };

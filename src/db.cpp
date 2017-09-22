@@ -100,6 +100,7 @@ db_excpt::replace(const QString substring, const QString replacement)
 }
 
 
+/* First connection to the database */
 int
 ConnectDb(const char* cnx_string, QString* errstr)
 {
@@ -665,6 +666,24 @@ db_ctxt::~db_ctxt()
 }
 
 
+/* All is static in db_manitou_config */
+bool
+db_manitou_config::m_has_tags_counters;
+
+bool
+db_manitou_config::has_tags_counters()
+{
+  return m_has_tags_counters;
+}
+
+bool
+db_manitou_config::init()
+{
+  db_cnx db;
+  m_has_tags_counters = (db.table_exists("tags_counters"));
+  return true;
+}
+
 
 /* db_schema static members */
 int db_schema::m_version[3];
@@ -685,9 +704,9 @@ db_schema::compare_version(const QString version)
   int* v_db = db_schema::version();
   QStringList s = version.split('.');
   for (int i = 0; i < 3; i++) {
-      int v_arg = (s.count()>i) ? s.at(i).toInt() : 0;
-      if (v_arg != v_db[i])
-	return v_db[i] - v_arg;
+    int v_arg = (s.count()>i) ? s.at(i).toInt() : 0;
+    if (v_arg != v_db[i])
+      return v_db[i] - v_arg;
   }
   return 0;
 }

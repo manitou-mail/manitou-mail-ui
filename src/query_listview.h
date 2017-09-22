@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -26,7 +26,10 @@
 #include <map>
 #include "db.h"
 #include "selectmail.h"
+#include "tags.h"
 #include <QSet>
+#include <QMap>
+#include <QBrush>
 
 class QMouseEvent;
 
@@ -37,8 +40,10 @@ typedef std::map<mail_id_t,int> qs_mail_map;
 // mail_id => priority
 typedef std::map<mail_id_t,int> priority_map;
 
+typedef QMap<int,int> archived_tag_map;
+
 // tag_id => map of current tagged mails
-typedef std::map<mail_id_t,qs_mail_map*> qs_tag_map;
+typedef std::map<uint,qs_mail_map*> qs_tag_map;
 
 class query_lvitem : public QTreeWidgetItem
 {
@@ -48,11 +53,13 @@ public:
   query_lvitem(QTreeWidget* parent, const QString name);
   virtual ~query_lvitem();
 
+  void set_brush(QBrush); /* childs inherit from the brush */
+
   // display title and counts of unread and unprocessed messages if available
   void set_title(const QString base, const qs_mail_map* status_map=NULL);
 
-
   void remove_children();
+
   int m_type;			/* a value from the enum below */
   enum item_type {
     tree_node,
@@ -73,6 +80,9 @@ public:
     m_type = type;
   }
 
+  void show_count(int cnt1, int cnt2=0);
+  void show_archived_count(int cnt1);
+
   QString m_sql;
   int m_unique_id;
   
@@ -81,6 +91,7 @@ public:
 
 private:
   static int id_generator;
+  QString m_name;
 
   // case-insensitive sort
   bool operator<(const QTreeWidgetItem &other) const {
@@ -93,14 +104,17 @@ class query_tag_lvitem : public query_lvitem
 {
 public:
   query_tag_lvitem(QTreeWidgetItem* parent, int item_type, QString name, uint id=0) :
-    query_lvitem(parent,item_type,name), m_tag_id(id) {}
+  query_lvitem(parent,item_type,name), m_tag_id(id)
+  {
+  }
 
   // use this constructor only for the root of tags
   query_tag_lvitem(QTreeWidget* parent, int item_type, QString name) :
-    query_lvitem(parent,name), m_tag_id(0)
-    {
-      m_type=item_type;
-    }
+  query_lvitem(parent,name), m_tag_id(0)
+  {
+    m_type = item_type;
+  }
+
   uint m_tag_id;
 };
 
@@ -117,17 +131,26 @@ public:
   void refresh();
   void mail_status_changed(mail_msg*,int);
   void mail_tag_changed(const mail_msg&, uint tag_id, bool added);
+
+  void archive_tag_changed(int tag_id, int diff);
+
   int highlight_entry(query_lvitem::item_type type, uint tag_id=0);
   static bool has_unread_messages(const qs_mail_map*);
   static int count_unread_messages(const qs_mail_map*);
 
+
 public slots:
+  // Update the counters for archived mail due to transitions
+  void change_archive_counts(const QList<tag_counter_transition> cnt_tags_changed);
+
   void reload_user_queries();
   void tags_restructured();
   void got_new_mail(mail_id_t);
   void context_menu(const QPoint&);
+
 protected:
   void mousePressEvent(QMouseEvent*);
+
 private:
   int m_all_unread_count;
   int m_all_unprocessed_count;
@@ -142,7 +165,10 @@ private:
   };
 
   query_lvitem* create_branch_current(const tag_node* root);
+
+  // Update the counters for current mail due to mail status transitions or mail deletion
   void update_status_counters();
+
   bool fetch_tag_map();
   void add_current_tag(uint);
   int map_count(int mask_not_set, uint tag_id);
@@ -152,7 +178,7 @@ private:
 
   void free_mail_maps();
   void make_item_current_tags(const tag_node* root);
-  void insert_child_tags(tag_node* r, query_tag_lvitem* item, int type, QSet<uint>* set);
+  int insert_child_tags(tag_node* r, query_tag_lvitem* item, int type, QSet<uint>* set);
   void update_tag_current_counter(uint tag_id);
   void display_counter(query_lvitem::item_type type);
   void store_expanded_state(QTreeWidgetItem* parent, QSet<uint>* set);
@@ -162,11 +188,14 @@ private:
   // clear the selection
   void set_item_no_signal(query_lvitem* item);
 
-  /* m_tagged: a map tag_id=>qs_mail_map* m, where 'm' is
-     a map: mail_id=>status */
+  /* m_tagged: a map tag_id=>qs_mail_map* m, where 'm' is a map:
+     mail_id=>status. Only for current messages (not archived). */
   qs_tag_map m_tagged;
 
   priority_map m_prio_map;
+
+  /* tag=>count for archived messages */
+  archived_tag_map m_archtag_map;
 
   // built-in query branches
   query_tag_lvitem* m_item_tags;

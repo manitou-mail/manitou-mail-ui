@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -33,6 +33,7 @@
 #include <QMessageBox>
 #include <QMouseEvent>
 #include <QTreeWidgetItemIterator>
+#include <QBrush>
 
 int
 query_lvitem::id_generator;
@@ -48,6 +49,7 @@ query_listview::query_listview(QWidget* parent): QTreeWidget(parent)
   // subscribe to new messages notifications
   message_port::connect_receiver(SIGNAL(new_mail_imported(mail_id_t)),
 				 this, SLOT(got_new_mail(mail_id_t)));
+
 }
 
 query_listview::~query_listview()
@@ -245,21 +247,45 @@ query_listview::map_count(int mask_not_set, uint tag_id)
   return cnt;
 }
 
-void
-query_listview::insert_child_tags(tag_node* n, query_tag_lvitem* parent_item,
-				  int type, QSet<uint>* expanded_set)
+/*
+ Recursively insert a tree of tag nodes into the treeview.
+ expanded_set: set of tag_id whose tree must be shown expanded
+   (otherwise it's folded)
+*/
+int
+query_listview::insert_child_tags(tag_node* n,
+				  query_tag_lvitem* parent_item,
+				  int type,
+				  QSet<uint>* expanded_set)
 {
+  int total_cnt = 0; // total of tag counters added at this node level
   std::list<tag_node*>::iterator iter;
+
   for (iter=n->m_childs.begin(); iter!=n->m_childs.end(); ++iter) {
-    query_tag_lvitem* q = new query_tag_lvitem(parent_item, type, (*iter)->name(), (*iter)->id());
+    query_tag_lvitem* q = new query_tag_lvitem(parent_item,
+					       type,
+					       (*iter)->name(),
+					       (*iter)->id());
+    int branch_cnt=0;
     if (!(*iter)->m_childs.empty()) {
-      insert_child_tags(*iter, q, type, expanded_set);
+     branch_cnt += insert_child_tags(*iter, q, type, expanded_set);
       if (expanded_set!=NULL && expanded_set->contains((*iter)->id())) {
 	q->setExpanded(true);
       }
       q->sortChildren(0, Qt::AscendingOrder);
     }
+
+    if (type == query_lvitem::archived_tagged) {
+      /* Search the counter associated to the tag. When found, set
+	 name-of-tag (count) as the text of the item */
+      archived_tag_map::const_iterator count_iter = m_archtag_map.constFind((*iter)->id());
+      if (count_iter != m_archtag_map.constEnd()) {
+	q->show_archived_count(count_iter.value());
+	total_cnt += branch_cnt + count_iter.value();
+      }
+    }
   }
+  return total_cnt;
 }
 
 query_lvitem*
@@ -267,6 +293,9 @@ query_listview::create_branch_current(const tag_node* root)
 {
   // Current messages (not archived)
   m_item_current = new query_lvitem(tr("Current messages"));
+  
+  //  m_item_current->set_brush(QBrush(QColor(225,160,46))); // orange
+  //  m_item_current->set_brush(QBrush(QColor(0xf4,0xe3,0x9b))); // light yellow
   insertTopLevelItem(index_branch_current, m_item_current);
 
   m_item_current_all = new query_lvitem(m_item_current, query_lvitem::current_all, tr("All"));
@@ -285,13 +314,14 @@ query_listview::create_branch_current(const tag_node* root)
 void
 query_listview::init()
 {
+  tags_definition_list tag_list;
+  tag_node root_tag;
+
   setHeaderLabel(tr("Quick selection"));
   setRootIsDecorated(true);
 
   fetch_tag_map();
-  tags_definition_list tag_list;
   tag_list.fetch();
-  tag_node root_tag;
   root_tag.get_child_tags(tag_list);
 
   // New messages
@@ -315,12 +345,16 @@ query_listview::init()
   m_item_archived = new query_lvitem(this, tr("Archived messages"));
   m_item_archived_untagged = new query_lvitem(m_item_archived,
 					      query_lvitem::archived_untagged,
-					      tr("Untagged"));
+					      tr("Not tagged"));
+
   m_item_tags = new query_tag_lvitem(m_item_archived,
 				     query_lvitem::archived_tagged,
 				     tr("Tagged"));
 
-  insert_child_tags(&root_tag, m_item_tags, query_lvitem::archived_tagged, NULL);
+  insert_child_tags(&root_tag,
+		    m_item_tags,
+		    query_lvitem::archived_tagged,
+		    NULL);
   m_item_tags->sortChildren(0, Qt::AscendingOrder);
 
   int archive_depth = get_config().get_number("display/quicksel/expand_archived");
@@ -342,6 +376,7 @@ query_listview::init()
   display_counter(query_lvitem::new_all);
   display_counter(query_lvitem::current_all);
   display_counter(query_lvitem::new_not_tagged);
+  display_counter(query_lvitem::archived_untagged);
 }
 
 /* Recursively expand the sub-items down to depth */
@@ -508,6 +543,19 @@ query_listview::fetch_tag_map()
       (*m)[mail_id] = status;
     }
     m_all_unprocessed_count = m_prio_map.size();
+
+    if (db_manitou_config::has_tags_counters()) {
+      sql_stream s1("SELECT tag_id, sum(cnt) FROM tags_counters"
+		    " GROUP BY tag_id",
+		    db);
+      m_archtag_map.clear();
+      while (!s1.eos()) {
+	int tag_id, cnt;
+	s1 >> tag_id >> cnt;
+	m_archtag_map[tag_id] = cnt;
+      }
+    }
+
   }
   catch(db_excpt& p) {
     db.handle_exception(p);
@@ -546,6 +594,7 @@ query_listview::update_tag_current_counter(uint tag_id)
       qs_tag_map::const_iterator it = m_tagged.find(0); // 0=>not tagged
       m_item_current_untagged->set_title(tr("Not tagged"),
 					 it != m_tagged.end() ? it->second : NULL);
+
     }
   }
 }
@@ -593,6 +642,15 @@ query_listview::display_counter(query_lvitem::item_type type)
       f = m_item_new_untagged->font(0);
       f.setBold(unread_untagged_count>0);
       m_item_new_untagged->setFont(0, f);
+    }
+    break;
+
+  case query_lvitem::archived_untagged:
+    {
+      archived_tag_map::const_iterator it = m_archtag_map.constFind(0);
+      if (it != m_archtag_map.constEnd()) {
+	m_item_archived_untagged->show_archived_count(it.value());
+      }
     }
     break;
 
@@ -688,6 +746,53 @@ query_listview::mail_tag_changed(const mail_msg& msg, uint tag_id, bool added)
 }
 
 /*
+  Called by msg_list_window to update counters when archived mail tags
+  change. 'diff' is how many messages must be added (if diff>0) or subtracted 
+  (if diff<0) to the tag's counter.
+  If tag_id==0, the message has no tag and the "Untagged" branch must be updated
+  instead of a branch corresponding to a tag.
+  Unlike mail_tag_changed(), the mail_id affected is not known or used,
+  as query_listview does not maintain a list of mail_id for archived mail.
+*/
+void
+query_listview::archive_tag_changed(int tag_id, int diff)
+{
+  DBG_PRINTF(4, "archive_tag_changed tag=%d : %d", tag_id, diff);
+
+  archived_tag_map::iterator it = m_archtag_map.find(tag_id);
+
+  if (it == m_archtag_map.end()) {
+    /* The tag does not exist in the map yet. Create it if diff>=0.
+       If diff<0 and the tag doesn't exist, we probably have missed
+       previous events when the counter was incremented. Do nothing
+       rather than displaying a wrong value */
+    if (diff >= 0) {
+      m_archtag_map[tag_id] = 0;
+      it = m_archtag_map.find(tag_id);
+    }
+    else {
+      DBG_PRINTF(1, "ERR: couldn't find archive tag map for tag_id=%d (diff=%d)\n",
+		 tag_id, diff);
+      // fall through to not found condition
+    }
+  }
+
+  if (it != m_archtag_map.end()) {
+    query_lvitem* item;
+    if (tag_id == 0) {
+      item = m_item_archived_untagged;
+    }
+    else
+      item = find_tag(m_item_tags, tag_id);
+    (*it) = (*it) + diff;
+    if (item) {
+      item->show_archived_count(*it);
+    }
+  }
+}
+
+
+/*
   Update the global counters due to mail status transitions or mail deletion
 */
 void
@@ -697,6 +802,18 @@ query_listview::update_status_counters()
   display_counter(query_lvitem::current_all);
   display_counter(query_lvitem::new_not_tagged);
 }
+
+/*
+  Slot. Update the counters for archived mail due to transitions.
+*/
+void
+query_listview::change_archive_counts(const QList<tag_counter_transition> changed)
+{
+  for (int i=0; i<changed.size(); i++) {
+    archive_tag_changed(changed.at(i).tag_id, changed.at(i).count_change);
+  }
+}
+
 
 /*
   Called by an msg_list_window to update counters when a mail status
@@ -802,6 +919,9 @@ query_listview::mail_status_changed(mail_msg* msg, int nstatus)
 	  }
 	}
     }
+    else {
+      /* mail_id is not found in the cache of current mail */
+    }
   }
 }
 
@@ -879,25 +999,47 @@ query_listview::refresh()
 }
 
 query_lvitem::query_lvitem(QTreeWidgetItem* parent, int item_type, const QString name) :
-  QTreeWidgetItem(parent, QStringList(name))
+  QTreeWidgetItem(parent, QStringList(name)), m_name(name)
 {
   m_type=item_type;
   m_unique_id = ++id_generator;
+  set_brush(parent->foreground(0));
 }
 
 query_lvitem::query_lvitem(QTreeWidget* parent, const QString name) :
-  QTreeWidgetItem(parent, QStringList(name))
+  QTreeWidgetItem(parent, QStringList(name)), m_name(name)
 {
   m_type=tree_node;		// 1st level node (=directory)
   m_unique_id = ++id_generator;
 }
 
-query_lvitem::query_lvitem(const QString name) : QTreeWidgetItem(QStringList(name))
+query_lvitem::query_lvitem(const QString name) : QTreeWidgetItem(QStringList(name)), m_name(name)
 {
 }
 
 query_lvitem::~query_lvitem()
 {
+}
+
+/* Show label preceded by checkmark and followed by count */
+void
+query_lvitem::show_archived_count(int cnt)
+{
+  if (cnt < 0)
+    cnt = 0; // no negative count
+  setText(0, QString("%1 %2 (%3)").arg(QChar(0x2713)).arg(m_name).arg(cnt));
+}
+
+void
+query_lvitem::show_count(int cnt1, int cnt2)
+{
+  /* No negative count */
+  if (cnt1 < 0)
+    cnt1 = 0;
+  if (cnt2==0)
+    setText(0, QString("%1 (%2)").arg(m_name).arg(cnt1));
+  else
+    setText(0, QString("%1 (%2-%3)").arg(m_name).arg(cnt1).arg(cnt2));
 }
 
 /* Text for the tooltips for leafs inside the 'Current messages' branch */
@@ -986,3 +1128,9 @@ query_lvitem::remove_children()
   }
 }
 
+void
+query_lvitem::set_brush(QBrush brush)
+{
+  setForeground(0, brush);
+  //setBackground(0, brush);
+}

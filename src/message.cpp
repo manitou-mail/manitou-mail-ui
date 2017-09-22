@@ -409,20 +409,47 @@ mail_msg::identity_id()
 
 // Add or remove a tag in the database and in memory
 bool
-mail_msg::set_tag (uint id, bool set /*=true*/)
+mail_msg::set_tag(uint tag_id, bool set /*=true*/)
 {
   db_cnx db;
   try {
-    if (set) {
-      sql_stream s1("INSERT INTO mail_tags(mail_id,tag,agent) VALUES (:p1,:p2,:p4)", db);
-      s1 << GetId() << id << user::current_user_id();
+    db.begin_transaction();
+    if (db_manitou_config::has_tags_counters()) {
+      std::set<mail_id_t> s;
+      s.insert(this->get_id());
+      QString str_a;
+      mail_id_to_sql_array(s, str_a);
+      if (set) {
+	/* add_mail_tags returns an array of mail_id of the messages
+	   to which the tag has _not_ been assigned */
+	sql_stream s3(QString("SELECT add_mail_tags(:tid, %1)").arg(str_a), db);
+	s3 << tag_id;
+	/* We can ignore the result, because the only reason for
+	   non-assignment (aside from an error) would be that the tag was
+	   already set in the database, so we had an out-of-date
+	   cached information that we're updating now. */
+      }
+      else {
+	// same interface than add_mail_tags above
+	sql_stream s3(QString("SELECT remove_mail_tags(:tid, %1)").arg(str_a), db);
+	s3 << tag_id;
+      }
     }
     else {
-      sql_stream s2("DELETE FROM mail_tags WHERE mail_id=:p1 AND tag=:p2", db);
-      s2 << GetId() << id;
+      // simpler code without tags_counters
+      if (set) {
+	sql_stream s1("INSERT INTO mail_tags(mail_id,tag,agent) VALUES (:p1,:p2,:p4)", db);
+	s1 << this->get_id() << tag_id << user::current_user_id();
+      }
+      else {
+	sql_stream s2("DELETE FROM mail_tags WHERE mail_id=:p1 AND tag=:p2", db);
+	s2 << get_id() << tag_id;
+      }
     }
+    db.commit_transaction();
   }
   catch(db_excpt& p) {
+    db.rollback_transaction();
     /* If there's an unique index violation when inserting, we want to
        ignore it (it means that the tag was already set for that
        message) */
@@ -431,38 +458,99 @@ mail_msg::set_tag (uint id, bool set /*=true*/)
       return false;
     }
   }
+  // cache the db state
   if (set)
-    m_tags.push_back(id);
+    m_tags.push_back(tag_id);
   else
-    m_tags.remove(id);
+    m_tags.remove(tag_id);
   return true;
 }
 
 //static
-int
+result_msgs_tagging
 mail_msg::toggle_tags_set(std::set<mail_msg*>& mset, uint tag_id, bool on)
 {
-  int result=0;
+  result_msgs_tagging result;
+
   if (mset.empty())
-    return true;
+    return result;
   QString in_list;
-  mail_id_to_select_in(mset, in_list);
+  mail_id_to_list(mset, in_list);
+  QString array_list;
+  mail_id_to_sql_array(mset, array_list);
+
   db_cnx db;
+
+  std::set<mail_msg*>::iterator it = mset.begin();
+  for (it = mset.begin(); it != mset.end(); ++it) {
+    if (((*it)->status() & (statusArchived|statusTrashed)) == statusArchived)
+      result.count_archived_assigned++;
+  }
+
   try {
+    db.begin_transaction();
     if (on) {
-      QString q1=QString("INSERT INTO mail_tags(mail_id,tag,agent) SELECT m.mail_id,:p1,:a FROM (SELECT mail_id FROM mail_tags WHERE tag=:p2) as mt RIGHT JOIN mail AS m ON mt.mail_id=m.mail_id WHERE mt.mail_id IS NULL AND m.mail_id IN %1").arg(in_list);
-      sql_stream s1(q1, db);
-      s1 << tag_id << user::current_user_id() << tag_id;
-      result=s1.affected_rows();
+      if (db_manitou_config::has_tags_counters()) {
+	QString q1 = QString("SELECT add_mail_tags(:tag_id,%1)").arg(array_list);
+	sql_stream s1(q1, db);
+	s1 << tag_id;
+	QString arr_not_set;
+	QVector<mail_id_t> not_set;
+	if (!s1.eos()) {
+	  s1 >> arr_not_set;
+	  // interpret arr_not_set as an array of mail_id
+	  str_to_vector(arr_not_set, not_set);
+	}
+	// TODO: do not count trashed messages. Separate archived and non archived counts
+	result.count_archived_assigned = mset.size() - not_set.size();
+      }
+      else {
+	QString q2 = QString("INSERT INTO mail_tags(mail_id,tag,agent)"
+			     " SELECT id,:tag_id,:a FROM unnest(%1) AS x(id)").arg(array_list);
+	sql_stream s2(q2, db);
+	s2 << tag_id << user::current_user_id();
+      }
     }
-    else {
-      QString q2=QString("DELETE FROM mail_tags WHERE tag=:p1 AND mail_id IN %1").arg(in_list);
-      sql_stream s2(q2, db);
-      s2 << tag_id;
-      result=s2.affected_rows();
+    else {     /* Remove tag from messages */
+      std::set<mail_id_t> unassigned; // archived messages loosing a tag (for tags counters)
+
+      if (db_manitou_config::has_tags_counters()) {
+	QString q2 = QString("SELECT remove_mail_tags(:tag_id,%1)").arg(array_list);
+	sql_stream s2(q2, db);
+	s2 << tag_id;
+      }
+      else {
+	QString q2 = QString("DELETE FROM mail_tags mt USING mail m WHERE tag=:p1 AND m.mail_id IN (%1) AND mt.mail_id=m.mail_id RETURNING m.mail_id,m.status").arg(in_list);
+	sql_stream s2(q2, db);
+	s2 << tag_id;
+	while (!s2.eos()) {
+	  int status;
+	  mail_id_t rm_mail_id;
+	  s2 >> rm_mail_id >> status;
+	  if (status&statusArchived && !(status&statusTrashed)) {
+	    result.count_archived_unassigned++;
+	    unassigned.insert(rm_mail_id);
+	  }
+	}
+      }
+
+      if (db_manitou_config::has_tags_counters()) {
+	// determine the number of archived messages that no longer have any tag
+	QString array_list;
+	mail_id_to_sql_array(unassigned, array_list);
+	QString q4 = QString("SELECT count(*) FROM unnest(%1) as m(i) LEFT JOIN mail_tags mt ON mt.mail_id=m.i WHERE mt.mail_id IS NULL").arg(array_list);
+	sql_stream s4(q4, db);
+	if (!s4.eos()) {
+	  int remcount;
+	  s4 >> remcount;
+	  result.count_notagleft = remcount;
+	}
+      }
     }
+    db.commit_transaction();
   }
   catch(db_excpt& p) {
+    db.rollback_transaction();
     DBEXCPT(p);
   }
   return result;
@@ -491,20 +579,20 @@ mail_msg::fetchNote()
 }
 
 bool
-mail_msg::trash()
+mail_msg::trash(db_ctxt* dbc)
 {
+  db_cnx db0;
+  db_cnx* db = dbc ? dbc->m_db : &db0;
   bool result=true;
-  db_cnx db;
   try {
-    db.begin_transaction();
-    sql_stream s("SELECT trash_msg(:id,:userid)", db);
+    sql_stream s("SELECT trash_msg(:id,:userid)", *db);
     s << getId() << user::current_user_id();
     s >> m_status;
-    m_db_status |= m_status;
-    db.commit_transaction();
+    m_db_status = m_status;
   }
   catch(db_excpt& p) {
-    db.rollback_transaction();
+    if (dbc && dbc->propagate_exceptions)
+      throw p;
     DBEXCPT(p);
     result=false;
   }
@@ -540,21 +628,68 @@ mail_msg::trash_set(std::set<mail_msg*>& mset)
   return result;
 }
 
-bool
-mail_msg::untrash()
+// static
+QList<tag_counter_transition>
+mail_msg::multi_trash(std::set<mail_msg*>& mset, db_ctxt* dbc)
 {
-  bool result=true;
-  db_cnx db;
+  db_cnx db0;
+  db_cnx* db = dbc ? dbc->m_db : &db0;
+
+  QList<tag_counter_transition> tags_diff;
+  if (mset.empty())
+    return tags_diff;
+
   try {
-    db.begin_transaction();
-    sql_stream sql("SELECT untrash_msg(:id, :ope)", db);
+    db->begin_transaction();
+    QString query, arr;
+    mail_id_to_sql_array(mset, arr);
+    if (db_manitou_config::has_tags_counters()) {
+      query = QString("SELECT * FROM trash_msg_set_tags(%1, :u)").arg(arr);
+      sql_stream ss(query, *db);
+      ss << user::current_user_id();
+
+      while (!ss.eos()) {
+	tag_counter_transition tr;
+	ss >> tr.tag_id >> tr.count_change;
+	tags_diff.append(tr);
+      }
+    }
+    else {
+      sql_stream sql(QString("SELECT trash_msg_set(%1, :ope)").arg(arr), *db);
+      sql << user::current_user_id();
+    }
+
+    for (std::set<mail_msg*>::iterator it=mset.begin(); it!=mset.end(); ++it) {
+      (*it)->set_orig_status((*it)->status() | statusTrashed);
+    }
+    db->commit_transaction();
+  }
+  catch(db_excpt& p) {
+    if (dbc && dbc->propagate_exceptions)
+      throw p;
+    db->rollback_transaction();
+    tags_diff.clear();
+    DBEXCPT(p);
+  }
+  return tags_diff;
+}
+
+bool
+mail_msg::untrash(db_ctxt* dbc)
+{
+  db_cnx db0;
+  db_cnx* db = dbc ? dbc->m_db : &db0;
+  bool result = true;
+
+  try {
+    sql_stream sql("SELECT untrash_msg(:id, :ope)", *db);
     sql << get_id() << user::current_user_id();
     sql >> m_status;
     m_db_status = m_status;
-    db.commit_transaction();
   }
   catch(db_excpt& p) {
-    db.rollback_transaction();
+    if (dbc && dbc->propagate_exceptions)
+      throw p;
     DBEXCPT(p);
     result=false;
   }
@@ -674,19 +809,18 @@ mail_msg::update_status(bool force/*=false*/, db_ctxt* dbc)
 */
 //static
 void
-mail_msg::mail_id_to_select_in(const std::set<mail_msg*>& s, QString& dest)
+mail_msg::mail_id_to_list(const std::set<mail_msg*>& s, QString& dest)
 {
   std::set<mail_msg*>::iterator it = s.begin();
   dest.truncate(0);
   if (it==s.end())
     return;
-  dest.append('(');
+
   for (; it!=s.end(); ++it) {
     if (it!=s.begin())
       dest.append(',');
     dest.append(QString("%1").arg((*it)->get_id()));
   }
-  dest.append(')');
 }
 
 //static
@@ -716,44 +850,54 @@ mail_msg::mail_id_to_sql_array(const std::set<mail_msg*>& s, QString& dest)
   }
 }
 
+//static
+void
+mail_msg::mail_id_to_sql_array(const std::set<mail_id_t>& s, QString& dest)
+{
+  std::set<mail_id_t>::iterator it = s.begin();
+  dest = "'{";
+  for (; it!=s.end(); ++it) {
+    if (it!=s.begin())
+      dest.append(',');
+    dest.append(QString("%1").arg((*it)));
+  }
+#if defined(DB_MAIL_ID_32)
+  dest.append("}'::int[]");
+#elif defined(DB_MAIL_ID_64)
+  dest.append("}'::bigint[]");
+#endif
+}
+
+// static
+void
+mail_msg::str_to_vector(const QString str, QVector<mail_id_t>& vect)
+{
+  for (const QString& s : str.split(',')) {
+    mail_id_t id = str_to_mail_id(s);
+    vect.append(id);
+  }
+}
+
 /* Update the status of a set of mails */
 // static
 bool
 mail_msg::set_or_with_status(std::set<mail_msg*>& s, uint or_mask)
 {
-  std::set<mail_msg*> mail_set;		// to update in MAIL
-  std::set<mail_msg*> trashed_mail_set;	// to update in TRASHED_MAIL
   bool result = true;
-
-  std::set<mail_msg*>::iterator it = s.begin();
-  for (it=s.begin(); it!=s.end(); ++it) {
-    mail_msg* m = *it;
-    if (m->status() & statusTrashed)
-      trashed_mail_set.insert(m);
-    else
-      mail_set.insert(m);
-  }
-
   db_cnx db;
   try {
     QString in_list;
-    // process MAIL
-    if (!mail_set.empty()) {
-      mail_id_to_select_in(mail_set, in_list);
-      QString query = QString("UPDATE mail SET status=status|:p1, mod_user_id=:o WHERE mail_id IN %1").arg(in_list);
+    if (!s.empty()) {
+      QString query;
+      mail_id_to_list(s, in_list);
+      query = QString("UPDATE mail SET status=status|:p1, mod_user_id=:o WHERE mail_id IN (%1)").arg(in_list);
       sql_stream sql(query, db);
       sql << or_mask << user::current_user_id();
-    }
-    // process TRASHED_MAIL
-    if (!trashed_mail_set.empty()) {
-      mail_id_to_sql_array(trashed_mail_set, in_list);
-      QString query = QString("SELECT trash_msg_set(%1, :p1)").arg(in_list);
-      sql_stream sql(query, db);
-      sql << user::current_user_id();
-    }
-    // do this only if no db exception has occurred
-    for (it=s.begin(); it!=s.end(); ++it) {
-      (*it)->set_orig_status((*it)->status() | or_mask);
+
+      // do this only if no db exception has occurred
+      for (std::set<mail_msg*>::iterator it=s.begin(); it!=s.end(); ++it) {
+	(*it)->set_orig_status((*it)->status() | or_mask);
+      }
     }
   }
   catch(db_excpt& p) {
@@ -761,6 +905,41 @@ mail_msg::set_or_with_status(std::set<mail_msg*>& s, uint or_mask)
     result = false;
   }
   return result;
+}
+
+// static
+QList<tag_counter_transition>
+mail_msg::multi_archive(std::set<mail_msg*>& s, db_ctxt* dbc)
+{
+  db_cnx db0;
+  db_cnx* db = dbc ? dbc->m_db : &db0;
+
+  QList<tag_counter_transition> tags_diff;
+  if (s.empty())
+    return tags_diff;
+
+  try {
+    QString query, arr;
+    mail_id_to_sql_array(s, arr);
+    query = QString("SELECT * FROM archive_msg_set(%1, :u)").arg(arr);
+    sql_stream ss(query, *db);
+    ss << user::current_user_id();
+
+    while (!ss.eos()) {
+      tag_counter_transition tr;
+      ss >> tr.tag_id >> tr.count_change;
+      tags_diff.append(tr);
+    }
+    for (std::set<mail_msg*>::iterator it=s.begin(); it!=s.end(); ++it) {
+      (*it)->set_orig_status((*it)->status() | statusArchived);
+    }
+  }
+  catch(db_excpt& p) {
+    if (dbc && dbc->propagate_exceptions)
+      throw p;
+    DBEXCPT(p);
+  }
+  return tags_diff;
 }
 
 bool
