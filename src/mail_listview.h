@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -41,6 +41,7 @@ class msg_list_window;
 class QIcon;
 class QMenu;
 class QKeyEvent;
+class command_item;
 
 class mail_item_model : public QStandardItemModel
 {
@@ -58,7 +59,11 @@ public:
   QStandardItem* reparent_msg(mail_msg* msg, mail_id_t parent_id);
   void update_msg(const mail_msg *msg);
   mail_msg* find(mail_id_t mail_id);
+  command_item* add_segment_selector(const QString);
   static const int mail_msg_role = Qt::UserRole+2;
+  static const int type_command = QStandardItem::UserType+1;
+  static const int type_flag = QStandardItem::UserType+2;
+
   // TODO: see if the date format could be kept in the view only
   // currently we need it when instantiating the QStandardItemModels
   void set_date_format(int d) { m_date_format=d; }
@@ -78,6 +83,8 @@ public:
   };
   void clear();
   QStandardItem* first_top_level_item() const;
+
+  void sort(int column, Qt::SortOrder order);
 
   QString m_display_sender_mode;
 
@@ -107,10 +114,21 @@ class flag_item: public QStandardItem
 public:
   flag_item();
   flag_item(const QIcon&);
+  int type() const { return mail_item_model::type_flag; }
   bool operator< (const QStandardItem & other) const {
     bool has_flag = data().toBool();
     bool other_has_flag = other.data().toBool();
     return !has_flag && other_has_flag;
+  }
+};
+
+// For items that run a command when selected
+class command_item: public QStandardItem
+{
+public:
+  command_item(const QString& text);
+  int type() const {
+    return mail_item_model::type_command;
   }
 };
 
@@ -154,6 +172,8 @@ public:
   void select_above(const mail_msg* msg);
   void select_msg(const mail_msg* msg);
 
+  void add_segment_selector(const QString segment);
+
   // select the message and scroll to it if ensure_visible is true
   void select_message(mail_id_t id, bool ensure_visible);
 
@@ -190,6 +210,9 @@ private:
   static const char* m_column_names[];
   int m_nb_visible_sections;
 
+private slots:
+  void item_clicked(const QModelIndex&);
+
 public slots:
   void popup_ctxt_menu(const QPoint&);
   void popup_ctxt_menu_headers(const QPoint&);
@@ -197,9 +220,12 @@ public slots:
   void force_msg_status (mail_id_t id, uint status, int priority);
   void refresh(mail_id_t id);
 
+
 signals:
   void selection_changed();
   void scroll_page_down();
+  void note_icon_clicked();
+  void change_segment(int);
 };
 
 

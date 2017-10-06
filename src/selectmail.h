@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -62,11 +62,59 @@ public:
   QMap<QString,QString> m_operators;
 };
 
+/*
+  Set of options that complement a fetch filter to indicate
+  what to with the results.
+*/
+class fetch_command
+{
+public:
+  // destination of the results
+  enum {
+    new_page,
+    new_window,
+    extend_current_page,
+    replace_current_page
+  } destination;
+};
+
+/*
+  Identifies a segment with (date,mail_id) pairs marking the start and
+  end of one segment of results for a filter (msgs_filter).  Segments
+  are fetched one at a time (as opposed to all results that match the
+  filter) to reduce memory consumption, execution time and latency.
+  The SQL query uses segments through clauses constraining
+  (msg_date,mail_id) withing bounds, and using LIMIT.
+*/
+class result_segment
+{
+public:
+  /* the bounds are (date_{min,max}, mailid_{min,max}) as a pair.
+     mail_id is a tie-breaker for the date */
+  QString date_min;		// format: YYYYMMDDHHMISS, with HH being 24-hour
+  mail_id_t mail_id_min;
+  QString date_max;		// same format as date_min
+  mail_id_t mail_id_max;
+  /* first segment of the resultset. Either a first fetch for a query
+     or a subsequent backward fetch that retrieved less results than
+     the limit */
+  bool is_first = true;
+
+  /* we know that there's no more results after a segment by asking
+     for N+1 results instead of N and noting than N+1 results came
+     back */
+  bool is_last;
+
+  // whether the other fields are initialized and valid
+  bool is_valid = false;
+
+  void print();
+};
+
 class msgs_filter
 {
 public:
   msgs_filter();
-  void init();
   virtual ~msgs_filter();
   const QString user_query() const {
     return m_user_query;
@@ -79,17 +127,14 @@ public:
   typedef std::list<mail_msg*> mlist_t;
   mlist_t m_list_msgs;
   // fetch the selection into a mail list widget
-  int fetch(mail_listview*, bool fetch_more=false);
-  int asynchronous_fetch (fetch_thread* t, bool fetch_more=false);
+  int fetch(mail_listview*, int direction=0);
+  int asynchronous_fetch (fetch_thread* t, int direction=0);
   void make_list(mail_listview*);
   void set_auto_refresh(bool s=true) {
     m_auto_refresh=s;
   }
   bool auto_refresh() const {
     return m_auto_refresh;
-  }
-  bool has_more_results() const {
-    return m_has_more_results;
   }
   int parse_search_string(QString s, fts_options&);
 
@@ -148,6 +193,11 @@ public:
   bool m_in_trash;
   bool m_include_trash;
 
+  /* Most queries can't have a progress bar because the database does
+     not report progress. There's an exception for partitioned
+     full-text search, where the database may emit a notification per
+     partition searched, which gets shown if the config option
+     display/wordsearch/progress_bar is set. */
   bool m_has_progress_bar;
 
   filter_expr m_filter_expression;
@@ -157,6 +207,14 @@ public:
   void set_date_order(int o) {
     m_order=o;
   }
+
+  result_segment& segment() {
+    return m_segment;
+  }
+  bool has_more_results() const {
+    return m_has_more_results;
+  }
+
   int m_max_results;		// max results per fetch iteration
   bool m_fetched;
 
@@ -174,6 +232,7 @@ public:
 #endif
 
 private:
+  void init();
   enum date_comparator {
     date_equal,
     date_after,
@@ -249,21 +308,21 @@ private:
      ... LIMIT ... */
   QString m_user_query;
 
-  /* used to fetch another batch of results that are older/newer (depending on m_order) */
-  /* conditions */
-  QString m_date_bound;
-  int m_mail_id_bound;
-  /* gathered from previous fetch */
-  QString m_results_date_bound;
-  int m_results_mail_id_bound;
+  /* used to fetch another set of results that are older/newer
+     (depending on m_order) */
+  result_segment m_segment;
 
-  /* ordering of msg_date (+1=ASC, -1=DESC) column for the fetch */
+  /* Ordering of msg_date (+1=ASC, -1=DESC) column for the fetch.
+     Instantiated from the configuration ("messages_order") when the
+     filter is initialized, and not changed afterwards. */
   int m_order;
 
-  /* true if m_max_results is set and the last fetch retrieved
-     m_max_results+1 results, meaning that there's at least one more
-     result to get */
-  bool m_has_more_results;
+  bool m_has_more_results = false;
+
+  /* To move backward/forward the fetch window within the
+     results. (0=first fetch, +1=ASC, -1=DESC) for (msg_date,mail_id) pairs.
+     Can be changed between fetches.  */
+  int m_direction = 0;
 
 #if 0
   /* keep the last part_no we joined against for IWI search. A

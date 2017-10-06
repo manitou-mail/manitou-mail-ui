@@ -83,7 +83,7 @@ mail_msg::mail_msg(const mail_result& r):
   m_bHeaderFetched(false),
   m_tags_fetched(false),
   m_mailnote_in_db(false),
-  m_nInReplyTo(r.m_in_replyto),
+  m_nInReplyTo((mail_id_t)r.m_in_replyto),
   m_rawsize(0)
 
 {
@@ -97,6 +97,7 @@ mail_msg::mail_msg(const mail_result& r):
   setStatus(r.m_status);
   set_sender_name(r.m_sender_name);
   set_flags(r.m_flags);
+  set_recipients(r.m_recipients);
 }
 
 void

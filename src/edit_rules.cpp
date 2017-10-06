@@ -820,7 +820,7 @@ filter_edit::timer_done()
     else {
       m_test_window_results->show_status_message(tr("%1 match(es) found. Testing more...").arg(m_nb_filter_test_match));
       m_waiting_for_results = true;
-      int r = m_test_msgs_filter->asynchronous_fetch(m_fthread, true);
+      int r = m_test_msgs_filter->asynchronous_fetch(m_fthread, +1);
       if (r!=1) // error
 	finished=true;
     }

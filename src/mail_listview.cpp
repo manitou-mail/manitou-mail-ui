@@ -38,6 +38,10 @@ flag_item::flag_item() : QStandardItem("")
 {
 }
 
+command_item::command_item(const QString& text) : QStandardItem(text)
+{
+}
+
 mail_item_model::mail_item_model(QObject* parent) : QStandardItemModel(parent)
 {
 }
@@ -301,24 +305,111 @@ QStandardItem*
 mail_item_model::insert_msg_sorted(mail_msg* msg, QStandardItem* parent,
 				   int column, Qt::SortOrder order)
 {
-  DBG_PRINTF(4, "insert_msg_sorted order=%d column=%d", (int)order, column);
   QList<QStandardItem*> items;
   create_row(msg, items);
-  QStandardItem* item = items[0];
   int row = insertion_point(items, parent, column, order);
-  DBG_PRINTF(4, "insertion point=%d", row);
   if (parent) {
     parent->insertRow(row, items);
   }
   else {
     insertRow(row, items);
   }
-  items_map.insert(msg->get_id(), item);
+
+  items_map.insert(msg->get_id(), items[0]);
+  return items[0];
+}
+
+command_item*
+mail_item_model::add_segment_selector(const QString segment)
+{
+  command_item* item = NULL;
+
+  /* pseudo-entry pointing to the next/previous segment */
+  if (segment == "next") {
+    item = new command_item(tr("Fetch next segment of results"));
+    item->setIcon(STATUS_ICON(ICON16_ARROW_DOWN));
+    item->setData(QVariant(+1));
+    // this item should be fixed at the end of list
+    appendRow(item);
+  }
+  else if (segment == "prev") {
+    item = new command_item(tr("Fetch previous segment of results"));
+    item->setIcon(STATUS_ICON(ICON16_ARROW_UP));
+    item->setData(QVariant(-1));
+    // this item should be fixed at the start of list
+    insertRow(0, item);
+  }
+  Q_ASSERT(item!=NULL);
+  if (item) {
+    // properties that are common to next and previous items
+    item->setFlags(item->flags()&(~Qt::ItemIsSelectable));
+    QFont f = item->font();
+    f.setItalic(true);
+    item->setFont(f);
+  }
   return item;
 }
 
+
+/*
+  Handle non-sortable command items around sort() to
+  remove them before and put them again after
+*/
+void
+mail_item_model::sort(int column, Qt::SortOrder order)
+{
+  DBG_PRINTF(6, "mail_item_model::sort()");
+  bool has_prev_segment = false;
+  bool has_next_segment = false;
+  QModelIndex index = this->index(0, 0);
+  QStandardItem* first_item = itemFromIndex(index);
+
+  if (first_item) {
+    if (first_item->type() == mail_item_model::type_command) {
+      if (first_item->data().toInt() == -1) {
+	has_prev_segment = true;
+	removeRow(index.row(), index.parent());
+      }
+      else if (first_item->data().toInt() == +1) {
+	has_next_segment = true;
+	removeRow(index.row(), index.parent());
+      }
+    }
+  }
+
+  QStandardItem* last_item = NULL;
+  if (rowCount() >= 1) {
+    index = this->index(rowCount()-1, 0);
+    if ((last_item = itemFromIndex(index)) != NULL) {
+      if (last_item->type() == mail_item_model::type_command) {
+	if (last_item->data().toInt() == -1) {
+	  has_prev_segment = true;
+	  removeRow(index.row(), index.parent());
+	}
+	else if (last_item->data().toInt() == +1) {
+	  has_next_segment = true;
+	  removeRow(index.row(), index.parent());
+	}
+      }
+    }
+  }
+
+
+  // call base class implementation
+  QStandardItemModel::sort(column, order);
+
+  // put back command items
+  if (has_prev_segment)
+    add_segment_selector("prev");
+  if (has_next_segment)
+    add_segment_selector("next");
+}
+
+
 /* Returns the insertion position for new_row in a sorted list, or -1
-   if it should be appended */
+   if it should be appended.
+   column: index of the column by which the list is ordered.
+*/
 int
 mail_item_model::insertion_point(QList<QStandardItem*>& new_row,
 				 QStandardItem* parent,
@@ -328,11 +419,21 @@ mail_item_model::insertion_point(QList<QStandardItem*>& new_row,
   const QStandardItem* item_col = new_row[column];
   Q_ASSERT(item_col!=NULL);
   // binary search
-  int l=0;
+  int l = 0;			// lower limit
   if (!parent) {
-    parent=invisibleRootItem();
+    parent = invisibleRootItem();
   }
-  int r=parent->rowCount()-1;
+  int r = parent->rowCount()-1;	// upper limit
+
+  /* ignore command items that may be present at the top and bottom of
+     the list: they must be kept at their positions*/
+  if (r >= 0 && parent == invisibleRootItem()) {
+    if (parent->child(l, 0)->type() == mail_item_model::type_command)
+      l++;
+    if (r > l && parent->child(r, 0)->type() == mail_item_model::type_command)
+      r--;
+  }
+
   while (l<=r) {
     int mid=(l+r)/2;
     const QStandardItem* mid_item=parent->child(mid, column);
@@ -541,12 +642,17 @@ mail_listview::mail_listview(QWidget* parent): QTreeView(parent)
   connect(header(), SIGNAL(customContextMenuRequested(const QPoint&)),
 	  this, SLOT(popup_ctxt_menu_headers(const QPoint&)));
 
+  connect(this, SIGNAL(clicked(const QModelIndex&)),
+	  this, SLOT(item_clicked(const QModelIndex&)));
+
+
   setEditTriggers(QAbstractItemView::NoEditTriggers);
 }
 
 mail_listview::~mail_listview()
 {
 }
+
 
 QMenu*
 mail_listview::make_header_menu(QWidget* parent)
@@ -739,6 +845,30 @@ mail_listview::refresh(mail_id_t id)
     msg->refresh();		// get latest status from database
     update_msg(msg);
   }
+}
+
+// slot called on a single-click
+void
+mail_listview::item_clicked(const QModelIndex& index)
+{
+  QStandardItem* item = model()->itemFromIndex(index);
+  if (!item)
+    return;
+
+  if (item->type() == mail_item_model::type_command) {
+    QVariant v = item->data();
+    if (v.toInt() == 1) { // fetch next
+      emit change_segment(1);
+    }
+    else if (v.toInt() == -1) { // fetch prev
+      emit change_segment(-1);
+    }
+  }
+
+  else if (index.column() == mail_item_model::column_note) {
+    emit note_icon_clicked();
+  }
+
 }
 
 /*
@@ -1001,9 +1131,6 @@ mail_listview::get_selected_indexes(QModelIndexList& list)
 void
 mail_listview::clear()
 {
-  DBG_PRINTF(4, "sort column=%d, nb columns=%d",
-	     header()->sortIndicatorSection(),
-	     header()->count());
   /* Keep the sort column and set it again after recreating the
      header. Otherwise sortIndicatorSection() is incremented by
      count() after init_columns(). (looks like a Qt bug. Example:
@@ -1019,9 +1146,6 @@ mail_listview::clear()
   if (section>=0) {
     header()->setSortIndicator(section, order);
   }
-  DBG_PRINTF(4, "sort column=%d, nb columns=%d",
-	     header()->sortIndicatorSection(),
-	     header()->count());
 }
 
 bool
@@ -1056,7 +1180,8 @@ mail_listview::get_selected(std::vector<mail_msg*>& vect)
       continue;
     QStandardItem* item = model()->itemFromIndex(idx);
     QVariant v=item->data(mail_item_model::mail_msg_role);
-    vect.push_back(v.value<mail_msg*>()); // add the mail_msg* to the vector
+    if (v.isValid())
+      vect.push_back(v.value<mail_msg*>()); // add the mail_msg* to the vector
   }
 }
 
@@ -1226,7 +1351,19 @@ mail_listview::insert_list(std::list<mail_msg*>& list)
       if (!existing_msg)
 	m->insert_msg(*it);
     }
-  }    
+  }
+}
+
+void
+mail_listview::add_segment_selector(const QString segment)
+{
+  mail_item_model* m = model();
+  command_item* item = m->add_segment_selector(segment);
+  if (item) {
+    QModelIndex index = m->indexFromItem(item);
+    setFirstColumnSpanned(index.row(), m->invisibleRootItem()->index(), true);
+  }
+
 }
 
 /* Hide/show the sender column or show/hide the recipient column and

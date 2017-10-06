@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -24,12 +24,12 @@
 #include "attachment_listview.h"
 #include "browser.h"
 
-#include <QSplitter>
-#include <QRegExp>
-#include <QList>
 #include <QAction>
-#include <QStackedWidget>
 #include <QHeaderView>
+#include <QList>
+#include <QRegExp>
+#include <QSplitter>
+#include <QStackedWidget>
 
 void
 msg_list_window::change_page(msgs_page* p)
@@ -260,10 +260,13 @@ msg_list_window::add_msgs_page(const msgs_filter* f, bool if_results _UNUSED_)
   connect(m_qlist,SIGNAL(doubleClicked(const QModelIndex&)),
 	  this,SLOT(mail_reply_all()));
 
-  connect(m_qlist, SIGNAL(clicked(const QModelIndex&)),
-	  this, SLOT(action_click_msg_list(const QModelIndex&)));
-
   connect(m_qlist, SIGNAL(scroll_page_down()), m_msgview, SLOT(page_down()));
+  connect(m_qlist, SIGNAL(note_icon_clicked()), this, SLOT(edit_note()));
+
+  /* Use queued connection because fetch_segment() may replace the list
+     contents. */
+  connect(m_qlist, SIGNAL(change_segment(int)), this, SLOT(fetch_segment(int)),
+	  Qt::QueuedConnection);
 
   if (m_pages->next_page()) {
     // we're in the middle of a page list, and asked to go forward.
@@ -295,5 +298,6 @@ msg_list_window::add_msgs_page(const msgs_filter* f, bool if_results _UNUSED_)
   m_pages->raise_page(page);
   m_tags_box->reset_tags();
   enable_forward_backward();
+  enable_segments();
 }
 

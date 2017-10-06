@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -24,16 +24,14 @@
 fetch_thread::fetch_thread()
 {
   m_cnx=NULL;
-  m_fetch_more=false;
   m_cancelled=false;
 }
 
-int
+void
 fetch_thread::store_results(sql_stream& s, int max_nb)
 {
-  int i=0;
-  QString date_stamp;
   mail_result r;
+  int i = 0;
 
   while (!s.eos() && (max_nb==-1 || i<max_nb)) {
     s >> r.m_id >> r.m_from >> r.m_subject >> r.m_date >> r.m_thread_id
@@ -41,9 +39,6 @@ fetch_thread::store_results(sql_stream& s, int max_nb)
       >> r.m_recipients;
     msg_status_cache::update(r.m_id, r.m_status);
     m_results->push_back(r);
-
-    date_stamp = r.m_date.isEmpty() ? QString("00000000000000%1").arg(r.m_id) :
-      QString("%1%2").arg(r.m_date).arg(r.m_id);
 
     /* Find the min/max of (msg_date,mail_id) */
     if (m_min_msg_date.isEmpty()) {
@@ -71,10 +66,8 @@ fetch_thread::store_results(sql_stream& s, int max_nb)
       if (r.m_id > m_max_mail_id)
 	m_max_mail_id = r.m_id;
     }
-
-    i++;
+    ++i;
   }
-  return i;
 }
 
 
@@ -158,7 +151,6 @@ fetch_thread::cancel()
       m_cancelled=true;
     }
   }
-  m_fetch_more=false;
 }
 
 void
@@ -169,5 +161,4 @@ fetch_thread::release()
     delete m_cnx;
     m_cnx=NULL;
   }
-  m_fetch_more=false;
 }

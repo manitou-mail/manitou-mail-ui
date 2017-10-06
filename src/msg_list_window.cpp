@@ -739,13 +739,30 @@ msg_list_window::init_menu()
   m_pMenuSelection->addSeparator();
 
   m_menu_actions[me_Selection_New] =
-    m_pMenuSelection->addAction(ico_new_query, tr("&New query"), this, SLOT(new_list()), Qt::Key_F2);
+    m_pMenuSelection->addAction(ico_new_query, tr("&New query"), this,
+				SLOT(new_list()), Qt::Key_F2);
   m_menu_actions[me_Selection_Refine] =
-    m_pMenuSelection->addAction(ico_replace_query, tr("&Modify query"), this, SLOT(sel_refine()));
+    m_pMenuSelection->addAction(ico_replace_query, tr("&Modify query"), this,
+				SLOT(sel_refine()));
   m_menu_actions[me_Selection_Refresh] =
-    m_pMenuSelection->addAction(ico_refresh, tr("&Refresh"), this, SLOT(sel_refresh()), Qt::Key_F5);
+    m_pMenuSelection->addAction(ico_refresh, tr("&Refresh"), this,
+				SLOT(sel_refresh()), Qt::Key_F5);
   m_menu_actions[me_Selection_Save_Query] =
-    m_pMenuSelection->addAction(ico_save_query, tr("&Save query"), this, SLOT(sel_save_query()));
+    m_pMenuSelection->addAction(ico_save_query, tr("&Save query"), this,
+				SLOT(sel_save_query()));
+
+
+  m_pMenuSelection->addSeparator();
+  m_menu_actions[me_Selection_PrevSegment] =
+    m_pMenuSelection->addAction(UI_ICON(ICON16_ARROW_UP),
+				tr("Fetch previous segment"), this,
+				SLOT(sel_prev_segment()));
+
+  m_menu_actions[me_Selection_NextSegment] =
+    m_pMenuSelection->addAction(UI_ICON(ICON16_ARROW_DOWN),
+				tr("Fetch next segment"), this,
+				SLOT(sel_next_segment()));
+
 
 #if 0
   m_pMenuSelection->addSeparator();
@@ -765,6 +782,7 @@ msg_list_window::msg_list_window (const msgs_filter* filter, display_prefs* dpre
   m_filter = new msgs_filter(*filter);
   m_pCurrentItem = NULL;
   m_progress_bar = NULL;
+  m_abort_button = NULL;
 
   // application icon
   setWindowIcon(FT_MAKE_ICON(FT_ICON16_EDIT));
@@ -831,16 +849,12 @@ msg_list_window::msg_list_window (const msgs_filter* filter, display_prefs* dpre
 
   resize(width,height);
 
-//  topLayout->setMenuBar(menu);
-
   create_actions();
-  add_msgs_page(m_filter,false);
-
   make_toolbar();
   make_search_toolbar();
-
   init_menu();
-  enable_forward_backward();
+
+  add_msgs_page(m_filter,false);
   init_fonts();
 
   m_timer_idle = new QTimer(this);
@@ -879,12 +893,12 @@ msg_list_window::raise_refresh()
 void
 msg_list_window::msg_list_postprocess()
 {
-  // sort by message date
+  // data is pre-sorted server-side by message date but we redo it
+  // just to have the sort indicator initialized (FIXME)
   DBG_PRINTF(8, "start sort (sortingEnabled=%d)", m_qlist->isSortingEnabled());
-  m_qlist->setSortingEnabled(true);
   m_qlist->sortByColumn(mail_item_model::column_date, get_config().get_msgs_sort_order());
-  DBG_PRINTF(8, "end sort");
-  m_qlist->header()->setSortIndicatorShown(true);
+  m_qlist->setSortingEnabled(true);
+
   m_qlist->setRootIsDecorated(display_vars.m_threaded);
   m_qlist->expandAll();
   set_title();
@@ -1391,12 +1405,13 @@ msg_list_window::set_title(const QString title/*=QString::null*/)
 void
 msg_list_window::enable_commands()
 {
-  int size=m_qlist->selection_size();
-  if (size==1) {
-    // one mail selected
-    std::vector<mail_msg*> v;
+  std::vector<mail_msg*> v;
+  int size = m_qlist->selection_size();
+  if (size == 1) {
     m_qlist->get_selected(v);
-
+    size = v.size();
+  }
+  if (size == 1) {
     m_action_reply_all->setEnabled(true);
     m_action_reply_sender->setEnabled(true);
     m_action_reply_list->setEnabled(true);
@@ -1413,7 +1428,7 @@ msg_list_window::enable_commands()
     m_action_msg_sender_details->setEnabled(true);
     m_menu_actions[me_Message_Properties]->setEnabled(true);
   }
-  else if (size==0) {
+  else if (size == 0) {
     // none selected
     m_action_reply_all->setEnabled(false);
     m_action_reply_sender->setEnabled(false);
@@ -1473,6 +1488,7 @@ msg_list_window::toggle_threaded(bool on)
      with current versions of QTreeView (as of Qt-4.3.3) */
   m_qlist->insert_list(m_filter->m_list_msgs);
   m_qlist->setRootIsDecorated(display_vars.m_threaded);
+  add_segments();
 }
 
 void
@@ -1808,16 +1824,6 @@ msg_list_window::open_address_book()
   w->show();
 }
 #endif
-
-void
-msg_list_window::action_click_msg_list(const QModelIndex& index)
-{
-  if (index.column() == mail_item_model::column_note) {
-    if (m_pCurrentItem) {
-      edit_note();
-    }
-  }
-}
 
 void
 msg_list_window::mail_reply_all()
@@ -2232,6 +2238,9 @@ msg_list_window::sel_filter(const msgs_filter& f)
 	  this, SLOT(show_progress(int)),
 	  Qt::QueuedConnection);
 
+  m_fetch_command.destination = want_new_window() ?
+    fetch_command::new_window : fetch_command::new_page;
+
   int r = m_loading_filter->asynchronous_fetch(&m_thread);
   if (r==1) {
     m_waiting_for_results = true;
@@ -2252,6 +2261,44 @@ msg_list_window::sel_save_query()
   extern void save_filter_query(msgs_filter*, int,const QString);
   save_filter_query(m_filter, 0, QString::null);
   m_query_lv->reload_user_queries();
+}
+
+
+void
+msg_list_window::fetch_segment(int direction)
+{
+  m_filter->segment().print();	// DEBUG
+
+  m_fetch_command.destination = fetch_command::replace_current_page;
+
+  enable_interaction(false);
+
+  m_loading_filter = new msgs_filter(*m_filter);
+  m_loading_filter->m_list_msgs.clear();
+  m_loading_filter->m_fetch_results = NULL;
+  Qt::SortOrder order = m_qlist->header()->sortIndicatorOrder();
+  m_loading_filter->set_date_order((order == Qt::DescendingOrder) ? -1 : +1);
+
+  int r = m_loading_filter->asynchronous_fetch(&m_thread, direction);
+  // copy-pasted from sel_filter()
+  if (r==1) {
+    m_waiting_for_results = true;
+  }
+  else if (r==0) {
+    QMessageBox::information(this, APP_NAME, tr("Fetch error"));
+  }
+}
+
+void
+msg_list_window::sel_next_segment()
+{
+  fetch_segment(+1);
+}
+
+void
+msg_list_window::sel_prev_segment()
+{
+  fetch_segment(-1);
 }
 
 #if 0
@@ -2382,7 +2429,7 @@ msg_list_window::fetch_more()
   statusBar()->showMessage(tr("Querying database..."));
 
   m_filter->m_fetch_results = NULL;
-  int r = m_filter->asynchronous_fetch(&m_thread, true);
+  int r = m_filter->asynchronous_fetch(&m_thread, +1);
   DBG_PRINTF(8, "after async_fetch m_filter->results has %d elements", m_filter->m_list_msgs.size());
   if (r == 1) {
     m_waiting_for_results = true;
@@ -2960,7 +3007,12 @@ msg_list_window::mails_selected()
   if (v.size()==1) {
     mail_selected(v[0]);
   }
-  else {
+  else if (v.size()==0) {
+    m_msgview->clear();
+    m_qAttch->hide();
+    m_pCurrentItem = NULL;
+  }
+  else { // multiple messages are selected
     m_msgview->clear();
     m_qAttch->hide();
     statusBar()->showMessage(tr("%1 messages selected.").arg(v.size()), 3000);
@@ -3284,14 +3336,13 @@ msg_list_window::timer_func()
     DBG_PRINTF(5, "End of asynchronous fetch detected in timer_func()");
     m_waiting_for_results = false;
 
-
     if (!m_loading_filter ||
 	(m_loading_filter && !m_loading_filter->m_has_progress_bar)) {
       // Only if no progress bar. Otherwise uninstall_progressbar() will handle this.
       enable_interaction(true);
     }
 
-    if (m_thread.m_fetch_more) { // FIXME: use a better abstraction
+    if (m_fetch_command.destination == fetch_command::extend_current_page) {
       // this is a "fetch more" operation. It uses the current filter (m_filter)
       m_filter->postprocess_fetch(m_thread);
       DBG_PRINTF(8, "fetch_more -> make_list");
@@ -3302,7 +3353,13 @@ msg_list_window::timer_func()
     else if (m_loading_filter && m_loading_filter->m_fetch_results) {
       // this is a fetch for a new list of results. It uses a temporary filter
       m_loading_filter->postprocess_fetch(m_thread);
-      if (want_new_window()) {
+      if (m_fetch_command.destination == fetch_command::replace_current_page) {
+	m_qlist->clear();
+	m_loading_filter->make_list(m_qlist);
+	*m_filter = *m_loading_filter;
+	set_title();
+      }
+      else if (m_fetch_command.destination == fetch_command::new_window) {
 	msg_list_window* w = new msg_list_window(m_loading_filter, 0);
 	w->show();
       }
@@ -3314,6 +3371,9 @@ msg_list_window::timer_func()
     m_thread.release();
 
     unsetCursor();
+
+    add_segments();
+    enable_segments();
 
     if (m_loading_filter && m_loading_filter->m_has_progress_bar)
       uninstall_progressbar();
@@ -3358,6 +3418,34 @@ msg_list_window::timer_func()
 	check_new_mail();
       }
     }
+  }
+}
+
+void
+msg_list_window::enable_segments()
+{
+  if (!m_filter)
+    return;
+
+  m_menu_actions[me_Selection_PrevSegment]
+    ->setEnabled(!m_filter->segment().is_first);
+
+  m_menu_actions[me_Selection_NextSegment]
+    ->setEnabled(!m_filter->segment().is_last);
+}
+
+void
+msg_list_window::add_segments()
+{
+  if (!m_filter)
+    return;
+
+  if (!m_filter->segment().is_last) {
+    m_qlist->add_segment_selector("next");
+  }
+
+  if (!m_filter->segment().is_first) {
+    m_qlist->add_segment_selector("prev");
   }
 }
 

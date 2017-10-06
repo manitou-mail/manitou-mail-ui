@@ -96,6 +96,9 @@ extern QString gl_xpm_path;
 #define ICON16_GO_UP "go-up.png"
 #define ICON16_GO_DOWN "go-down.png"
 
+#define ICON16_ARROW_UP "arrow-up.png"
+#define ICON16_ARROW_DOWN "arrow-down.png"
+
 #define ICON16_FOLDER "folder.png"
 #define ICON16_IMPORTANT "emblem-important.png"
 #define ICON16_DIALOG_OK "dialog-ok.png"

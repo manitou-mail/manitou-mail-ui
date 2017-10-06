@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -39,7 +39,7 @@ public:
   int m_max_results;
   int m_step_count; // increase each time the thread is reused (fetch more)
   std::list<mail_result>* m_results;
-  int store_results(sql_stream& stream, int max_nb);
+  void store_results(sql_stream& stream, int max_nb);
   QString m_query;
   QString m_errstr;
   int m_exec_time;   // query exec time in milliseconds
@@ -52,7 +52,6 @@ public:
   QString m_min_msg_date;
 
   //  progressive_wordsearch m_psearch;
-  bool m_fetch_more;
   bool m_cancelled;
 
   // Notice processing

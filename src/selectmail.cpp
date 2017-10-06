@@ -62,7 +62,7 @@ msgs_filter::msgs_filter()
 void
 msgs_filter::init()
 {
-  m_order=(get_config().get_msgs_sort_order()==Qt::AscendingOrder)?1:-1;
+  m_order = (get_config().get_msgs_sort_order()==Qt::AscendingOrder)?1:-1;
   m_tag_id=0;
   m_thread_id=0;
   m_status=-1;
@@ -96,25 +96,24 @@ msgs_filter::init()
   m_min_prio = max_possible_prio+1;
   m_nAddrType = 0;
 
-  m_user_query=QString::null;
-
-  m_mail_id_bound = 0;
-  m_date_bound = QString::null;
-
   // results
   m_fetched = false;
   m_fetch_results = NULL;
-
-  m_results_date_bound = QString::null;
-  m_results_mail_id_bound = 0;
-  m_has_more_results = false;
-  
 }
 
 msgs_filter::~msgs_filter()
 {
   if (m_fetch_results)
     delete m_fetch_results;
+}
+
+void
+result_segment::print()
+{
+  QString d = QString("segment: min=(%1,%2) max=(%3,%4), first=%5,last=%6,valid=%7")
+    .arg(date_min).arg(mail_id_min).arg(date_max).arg(mail_id_max)
+    .arg(is_first).arg(is_last).arg(is_valid);
+  DBG_PRINTF(3, "%s", d.toLocal8Bit().constData());
 }
 
 // Initialize a fetch_thread with conditions and state known by the filter
@@ -125,26 +124,62 @@ msgs_filter::preprocess_fetch(fetch_thread& thread)
 }
 
 
-// Store post-fetch state to the filter from the fetch_thread
+/*
+  - store post-fetch state into the filter from the fetch_thread.
+  - compute is_first / is_last, based on whether there is an N+1
+    result over the limit of the segment.
+  - set the new bounds for the current segment.
+*/
 void
 msgs_filter::postprocess_fetch(fetch_thread& thread)
 {
-  m_has_more_results = m_max_results>0 && (thread.m_tuples_count > m_max_results);
+  bool has_more = m_max_results>0 && (thread.m_tuples_count > m_max_results);
 
-  if (m_order>0) {
-    m_results_mail_id_bound = thread.m_max_mail_id;
-    m_results_date_bound = thread.m_max_msg_date;
+  if (m_direction == 0) {
+    m_segment.is_first = true;	// not sliding along results (yet)
+    m_segment.is_last = !has_more;
   }
   else {
-    m_results_mail_id_bound = thread.m_min_mail_id;
-    m_results_date_bound = thread.m_min_msg_date;
+    if (m_order > 0) {
+      if (m_direction > 0) {
+	m_segment.is_first = false;
+	m_segment.is_last = !has_more;
+      }
+      else {
+	m_segment.is_last = false;
+	m_segment.is_first = !has_more;
+      }
+    }
+    else {
+      if (m_direction < 0) { // descending order, moving up in the list
+	m_segment.is_last = false; // we're going up from a previous segment
+	m_segment.is_first = !has_more;
+      }
+      else  { // descending order, moving down in the list
+	m_segment.is_first = false;
+	m_segment.is_last = !has_more;
+      }
+    }
   }
+
+  m_segment.mail_id_max = thread.m_max_mail_id;
+  m_segment.date_max = thread.m_max_msg_date;
+
+  m_segment.mail_id_min = thread.m_min_mail_id;
+  m_segment.date_min = thread.m_min_msg_date;
+
+  m_segment.is_valid = true;
+
+  m_has_more_results = has_more || !m_segment.is_first || !m_segment.is_last;
+
+  DBG_PRINTF(4, "postprocess_fetch");
+  m_segment.print();
 }
 
 int
-msgs_filter::add_address_selection (sql_query& q,
-				    const QString email_addr,
-				    int addr_type)
+msgs_filter::add_address_selection(sql_query& q,
+				   const QString email_addr,
+				   int addr_type)
 {
   mail_address addr;
   bool address_found;
@@ -345,7 +380,7 @@ msgs_filter::select_list_mail_columns =
   "m.mail_id,"
   "sender,"
   "subject,"
-  "to_char(msg_date,'YYYYMMDDHH24MISS'),"
+  "to_char(msg_date,'YYYYMMDDHH24MISSUS'),"
   "thread_id,"
   "m.status,"
   "in_reply_to,"
@@ -364,8 +399,8 @@ msgs_filter::select_list_mail_columns =
   3: there are invalid parameters in the filter that imply a user-visible
      error message.
 
-  'fetch_more' can be set on subsequent invocations to fetch more results
-  (think "next page") based on the lower/higher (msg_date,mail_id) previously
+  'direction' can be set on subsequent invocations to fetch more results
+  (previous/next pages) based on the lower/higher (msg_date,mail_id) previously
   retrieved
 */
 int
@@ -416,14 +451,15 @@ msgs_filter::build_query(sql_query& q)
     }
     q.add_table(main_table);
 
-    // bounds. m_mail_id_bound and m_date_bound should be either both set or both unset
 
-    if (!m_date_bound.isEmpty()) {
-      if (m_order < 0) {
-	q.add_clause(QString("(m.msg_date,m.mail_id) < (to_timestamp('%1','YYYYMMDDHH24MISS'),%2)").arg(m_date_bound).arg(m_mail_id_bound));
+    /* m_segment should be valid, but in the abormal case when it's not,
+       ignore the bounds to mitigate the problem. */
+    if (m_segment.is_valid) {
+      if ((m_direction > 0 && m_order < 0) || (m_direction < 0 && m_order > 0)) {
+	q.add_clause(QString("(m.msg_date,m.mail_id) < (to_timestamp('%1','YYYYMMDDHH24MIUS'),%2)").arg(m_segment.date_min).arg(m_segment.mail_id_min));
       }
-      else if (m_order > 0) {
-	q.add_clause(QString("(m.msg_date,m.mail_id) > (to_timestamp('%1','YYYYMMDDHH24MISS'),%2)").arg(m_date_bound).arg(m_mail_id_bound));
+      else if ((m_direction > 0 && m_order > 0) || (m_direction < 0 && m_order < 0) ) {
+	q.add_clause(QString("(m.msg_date,m.mail_id) > (to_timestamp('%1','YYYYMMDDHH24MIUS'),%2)").arg(m_segment.date_max).arg(m_segment.mail_id_max));
       }
     }
 
@@ -632,8 +668,14 @@ msgs_filter::build_query(sql_query& q)
     }
 
     {
+      const char* order;
+      if (m_order < 0)
+	order =  (m_direction>=0) ? "DESC" : "ASC";
+      else
+	order = (m_direction>=0) ? "ASC" : "DESC";
+
       QString sFinal = QString("ORDER BY (m.msg_date,m.mail_id) %1").
-	arg(m_order<0 ? "DESC" : "ASC");
+	arg(order);
       if (m_max_results>0) {
 	sFinal.append(QString(" LIMIT %1").arg(m_max_results+1));
       }
@@ -947,19 +989,17 @@ msgs_filter::process_mail_id_clause(sql_query& q, QList<QString> vals)
 /*
   Return values: same as build_query()
 
-  'fetch_more' can be set on subsequent invocations to fetch more results
-  (think "next page") based on the lower/higher (msg_date,mail_id) previously
+  direction can be set to -1/+1 on subsequent fetches to retrieve more results
+  (previous/next page) based on the lower/higher (msg_date,mail_id) previously
   retrieved
 */
 int
-msgs_filter::asynchronous_fetch(fetch_thread* t, bool fetch_more/*=false*/)
+msgs_filter::asynchronous_fetch(fetch_thread* t, int direction)
 {
   m_fetched = true;
   sql_query q;
-  if (fetch_more) {
-    m_date_bound = m_results_date_bound;
-    m_mail_id_bound = m_results_mail_id_bound;
-  }
+
+  m_direction = direction;
   int r = build_query(q);
   if (r==1) {
     // start the query only if it might return results
@@ -967,7 +1007,6 @@ msgs_filter::asynchronous_fetch(fetch_thread* t, bool fetch_more/*=false*/)
       delete m_fetch_results;
     m_fetch_results = new std::list<mail_result>;
     t->m_results = m_fetch_results;
-    t->m_fetch_more = fetch_more;
     t->m_max_results = m_max_results;
 
     if (!t->m_cnx) {
@@ -1003,7 +1042,7 @@ msgs_filter::asynchronous_fetch(fetch_thread* t, bool fetch_more/*=false*/)
 
 */
 int
-msgs_filter::fetch(mail_listview* qlv, bool fetch_more)
+msgs_filter::fetch(mail_listview* qlv, int direction)
 {
   DBG_PRINTF(8, "msgs_filter::fetch()");
   m_errmsg=QString::null;
@@ -1011,10 +1050,7 @@ msgs_filter::fetch(mail_listview* qlv, bool fetch_more)
   int r=1;
   try {
     sql_query q;
-    if (fetch_more) {
-      m_date_bound = m_results_date_bound;
-      m_mail_id_bound = m_results_mail_id_bound;
-    }
+    m_direction = direction;
     r = build_query(q);
     if (r==1) {
       db_cnx db;
@@ -1096,7 +1132,7 @@ msgs_filter::add_result(mail_result& r, mail_listview* qlv)
     return;		// avoid duplicates
   {
     mail_msg* msg = new mail_msg(r);
-    m_list_msgs.push_back(msg); // FIXME: check if we still need that list
+    m_list_msgs.push_back(msg);
     std::list<mail_msg*> list;
     list.push_back(msg);
     qlv->insert_list(list);
@@ -1118,32 +1154,41 @@ msgs_filter::make_list(mail_listview* qlv)
     refetch=true;
   }
 
+  /* all_outgoing ends up beging true if there are messages and
+     they're all outgoing, so initialize it to false if there's no result. */
+  all_outgoing = !(m_fetch_results->empty());
 
-  std::list<mail_result>::const_iterator iter = m_fetch_results->begin();
-  if (iter!=m_fetch_results->end())
-    all_outgoing = (iter->m_status & mail_msg::statusOutgoing) == mail_msg::statusOutgoing;
+  if (m_direction >= 0) {
+    std::list<mail_result>::const_iterator iter = m_fetch_results->cbegin();
 
-  for (; iter != m_fetch_results->end(); ++iter) {
-    if (refetch) {
-      if (qlv->find(iter->m_id)!=NULL)
+    for (; iter != m_fetch_results->cend(); ++iter) {
+      if (refetch && qlv->find(iter->m_id)!=NULL)
 	continue;		// avoid duplicates
+      mail_msg* msg = new mail_msg(*iter);
+      if (!msg)
+	break;
+      all_outgoing &= (iter->m_status & mail_msg::statusOutgoing) == mail_msg::statusOutgoing;
+      m_list_msgs.push_back(msg);
     }
-
-    mail_msg* msg = new mail_msg(iter->m_id, iter->m_from, iter->m_subject,
-				 date(iter->m_date));
-    msg->setThread(iter->m_thread_id);
-    msg->set_orig_status(iter->m_status);
-    msg->setStatus(iter->m_status);
-    all_outgoing &= (iter->m_status & mail_msg::statusOutgoing) == mail_msg::statusOutgoing;
-    msg->setInReplyTo((mail_id_t)iter->m_in_replyto);
-    msg->set_sender_name(iter->m_sender_name);
-    msg->set_flags(iter->m_flags);
-    msg->set_priority(iter->m_pri);
-    msg->set_recipients(iter->m_recipients);
-
-    m_list_msgs.push_back(msg);
   }
-  
+  else {
+    /* iterate on reverse over the list, to have m_lists_msgs in the order
+       expected by the listview, so it doesn't have to sort on top of it.
+       Aside from that, the code is the same as in the branch above
+       when m_direction>=0 */
+    std::list<mail_result>::const_reverse_iterator iter = m_fetch_results->crbegin();
+
+    for (; iter != m_fetch_results->crend(); ++iter) {
+      if (refetch && qlv->find(iter->m_id)!=NULL)
+	continue;		// avoid duplicates
+      mail_msg* msg = new mail_msg(*iter);
+      if (!msg)
+	break;
+      all_outgoing &= (iter->m_status & mail_msg::statusOutgoing) == mail_msg::statusOutgoing;
+      m_list_msgs.push_back(msg);
+    }
+  }
+
   if (all_outgoing && qlv->empty() && get_config().get_bool("display/auto_sender_column"))
     qlv->swap_sender_recipient(true);
 

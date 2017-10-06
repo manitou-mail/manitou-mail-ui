@@ -107,11 +107,6 @@ public:
     return m_qlist;
   }
 
-/*
-  int nb_messages() const {
-    return m_filter->m_list_msgs.size();
-  }
-*/
   enum status_transition_type {
     archive=1,
     trash
@@ -172,6 +167,9 @@ public slots:
   void sel_trashcan();
   void sel_sent();
   void sel_save_query();
+  void sel_next_segment();
+  void sel_prev_segment();
+  void fetch_segment(int direction);
 #if 0
   void sel_header_analysis();
 #endif
@@ -202,7 +200,6 @@ public slots:
   void mail_reply_all();
   void mail_reply_list();
   void mail_reply(int whom_to);
-  void action_click_msg_list(const QModelIndex& index);
   void bounce();
   void attch_selected(QTreeWidgetItem*,int);
   void attch_run(attch_lvitem*);
@@ -275,6 +272,8 @@ private:
   void msg_list_postprocess();
   void remove_selected_msgs(int action);	// 0=trash, 1=delete
   void change_page(msgs_page*);
+  void enable_segments();
+  void add_segments();
   bool want_new_window() const;
   void remove_msg_page(std::list<msgs_page*>::iterator it,
 		       bool and_after=false);
@@ -316,6 +315,8 @@ private:
     me_Selection_Retrieve,
     me_Selection_Export,
     me_Selection_Save_Query,
+    me_Selection_NextSegment,
+    me_Selection_PrevSegment,
     me_Selection_Header_Analysis,
     me_Message_New,
     me_Message_Reply_All,
@@ -395,6 +396,7 @@ private:
 
   // current page's widgets and data
   msgs_filter* m_filter;
+  fetch_command m_fetch_command;
   message_view* m_msgview;
   mail_msg* m_pCurrentItem;
   attch_listview* m_qAttch;
