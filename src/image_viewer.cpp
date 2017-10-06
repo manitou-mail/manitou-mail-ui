@@ -66,7 +66,9 @@ image_viewer::show_attachment(attachment* a)
   QString img_format = QString::fromLocal8Bit(imgr.format());
   if (img_format.isEmpty())
     img_format = tr("unknown");
+#if QT_VERSION>=0x050500
   imgr.setAutoTransform(true);
+#endif
   m_image = imgr.read();
 
   if (m_image.isNull()) {
