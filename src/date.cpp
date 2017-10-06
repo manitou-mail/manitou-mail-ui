@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -31,16 +31,24 @@ date::date(const QString date)
     return;
   }
   m_null=false;
-  m_sYYYYMMDDHHMMSS=date;
-  m_sDate=date.mid(6,2)+"/"+date.mid(4,2)+"/"+date.mid(0,4);
+  if (date.length() == 14) {	// to_char format: YYYYMMDDHH24MISS
+    m_sYYYYMMDDHHMMSS = date;
+  }
+  else {
+    // expected to_char format: YYYYMMDDHH24MIUS (US=microseconds with 6 digits)
+    // leave out the microseconds
+    m_sYYYYMMDDHHMMSS = date.mid(0, 14);
+  }
+
+  m_sDate = date.mid(6,2)+"/"+date.mid(4,2)+"/"+date.mid(0,4);
 
   m_day = date.mid(6,2).toInt();
   m_month = date.mid(4,2).toInt();
   m_year = date.mid(0,4).toInt();
 
-  m_hour=date.mid(8,2).toInt();
-  m_min=date.mid(10,2).toInt();
-  m_sec=date.mid(12,2).toInt();
+  m_hour = date.mid(8,2).toInt();
+  m_min = date.mid(10,2).toInt();
+  m_sec = date.mid(12,2).toInt();
 }
 
 bool
