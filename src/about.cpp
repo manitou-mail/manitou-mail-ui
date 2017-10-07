@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -367,7 +367,7 @@ about_box::init_version_tab()
   about_panel* wt = new about_panel(m_version_tab);
   l->addWidget(wt);
 
-  QString s=tr("This is <b>Manitou-Mail</b> version %1, (c) 2004-2016 Daniel V&#233;rit&#233; (<i>daniel@manitou-mail.org</i>).").arg(VERSION);
+  QString s=tr("This is <b>Manitou-Mail</b> version %1, (c) 2004-2017 Daniel V&#233;rit&#233; (<i>daniel@manitou-mail.org</i>).").arg(VERSION);
   QString s1=tr("Compiled with Qt %1, running with Qt %2").arg(QT_VERSION_STR).arg(qVersion());
   QString s2=tr(
    "This program is free software; you can redistribute it and/or modify"
