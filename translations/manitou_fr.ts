@@ -442,7 +442,7 @@
     </message>
     <message>
         <source>Unable to parse date expression.</source>
-        <translation>Echec d'analyse de la date.</translation>
+        <translation>Echec d&apos;analyse de la date.</translation>
     </message>
 </context>
 <context>
@@ -1004,6 +1004,10 @@ Cette pièce jointe doit être supprimée du message en cours de composition.</t
     <message>
         <source>File</source>
         <translation>Fichier</translation>
+    </message>
+    <message>
+        <source>View image</source>
+        <translation>Voir l&apos;image</translation>
     </message>
 </context>
 <context>
@@ -1778,6 +1782,25 @@ Save now?</source>
     </message>
 </context>
 <context>
+    <name>image_viewer</name>
+    <message>
+        <source>Image view</source>
+        <translation>Visualisation image</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>inconnu</translation>
+    </message>
+    <message>
+        <source>Cannot instantiate image from attachment</source>
+        <translation>Impossible d&apos;instancier l&apos;image en pièce jointe</translation>
+    </message>
+    <message>
+        <source>Format: %3 - Size: %1x%2 px</source>
+        <translation>Format: %3 - Taille: %1x%2 px</translation>
+    </message>
+</context>
+<context>
     <name>import_window</name>
     <message>
         <source>Mail import</source>
@@ -1949,6 +1972,10 @@ Les messages non encore importés seront perdus.</translation>
         <source>Help</source>
         <translation>Aide</translation>
     </message>
+    <message>
+        <source>Encrypted session</source>
+        <translation>Session chiffrée</translation>
+    </message>
 </context>
 <context>
     <name>mail_item_model</name>
@@ -1983,6 +2010,14 @@ Les messages non encore importés seront perdus.</translation>
     <message>
         <source>Recipient</source>
         <translation>Destinataire</translation>
+    </message>
+    <message>
+        <source>Fetch next segment of results</source>
+        <translation>Charger le segment suivant</translation>
+    </message>
+    <message>
+        <source>Fetch previous segment of results</source>
+        <translation>Charger le segment précédent</translation>
     </message>
 </context>
 <context>
@@ -3139,10 +3174,6 @@ Les messages non encore importés seront perdus.</translation>
         <translation>Arrêter</translation>
     </message>
     <message>
-        <source>%1 message(s) processed.</source>
-        <translation>%1 message(s) traité(s).</translation>
-    </message>
-    <message>
         <source>%1 message(s) trashed.</source>
         <translation>%1 message(s) mis en corbeille.</translation>
     </message>
@@ -3269,6 +3300,30 @@ Les messages non encore importés seront perdus.</translation>
     <message>
         <source>%1 message(s) selected.</source>
         <translation>%1 message(s) sélectionnés.</translation>
+    </message>
+    <message>
+        <source>Copy link</source>
+        <translation>Copier le lien</translation>
+    </message>
+    <message>
+        <source>%1 message(s) tagged.</source>
+        <translation>%1 message(s) étiquetté(s)</translation>
+    </message>
+    <message>
+        <source>%1 message(s) untagged.</source>
+        <translation>%1 messages(s) désétiquetés.</translation>
+    </message>
+    <message>
+        <source>Fetch previous segment</source>
+        <translation>Charger segment précédent</translation>
+    </message>
+    <message>
+        <source>Fetch next segment</source>
+        <translation>Charger segment suivant</translation>
+    </message>
+    <message>
+        <source>%1 messages selected.</source>
+        <translation>%1 messages sélectionnés.</translation>
     </message>
 </context>
 <context>
@@ -3683,6 +3738,36 @@ Expédier malgré tout?</translation>
         <source>Schedule delivery</source>
         <translation>Programmer l&apos;envoi</translation>
     </message>
+    <message>
+        <source>External editor</source>
+        <translation>Editeur externe</translation>
+    </message>
+    <message>
+        <source>No external editor is defined.</source>
+        <translation>Aucun éditeur externe n&apos;est défini.</translation>
+    </message>
+    <message>
+        <source>Unable to open temporary file for editor:
+%1</source>
+        <translation>Impossible d&apos;ouvrir le fichier temporaire pour l&apos;éditeur:
+%1</translation>
+    </message>
+    <message>
+        <source>Abort editor</source>
+        <translation>Annuler l&apos;éditeur</translation>
+    </message>
+    <message>
+        <source>Unable to open temporary file after edit:
+%1</source>
+        <translation>Impossible d&apos;ouvrir le fichier temporaire après édition:
+%1</translation>
+    </message>
+    <message>
+        <source>Failed to run external editor:
+%1</source>
+        <translation>Impossible de lancer l&apos;éditeur externe:
+%1</translation>
+    </message>
 </context>
 <context>
     <name>note_widget</name>
@@ -4002,6 +4087,10 @@ Expédier malgré tout?</translation>
         <source>Root tag</source>
         <translation>Etiquette racine</translation>
     </message>
+    <message>
+        <source>External editor</source>
+        <translation>Editeur externe</translation>
+    </message>
 </context>
 <context>
     <name>properties_dialog</name>
@@ -4128,10 +4217,6 @@ Voulez-vous le mettre à jour malgré cela?</translation>
     <message>
         <source>Archived messages</source>
         <translation>Messages archivés</translation>
-    </message>
-    <message>
-        <source>Untagged</source>
-        <translation>Non étiquettés</translation>
     </message>
 </context>
 <context>
