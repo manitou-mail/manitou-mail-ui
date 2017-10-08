@@ -2276,8 +2276,6 @@ msg_list_window::fetch_segment(int direction)
   m_loading_filter = new msgs_filter(*m_filter);
   m_loading_filter->m_list_msgs.clear();
   m_loading_filter->m_fetch_results = NULL;
-  Qt::SortOrder order = m_qlist->header()->sortIndicatorOrder();
-  m_loading_filter->set_date_order((order == Qt::DescendingOrder) ? -1 : +1);
 
   int r = m_loading_filter->asynchronous_fetch(&m_thread, direction);
   // copy-pasted from sel_filter()
