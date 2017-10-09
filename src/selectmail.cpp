@@ -18,37 +18,38 @@
 */
 
 #include "main.h"
-#include "selectmail.h"
-#include "msg_list_window.h"
-#include "db.h"
-#include "tags.h"
-#include "msg_status_cache.h"
-#include "sqlquery.h"
-#include "sqlstream.h"
 #include "addresses.h"
+#include "db.h"
 #include "helper.h"
 #include "icons.h"
+#include "msg_list_window.h"
+#include "msg_status_cache.h"
+#include "selectmail.h"
 #include "sql_editor.h"
+#include "sqlquery.h"
+#include "sqlstream.h"
+#include "tags.h"
+#include "ui_controls.h"
 
-#include <QLineEdit>
-#include <QComboBox>
-#include <QLabel>
-#include <QButtonGroup>
-#include <QSpinBox>
-#include <QMessageBox>
 #include <QApplication>
-#include <QCursor>
-#include <QPushButton>
-#include <QToolButton>
-#include <QTimer>
-#include <QFontMetrics>
-#include <QRadioButton>
-#include <QDateEdit>
+#include <QButtonGroup>
+#include <QCalendarWidget>
 #include <QCheckBox>
+#include <QComboBox>
+#include <QCursor>
+#include <QDateEdit>
+#include <QDialogButtonBox>
+#include <QFontMetrics>
 #include <QGridLayout>
 #include <QHBoxLayout>
-#include <QDialogButtonBox>
-#include <QCalendarWidget>
+#include <QLabel>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QRadioButton>
+#include <QSpinBox>
+#include <QTimer>
+#include <QToolButton>
 
 
 const int
@@ -1329,7 +1330,6 @@ msg_select_dialog::msg_select_dialog(bool open_new/*=true*/) : QDialog(0)
   gridLayout->addWidget(new QLabel(tr("Limit to:"),this), nRow, 0);
   // Limit to: [max results] messages (3 widgets)
   QHBoxLayout* hbox_lt=new QHBoxLayout();
-  hbox_lt->setSpacing(10);
   m_wMaxResults=new QLineEdit();
   hbox_lt->addWidget(m_wMaxResults);
   QFontMetrics fm(m_wMaxResults->font());
@@ -1337,6 +1337,14 @@ msg_select_dialog::msg_select_dialog(bool open_new/*=true*/) : QDialog(0)
 
   m_wMaxResults->setText(get_config().get_string("max_msgs_per_selection"));
   hbox_lt->addWidget(new QLabel(tr("messages")));
+
+  m_sort_order = new button_group(QBoxLayout::LeftToRight);
+  m_sort_order->setFrameShape(QFrame::NoFrame);
+  m_sort_order->addButton(new QRadioButton(tr("Newest first")), 1); // m_order=-1, desc
+  m_sort_order->addButton(new QRadioButton(tr("Oldest first")), 2); // m_order=+1, asc
+  int sort_btn_id = (get_config().get_msgs_sort_order() == Qt::AscendingOrder) ? 2 : 1;
+  m_sort_order->setButton(sort_btn_id);
+  hbox_lt->addWidget(m_sort_order);
   hbox_lt->addStretch(10);
   gridLayout->addLayout(hbox_lt, nRow, 1);
 
@@ -1561,6 +1569,10 @@ msg_select_dialog::to_filter(msgs_filter* filter)
       return;
     }
   }
+
+  // Button Id for newest first is 1, oldest first is 2.
+  filter->m_order = (m_sort_order->selected_id() == 1) ? -1 : +1;
+
   filter->m_status_set=m_status_set_mask;
   filter->m_status_unset=m_status_unset_mask;
 }
@@ -1593,6 +1605,8 @@ msg_select_dialog::filter_to_dialog(const msgs_filter* filter)
   else
     m_wMaxResults->setText(QString::null);
 
+  m_sort_order->setButton((filter->m_order == -1) ? 1 : 2);
+
   if (!filter->m_date_clause.isEmpty()) {
     for (int i=1; i<m_date_cb->count(); i++) {
       if (m_date_cb->itemData(i)==filter->m_date_clause) {
@@ -1624,6 +1638,7 @@ msg_select_dialog::timer_done()
       if (m_new_selection) {
 	msg_list_window* w = new msg_list_window(&m_filter, 0);
 	w->show();
+	w->add_segments();
       }
       else {
 	emit fetch_done(&m_filter);

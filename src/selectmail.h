@@ -36,19 +36,19 @@
 #include "filter_rules.h"
 #include "fetch_thread.h"
 
+class QButtonGroup;
+class QCheckBox;
+class QComboBox;
+class QDateTimeEdit;
+class QDialogButtonBox;
 class QLineEdit;
 class QSpinBox;
-class QButtonGroup;
 class QTimer;
-class QDateTimeEdit;
-class QCheckBox;
 class QToolButton;
 class tag_selector;
-class QButtonGroup;
-class QComboBox;
-class QDialogButtonBox;
 
 class tag_line_edit_selector;
+class button_group;
 
 // Options from the searchbox
 class fts_options
@@ -185,6 +185,11 @@ public:
   QString m_date_before_clause;
   QString m_date_after_clause;
 
+  /* Ordering of msg_date (+1=ASC, -1=DESC) column for the fetch.
+     Instantiated from the configuration ("messages_order") when the
+     filter is initialized, and not changed afterwards. */
+  int m_order;
+
   int m_min_prio;
   uint m_tag_id;
 
@@ -312,11 +317,6 @@ private:
      (depending on m_order) */
   result_segment m_segment;
 
-  /* Ordering of msg_date (+1=ASC, -1=DESC) column for the fetch.
-     Instantiated from the configuration ("messages_order") when the
-     filter is initialized, and not changed afterwards. */
-  int m_order;
-
   bool m_has_more_results = false;
 
   /* To move backward/forward the fetch window within the
@@ -411,6 +411,7 @@ private:
   QCheckBox* m_chk_datemax;
   QLineEdit* m_wStatus;
   QLineEdit* m_wMaxResults;
+  button_group* m_sort_order;
   QDialogButtonBox* m_btn_box;
   QPushButton* m_wStatusMoreButton;
   QToolButton* m_zoom_button;
