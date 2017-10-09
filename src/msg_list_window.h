@@ -138,6 +138,8 @@ public slots:
   void sender_properties();
 
   void enable_commands();
+  void enable_segments();
+  void add_segments();
 
   // File menu
   void preferences();
@@ -272,8 +274,6 @@ private:
   void msg_list_postprocess();
   void remove_selected_msgs(int action);	// 0=trash, 1=delete
   void change_page(msgs_page*);
-  void enable_segments();
-  void add_segments();
   bool want_new_window() const;
   void remove_msg_page(std::list<msgs_page*>::iterator it,
 		       bool and_after=false);

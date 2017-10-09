@@ -2464,6 +2464,7 @@ msg_list_window::fill_fetch_new_page(msgs_filter* f)
   DBG_PRINTF(5,"fill_fetch_new_page()");
   clear_quick_query_selection();
   add_msgs_page(f, false);
+  add_segments();
   // Remove any highlighting in the quick query selection to avoid confusion
   // between a user query and and a selection branch
 }
