@@ -35,7 +35,7 @@ date::date(const QString date)
     m_sYYYYMMDDHHMMSS = date;
   }
   else {
-    // expected to_char format: YYYYMMDDHH24MIUS (US=microseconds with 6 digits)
+    // expected to_char format: YYYYMMDDHH24MISSUS (US=microseconds with 6 digits)
     // leave out the microseconds
     m_sYYYYMMDDHHMMSS = date.mid(0, 14);
   }

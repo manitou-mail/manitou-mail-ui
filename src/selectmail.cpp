@@ -457,10 +457,10 @@ msgs_filter::build_query(sql_query& q)
        ignore the bounds to mitigate the problem. */
     if (m_segment.is_valid) {
       if ((m_direction > 0 && m_order < 0) || (m_direction < 0 && m_order > 0)) {
-	q.add_clause(QString("(m.msg_date,m.mail_id) < (to_timestamp('%1','YYYYMMDDHH24MIUS'),%2)").arg(m_segment.date_min).arg(m_segment.mail_id_min));
+	q.add_clause(QString("(m.msg_date,m.mail_id) < (to_timestamp('%1','YYYYMMDDHH24MISSUS'),%2)").arg(m_segment.date_min).arg(m_segment.mail_id_min));
       }
       else if ((m_direction > 0 && m_order > 0) || (m_direction < 0 && m_order < 0) ) {
-	q.add_clause(QString("(m.msg_date,m.mail_id) > (to_timestamp('%1','YYYYMMDDHH24MIUS'),%2)").arg(m_segment.date_max).arg(m_segment.mail_id_max));
+	q.add_clause(QString("(m.msg_date,m.mail_id) > (to_timestamp('%1','YYYYMMDDHH24MISSUS'),%2)").arg(m_segment.date_max).arg(m_segment.mail_id_max));
       }
     }
 
