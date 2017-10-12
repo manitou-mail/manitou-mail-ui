@@ -992,13 +992,14 @@ mail_listview::select_threads(const QSet<uint>& threads)
   QItemSelectionModel* sel = this->selectionModel();
 
   while (item) {
-    QVariant v = item->data(mail_item_model::mail_msg_role);
-    mail_msg* msg = v.value<mail_msg*>();
     QModelIndex index = item->index();
-    if (threads.contains(msg->thread_id())) {
-      DBG_PRINTF(4, "selecting index for mail_id=%d", msg->get_id());
-      sel->select(index, QItemSelectionModel::Select|QItemSelectionModel::Rows);
-      cnt++;
+    QVariant v = item->data(mail_item_model::mail_msg_role);
+    if (v.isValid()) {
+      mail_msg* msg = v.value<mail_msg*>();
+      if (threads.contains(msg->thread_id())) {
+	sel->select(index, QItemSelectionModel::Select|QItemSelectionModel::Rows);
+	cnt++;
+      }
     }
     // next item
     QModelIndex index_below  = indexBelow(index);
