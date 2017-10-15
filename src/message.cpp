@@ -1063,6 +1063,17 @@ mail_msg::store(ui_feedback* ui)
 	fields.add_if_not_zero ("thread_id", m_thread_id);
       }
       // update the status of the message we're replying to
+      if (db_manitou_config::has_tags_counters()) {
+	sql_stream sttags("SELECT id,c FROM transition_status_tags(:id,"
+			  "(select status|:mask from mail where mail_id=:id))"
+			  " as t(id,c)", db);
+	sttags << m_nInReplyTo << statusReplied+statusArchived << m_nInReplyTo;
+	while (!sttags.eos()) {
+	  int tag_id, cnt;
+	  sttags >> tag_id >> cnt;
+	  m_tags_transitions.append(tag_counter_transition(tag_id, cnt));
+	}
+      }
       sql_stream sr ("UPDATE mail SET status=(status | :p1) WHERE mail_id=:p2", db);
       sr << statusReplied+statusArchived << m_nInReplyTo;
     }
@@ -1070,6 +1081,17 @@ mail_msg::store(ui_feedback* ui)
       const std::vector<mail_id_t>& v = forwardOf();
       sql_stream sr ("UPDATE mail SET status=(status | :p1) WHERE mail_id=:p2", db);
       for (uint ifwd=0; ifwd < v.size(); ifwd++) {
+	if (db_manitou_config::has_tags_counters()) {
+	  sql_stream sttags("SELECT id,c FROM transition_status_tags(:id,"
+			    "(select status|:mask from mail where mail_id=:id))"
+			    " as t(id,c)", db);
+	  sttags << v[ifwd] << statusFwded+statusArchived << v[ifwd];
+	  while (!sttags.eos()) {
+	    int tag_id, cnt;
+	    sttags >> tag_id >> cnt;
+	    m_tags_transitions.append(tag_counter_transition(tag_id, cnt));
+	  }
+	}
 	// Update statuses of forwarded messages
 	sr << statusFwded+statusArchived << v[ifwd];
       }

@@ -188,6 +188,11 @@ public:
   void set_tags (const std::list<uint>& l);
   std::list<uint>& get_tags();
   const std::list<uint>& get_cached_tags() const;
+  /* transitions caused by changing the message status, including tags
+     on other messages (such as the messages to which this message is
+     replying or forwarding and which get archived as a
+     side-effect) */
+  QList<tag_counter_transition> m_tags_transitions;
 
   uint status() const { return m_status; }
   uint thread_id() const { return m_thread_id; }

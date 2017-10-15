@@ -125,6 +125,7 @@ public slots:
 signals:
 /*  void change_status_request (uint id, uint mask_set, uint mask_unset);*/
   void refresh_request (mail_id_t m_id);
+  void tags_counters_changed(QList<tag_counter_transition>);
 
 private slots:
   void external_editor_finished(int,QProcess::ExitStatus);

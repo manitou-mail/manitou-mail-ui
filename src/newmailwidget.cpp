@@ -1060,6 +1060,8 @@ new_mail_widget::send()
 	  emit refresh_request(v[i]);
 	}
       }
+      if (m_msg.m_tags_transitions.size() > 0)
+	emit tags_counters_changed(m_msg.m_tags_transitions);
       m_close_confirm=false;
       close();
     }

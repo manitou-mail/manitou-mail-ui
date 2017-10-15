@@ -1911,6 +1911,10 @@ msg_list_window::mail_reply(int whom_to)
   connect(w, SIGNAL(refresh_request(mail_id_t)),
 	  this, SLOT(global_refresh_status(mail_id_t)));
 
+  if (m_query_lv)
+    m_query_lv->connect(w, SIGNAL(tags_counters_changed(QList<tag_counter_transition>)),
+			m_query_lv, SLOT(change_archive_counts(QList<tag_counter_transition>)));
+
   if (w->errmsg().isEmpty()) {
     w->show();
   }
@@ -1941,6 +1945,10 @@ msg_list_window::forward()
      new status (now forwarded)  */
   connect(w, SIGNAL(refresh_request(mail_id_t)),
 	  this, SLOT(global_refresh_status(mail_id_t)));
+
+  if (m_query_lv)
+    m_query_lv->connect(w, SIGNAL(tags_counters_changed(QList<tag_counter_transition>)),
+			m_query_lv, SLOT(change_archive_counts(QList<tag_counter_transition>)));
 
   if (w->errmsg().isEmpty()) {
     w->show();
