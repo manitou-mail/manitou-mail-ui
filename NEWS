@@ -1,3 +1,22 @@
+ v1.7.0, Oct 2017
+--------------------------
+user interface:
+- navigation through segmented results for large lists of messages
+- tags counters for archived messages
+- send later for outgoing mail
+- encrypted session checkbox in login dialog
+- can use an external text or html editor to compose messages
+- domains in mail addresses can be omitted for search operators
+- new msgid and id search operators
+- improvements in display of message/rfc822 attachments
+
+manitou-mdx:
+- removal of the mail_status table
+- optional materialized tags counters
+- update mail.sender_date when sending outgoing messages
+- skip UTF-8 BOM in mail files
+- support scheduled sending
+
  v1.6.0, March 2017
 --------------------------
 user interface:
