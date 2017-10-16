@@ -492,8 +492,8 @@
         <translation>Email:&lt;br&gt;support%1manitou-mail.org&lt;/a&gt;</translation>
     </message>
     <message>
-        <source>This is &lt;b&gt;Manitou-Mail&lt;/b&gt; version %1, (c) 2004-2016 Daniel V&amp;#233;rit&amp;#233; (&lt;i&gt;daniel@manitou-mail.org&lt;/i&gt;).</source>
-        <translation>&lt;b&gt;Manitou-Mail&lt;/b&gt; version %1, (c) 2004-2016 Daniel V&amp;#233;rit&amp;#233; (&lt;i&gt;daniel@manitou-mail.org&lt;/i&gt;).</translation>
+        <source>This is &lt;b&gt;Manitou-Mail&lt;/b&gt; version %1, (c) 2004-2017 Daniel V&amp;#233;rit&amp;#233; (&lt;i&gt;daniel@manitou-mail.org&lt;/i&gt;).</source>
+        <translation>&lt;b&gt;Manitou-Mail&lt;/b&gt; version %1, (c) 2004-2017 Daniel V&amp;#233;rit&amp;#233; (&lt;i&gt;daniel@manitou-mail.org&lt;/i&gt;).</translation>
     </message>
 </context>
 <context>
@@ -3483,6 +3483,14 @@ Les messages non encore importés seront perdus.</translation>
     <message>
         <source>In trashcan</source>
         <translation>En corbeille</translation>
+    </message>
+    <message>
+        <source>Newest first</source>
+        <translation>Récents en premier</translation>
+    </message>
+    <message>
+        <source>Oldest first</source>
+        <translation>Anciens en premier</translation>
     </message>
 </context>
 <context>
