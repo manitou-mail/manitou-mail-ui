@@ -72,6 +72,7 @@ login_dialog::login_dialog() : QDialog(0)
 
   m_tls = new QCheckBox(tr("Encrypted session"));
   m_tls->setTristate();
+  m_tls->setCheckState(Qt::Checked);
   grid->addWidget(m_tls, row, 1);
 
   QHBoxLayout* hbox = new QHBoxLayout();
@@ -108,11 +109,13 @@ login_dialog::init_settings()
   set_dbname(settings.value("dbname").toString());
   set_host(settings.value("host").toString());
   set_params(settings.value("params").toString());
-  bool ok=false;
-  // serialized tri-state value corresponding to Qt::CheckState
-  int tls_state = settings.value("tls").toInt(&ok);
-  if (ok && tls_state>=0 && tls_state<=2)
-    set_tls((Qt::CheckState)tls_state);
+  if (settings.contains("tls")) {
+    bool ok=false;
+    // serialized tri-state value corresponding to Qt::CheckState
+    int tls_state = settings.value("tls").toInt(&ok);
+    if (ok && tls_state>=0 && tls_state<=2)
+      set_tls((Qt::CheckState)tls_state);
+  }
 }
 
 void
@@ -152,7 +155,7 @@ login_dialog::connect_string()
   else if (m_tls->checkState()==Qt::Unchecked)
     res.append(" sslmode=disable");
   /* if Qt::PartiallyChecked, do not specify sslmode. The user can
-     direct it through m_params */
+     direct it through m_params or PGSSLMODE */
   return res.trimmed();
 }
 
