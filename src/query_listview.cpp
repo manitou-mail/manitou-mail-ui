@@ -268,7 +268,7 @@ query_listview::insert_child_tags(tag_node* n,
 					       (*iter)->id());
     int branch_cnt=0;
     if (!(*iter)->m_childs.empty()) {
-     branch_cnt += insert_child_tags(*iter, q, type, expanded_set);
+      branch_cnt += insert_child_tags(*iter, q, type, expanded_set);
       if (expanded_set!=NULL && expanded_set->contains((*iter)->id())) {
 	q->setExpanded(true);
       }
@@ -280,7 +280,10 @@ query_listview::insert_child_tags(tag_node* n,
 	 name-of-tag (count) as the text of the item */
       archived_tag_map::const_iterator count_iter = m_archtag_map.constFind((*iter)->id());
       if (count_iter != m_archtag_map.constEnd()) {
-	q->show_archived_count(count_iter.value());
+	/* if a parent tag has children but a zero count, it's just a container.
+	   In this case, ignore the count to lighten the display */
+	bool show_zero = (*iter)->m_childs.empty();
+	q->show_archived_count(count_iter.value(), show_zero);
 	total_cnt += branch_cnt + count_iter.value();
       }
     }
@@ -1021,13 +1024,19 @@ query_lvitem::~query_lvitem()
 {
 }
 
-/* Show label preceded by checkmark and followed by count */
+/*
+  Show label preceded by checkmark and followed by count.
+  Zero counts are displayed only if show_zero is true.
+*/
 void
-query_lvitem::show_archived_count(int cnt)
+query_lvitem::show_archived_count(int cnt, bool show_zero)
 {
   if (cnt < 0)
     cnt = 0; // no negative count
-  setText(0, QString("%1 %2 (%3)").arg(QChar(0x2713)).arg(m_name).arg(cnt));
+  if (cnt != 0 || show_zero)
+    setText(0, QString("%1 %2 (%3)").arg(QChar(0x2713)).arg(m_name).arg(cnt));
+  else
+    setText(0, QString("%1 %2").arg(QChar(0x2713)).arg(m_name));
 }
 
 void

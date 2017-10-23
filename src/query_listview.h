@@ -81,7 +81,7 @@ public:
   }
 
   void show_count(int cnt1, int cnt2=0);
-  void show_archived_count(int cnt1);
+  void show_archived_count(int cnt1, bool show_zero=true);
 
   QString m_sql;
   int m_unique_id;
