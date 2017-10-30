@@ -70,6 +70,7 @@ image_viewer::show_attachment(attachment* a)
   imgr.setAutoTransform(true);
 #endif
   m_image = imgr.read();
+  io.close();			// ends transaction
 
   if (m_image.isNull()) {
     QMessageBox::critical(this, APP_NAME, tr("Cannot instantiate image from attachment"));
@@ -88,7 +89,7 @@ image_viewer::show_attachment(attachment* a)
 
     m_image_label->resize(m_scale_factor * m_image_label->pixmap()->size());
     show();
- }
+  }
 }
 
 image_label::image_label(QWidget* parent) : QLabel(parent)

@@ -186,11 +186,12 @@ public:
   qint64 readData(char* data, qint64 size);
   qint64 writeData(const char* data, qint64 maxsize);
   void abort();
+  void close();
   qint64 bytesAvailable() const;
   bool atEnd() const;
   bool isSequential() const;
 private:
-  attachment* m_a;
+  attachment* m_a = NULL;
   int already_read;
 private slots:
   void go();

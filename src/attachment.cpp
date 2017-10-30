@@ -1061,6 +1061,14 @@ attachment_iodevice::~attachment_iodevice()
 {
 }
 
+void
+attachment_iodevice::close()
+{
+  if (m_a != NULL)
+    m_a->close();		// ends database transaction
+  QIODevice::close();
+}
+
 qint64
 attachment_iodevice::readData(char* data, qint64 size)
 {
@@ -1102,6 +1110,7 @@ attachment_iodevice::isSequential() const
 void
 attachment_iodevice::abort()
 {
+  if (m_a != NULL)
   m_a->close();
 }
 
