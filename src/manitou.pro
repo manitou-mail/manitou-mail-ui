@@ -51,6 +51,7 @@ HEADERS += about.h \
            helper.h \
            html_editor.h \
            icons.h \
+           image_viewer.h \
            identities.h \
            import_window.h \
            line_edit_autocomplete.h \
@@ -138,6 +139,7 @@ SOURCES += about.cpp \
            helper.cpp \
            html_editor.cpp \
            identities.cpp \
+           image_viewer.cpp \
            import_window.cpp \ 
            line_edit_autocomplete.cpp \
            login.cpp \
