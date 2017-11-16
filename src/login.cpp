@@ -147,6 +147,7 @@ login_dialog::connect_string()
   if (!m_host->text().isEmpty()) {
     res.append(" host=" + quote_connect_param(m_host->text()));
   }
+  res.append(" application_name=manitou");
   if (!m_params->text().isEmpty()) {
     res.append(" " + m_params->text());
   }
