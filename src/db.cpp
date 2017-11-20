@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -73,7 +73,7 @@ void DBEXCPT(db_excpt& p)
 
 db_excpt::db_excpt(const QString query,
 		   const QString msg,
-		   QString code/*=QString::null*/)
+		   QString code/*=QString()*/)
 {
   m_query=query;
   m_err_msg=msg;
@@ -726,6 +726,6 @@ db_schema::version()
 	   m_version[i] = s.count() > i ? s.at(i).toInt() : 0;
   }
   else
-    m_version_string = QString::null;
+    m_version_string = QString();
   return m_version;
 }

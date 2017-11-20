@@ -100,7 +100,7 @@ public:
   msgs_filter* current_filter() {
     return m_filter;
   }
-  void set_title(const QString title=QString::null);
+  void set_title(const QString title=QString());
   void clear_quick_query_selection();
 
   mail_listview* current_list() {
@@ -125,7 +125,7 @@ public slots:
   void timer_func();
   void timer_idle();
   void abort_operation();
-  void install_progressbar(QString=QString::null);
+  void install_progressbar(QString=QString());
   void uninstall_progressbar();
 
   void msg_zoom_in();

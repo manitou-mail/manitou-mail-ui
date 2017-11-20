@@ -96,7 +96,7 @@ public:
   QString get_temp_location();
 
   void setAll(attach_id_t id, uint size, const QString filename, const QString mime_type,
-    const QString charset=QString::null) {
+	      const QString charset=QString()) {
     m_Id=id;
     m_filename=filename;
     m_size=size;

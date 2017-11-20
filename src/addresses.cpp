@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -32,7 +32,7 @@ mail_address::parse_extract_email(const QString line)
   if (emails.size()==1)
     return emails.front();
   else
-    return QString::null;
+    return QString();
 }
 
 /*

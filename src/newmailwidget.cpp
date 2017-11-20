@@ -1159,7 +1159,7 @@ new_mail_widget::insert_file()
   }
 
   if (f.error() || !opened) {
-    file_contents=QString::null;
+    file_contents = QString();
     QString errstr;
     if (f.error()==QFile::OpenError || !opened) {
       errstr=tr("Unable to open file '%1'").arg(name);
@@ -1475,7 +1475,7 @@ new_mail_widget::save_template()
     if (m_edit_mode == plain_mode) {
       QTextDocument* doc = m_bodyw->document();
       m_template.set_text_body(doc->toPlainText());
-      m_template.set_html_body(QString::null);
+      m_template.set_html_body(QString());
     }
     else {
       m_template.set_html_body(m_html_edit->html_text());

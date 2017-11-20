@@ -226,7 +226,7 @@ public:
   db_excpt() {}
   db_excpt(const QString query, db_cnx& d);
   // defined in db.cpp
-  db_excpt(const QString query, const QString msg, QString code=QString::null);
+  db_excpt(const QString query, const QString msg, QString code=QString());
   virtual ~db_excpt() {}
   QString query() const { return m_query; }
   QString errmsg() const { return m_err_msg; }

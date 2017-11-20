@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -74,7 +74,7 @@ struct ltstr
 
   // save to the database the set of key/values whose name start with 'prefix'
   // (or all keys if 'prefix' is null)
-  bool store(const QString key_prefix=QString::null);
+  bool store(const QString key_prefix=QString());
 
   // update into the database all the entries in 'newconf'
   // that are different from 'this'

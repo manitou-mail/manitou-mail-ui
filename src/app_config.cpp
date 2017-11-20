@@ -128,7 +128,7 @@ app_config::dump()
 /* Save to the database the set of key/values whose name start with
    'key_prefix' (or all keys if 'key_prefix' is null) */
 bool
-app_config::store(const QString key_prefix /* =QString::null */)
+app_config::store(const QString key_prefix /* =QString() */)
 {
   const char* q_insert;
   const char* q_update;

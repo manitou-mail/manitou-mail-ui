@@ -242,7 +242,7 @@ manitou_application::chartjs_path()
   if (QFile::exists(s + "/web/Chart.js/dist/Chart.min.js")) {
     return s;
   }
-  return QString::null;
+  return QString();
 }
 
 int

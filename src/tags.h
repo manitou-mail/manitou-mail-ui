@@ -208,7 +208,7 @@ public:
   }
 
   QList<QString> get_all_completions() {
-    return tags_repository::search_substring(QString::null);
+    return tags_repository::search_substring(QString());
   }
 
   virtual void mousePressEvent(QMouseEvent*);

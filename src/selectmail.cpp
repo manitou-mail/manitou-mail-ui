@@ -72,24 +72,24 @@ msgs_filter::init()
   m_include_trash = false;
   m_newer_than=0;
   m_has_progress_bar = false;
-  m_date_clause = QString::null;
-  m_date_exact_clause = QString::null;
-  m_date_before_clause = QString::null;
-  m_date_after_clause = QString::null;
+  m_date_clause = QString();
+  m_date_exact_clause = QString();
+  m_date_before_clause = QString();
+  m_date_after_clause = QString();
   m_max_results=get_config().get_number("max_msgs_per_selection");
   if (m_max_results==0)
     m_max_results=1000;
   m_addresses_count=0;
   m_alias_sequence=0;
-  m_sAddress=QString::null;
-  m_subject=QString::null;
-  m_body_substring=QString::null;
-  m_addr_to=QString::null;
-  m_sql_stmt=QString::null;
-  m_tag_name=QString::null;
+  m_sAddress=QString();
+  m_subject=QString();
+  m_body_substring=QString();
+  m_addr_to=QString();
+  m_sql_stmt=QString();
+  m_tag_name=QString();
   m_date_min=QDate();
   m_date_max=QDate();
-  //  m_word=QString::null;
+  //  m_word=QString();
   m_fts.m_words.clear();
   m_fts.m_exclude_words.clear();
   m_in_trash=false;
@@ -1046,7 +1046,7 @@ int
 msgs_filter::fetch(mail_listview* qlv, int direction)
 {
   DBG_PRINTF(8, "msgs_filter::fetch()");
-  m_errmsg=QString::null;
+  m_errmsg=QString();
   m_fetched = true;
   int r=1;
   try {
@@ -1524,13 +1524,13 @@ msg_select_dialog::to_filter(msgs_filter* filter)
   if (!m_wcontact->text().trimmed().isEmpty())
     filter->m_sAddress = mail_address::parse_extract_email(m_wcontact->text().trimmed());
   else
-    filter->m_sAddress = QString::null;
+    filter->m_sAddress = QString();
   filter->m_nAddrType = m_wAddrType->currentIndex();
 
   if (!m_wto->text().trimmed().isEmpty())
     filter->m_addr_to = mail_address::parse_extract_email(m_wto->text().trimmed());
   else
-    filter->m_addr_to = QString::null;
+    filter->m_addr_to = QString();
     
   filter->m_tag_id = m_qtag_sel->current_tag_id();
 
@@ -1551,10 +1551,10 @@ msg_select_dialog::to_filter(msgs_filter* filter)
     }
   }
   else {
-    filter->m_date_clause = QString::null;
-    filter->m_date_exact_clause = QString::null;
-    filter->m_date_before_clause = QString::null;
-    filter->m_date_after_clause = QString::null;
+    filter->m_date_clause = QString();
+    filter->m_date_exact_clause = QString();
+    filter->m_date_before_clause = QString();
+    filter->m_date_after_clause = QString();
     filter->m_date_min = QDate();
     filter->m_date_max = QDate();
   }
@@ -1603,7 +1603,7 @@ msg_select_dialog::filter_to_dialog(const msgs_filter* filter)
     m_wMaxResults->setText(QString("%1").arg(filter->m_max_results));
   }
   else
-    m_wMaxResults->setText(QString::null);
+    m_wMaxResults->setText(QString());
 
   m_sort_order->setButton((filter->m_order == -1) ? 1 : 2);
 

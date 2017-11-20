@@ -1377,7 +1377,7 @@ msg_list_window::change_multi_mail_status(enum status_transition_type transition
 // set the window title. If no argument is given, display the
 // number of messages in the list
 void
-msg_list_window::set_title(const QString title/*=QString::null*/)
+msg_list_window::set_title(const QString title/*=QString()*/)
 {
   if (title.isEmpty()) {
     QString sTitle;
@@ -2267,7 +2267,7 @@ void
 msg_list_window::sel_save_query()
 {
   extern void save_filter_query(msgs_filter*, int,const QString);
-  save_filter_query(m_filter, 0, QString::null);
+  save_filter_query(m_filter, 0, QString());
   m_query_lv->reload_user_queries();
 }
 
