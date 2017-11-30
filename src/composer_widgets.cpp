@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -407,10 +407,7 @@ body_edit_widget::body_edit_widget(QWidget* p)
   QString fontname=get_config().get_string("newmail/font");
   if (!fontname.isEmpty() && fontname!="xft") {
     QFont f;
-    if (fontname.at(0)=='-')
-      f.setRawName(fontname);		// for pre-0.9.5 entries
-    else
-      f.fromString(fontname);
+    f.fromString(fontname);
     setFont(f);
   }
   else {

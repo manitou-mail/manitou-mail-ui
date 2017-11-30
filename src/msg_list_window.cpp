@@ -1566,10 +1566,7 @@ static void
 initf(QFont& f, const QString v)
 {
   if (v=="xft") return;
-  if (v.at(0)=='-')
-    f.setRawName(v);		// for pre-0.9.5 entries
-  else
-    f.fromString(v);
+  f.fromString(v);
 }
 
 void
