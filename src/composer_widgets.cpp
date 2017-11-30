@@ -124,7 +124,7 @@ header_field_editor::get_field_name() const
       return "ReplyTo";
     }
   }
-  return QString::null;
+  return QString();
 }
 
 void

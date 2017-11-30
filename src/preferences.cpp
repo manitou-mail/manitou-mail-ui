@@ -195,7 +195,7 @@ prefs_dialog::edit_mimetype()
 void
 prefs_dialog::new_mimetype()
 {
-  viewer_edit_dialog dlg(this, QString::null, QString::null);
+  viewer_edit_dialog dlg(this, QString(), QString());
   if (dlg.exec()==QDialog::Accepted && !dlg.mimetype().isEmpty()) {
     QTreeWidget* lv = m_widgets->mt_lv;
     QTreeWidgetItem* item=new QTreeWidgetItem(lv);
@@ -1215,7 +1215,7 @@ prefs_dialog::widgets_to_ident()
     // when the "default" property gets unchecked, we reflect that
     // on m_widgets->m_default_email
     if (m_widgets->m_default_email == id->m_email_addr) // if it was the default
-      m_widgets->m_default_email = QString::null;
+      m_widgets->m_default_email = QString();
   }
 }
 
@@ -1244,13 +1244,13 @@ prefs_dialog::ident_to_widgets()
     m_widgets->w_default_identity->setChecked(id->m_is_default);
   }
   else {
-    m_widgets->w_name->setText(QString::null);
-    m_widgets->w_xface->setText(QString::null);
-    m_widgets->w_email->setText(QString::null);
-    m_widgets->w_signature->setPlainText(QString::null);
+    m_widgets->w_name->setText(QString());
+    m_widgets->w_xface->setText(QString());
+    m_widgets->w_email->setText(QString());
+    m_widgets->w_signature->setPlainText(QString());
     m_widgets->w_default_identity->setChecked(false);
     m_widgets->w_restricted->setChecked(false);
-    m_widgets->w_root_tag->setText(QString::null);
+    m_widgets->w_root_tag->setText(QString());
   }
 }
 

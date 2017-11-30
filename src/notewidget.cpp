@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2010 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -73,7 +73,7 @@ void note_widget::cancel()
 
 void note_widget::delete_note()
 {
-  m_edit->setPlainText(QString::null);
+  m_edit->setPlainText(QString());
   done(1);
 }
 

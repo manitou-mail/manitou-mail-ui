@@ -570,7 +570,7 @@ mail_msg::fetchNote()
       m_mailnote_in_db=true;
     }
     else
-      m_mail_note=QString::null;
+      m_mail_note=QString();
   }
   catch(db_excpt& p) {
     DBEXCPT(p);

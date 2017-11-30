@@ -104,13 +104,13 @@ fetch_thread::run()
 {
   if (!m_cnx) return;
   DBG_PRINTF(5,"fetch_thread::run(), max_results=%d", m_max_results);
-  m_errstr=QString::null;
+  m_errstr=QString();
   QTime start = QTime::currentTime();
 
   m_tuples_count=0;
   m_min_mail_id = m_max_mail_id = 0;
-  m_max_msg_date = QString::null;
-  m_min_msg_date = QString::null;
+  m_max_msg_date = QString();
+  m_min_msg_date = QString();
 
   // install a notice receiver to handle progress report for certain queries
   // (wordsearch)

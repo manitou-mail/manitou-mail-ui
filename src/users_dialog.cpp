@@ -1,4 +1,4 @@
-/* Copyright (C) 2016 Daniel Verite
+/* Copyright (C) 2016-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -172,7 +172,7 @@ user_edit_dialog::user_edit_dialog(int role_oid)
 
   if (u.m_is_superuser) {
     QLabel* label = new QLabel(tr("<b>Superuser account: unrestricted permissions.</b>"));
-    layout->addRow(QString::null, label);
+    layout->addRow(QString(), label);
   }
 
   layout->addRow(tr("Login <sup>(*)</sup>:"), m_login);
@@ -647,7 +647,7 @@ role_perms_edit_dialog::set_grants()
     dbc.m_db->begin_transaction();
     if (!m_role_oid) {
       // Create the new role
-      user::create_db_user(rolname, QString::null, false, &dbc);
+      user::create_db_user(rolname, QString(), false, &dbc);
       m_role_oid = user::oid_db_role(rolname, true);
       if (!m_role_oid) {
 	QMessageBox::critical(this, tr("Error"), tr("The role could not be created."));

@@ -111,7 +111,7 @@ text_merger::column_name(int index) const
     if (it.value()==index)
       return it.key();
   }
-  return QString::null;
+  return QString();
 }
 
 // can throw a QString
@@ -142,10 +142,10 @@ text_merger::merge_record(QIODevice* io, const QString tmpl)
   }
   QStringList values=collect_data(io);
   if (values.isEmpty())
-    return QString::null;
+    return QString();
   // discard empty lines (LF or CRLF alone). This is mostly useful if encountered at the end
   if (values.size()==1 && values.at(0).isEmpty())
-    return QString::null;
+    return QString();
   if (values.size()==m_field_names.size()) {
     return merge_template(tmpl, values);
   }

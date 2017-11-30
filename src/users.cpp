@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -703,7 +703,7 @@ db_role::has_multiple_privileges(QList<db_obj_privilege> list,
 	func_values.append(QString("('%1')").arg(qfunc));
       }
       else {
-	throw db_excpt(QString::null,
+	throw db_excpt(QString(),
 		       QString("Unhandled object type: %1").arg(p.m_objtype),
 		       db_excpt::client_assertion);
 

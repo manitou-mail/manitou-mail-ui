@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2011 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -251,7 +251,7 @@ mailing_db::status_text() const
     return QObject::tr(txt[m_status]);
   }
   else
-    return QString::null;
+    return QString();
 }
 
 bool

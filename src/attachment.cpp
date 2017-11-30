@@ -107,7 +107,7 @@ attachment::default_os_application()
     return QString::fromWCharArray(sBuffer);
   }
 #endif
-  return QString::null;
+  return QString();
 }
 
 QString
@@ -187,7 +187,7 @@ attachment::application() const
   }
   catch(db_excpt& p) {
     DBEXCPT(p);
-    return QString::null;
+    return QString();
   }
 }
 
@@ -621,7 +621,7 @@ attachment::extension(const QString filename)
   if (dotpos >=0 && dotpos+1 < filename.length())
     return filename.mid(dotpos+1);
   else
-    return QString::null;
+    return QString();
 }
 
 void

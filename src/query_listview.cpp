@@ -215,7 +215,7 @@ query_listview::make_item_current_tags(const tag_node* root)
     if (qsi->first==0) continue; // ignore non-tagged
     const tag_node* node = root->find(qsi->first);
     if (node) {
-      query_tag_lvitem* q = new query_tag_lvitem(m_item_current_tags, query_lvitem::current_tagged, QString::null /*title*/, qsi->first);
+      query_tag_lvitem* q = new query_tag_lvitem(m_item_current_tags, query_lvitem::current_tagged, QString() /*title*/, qsi->first);
       q->set_title(node->hierarchy(), qsi->second);
     }
   }
@@ -306,7 +306,7 @@ query_listview::create_branch_current(const tag_node* root)
   make_item_current_tags(root);
   m_item_current_prio = new query_lvitem(m_item_current, query_lvitem::current_prio, tr("Prioritized"));
 
-  m_item_current_untagged = new query_lvitem(m_item_current, query_lvitem::current_not_tagged, QString::null);
+  m_item_current_untagged = new query_lvitem(m_item_current, query_lvitem::current_not_tagged, QString());
   update_tag_current_counter(0); // update counts of Current->[Not tagged] branch
 
 
@@ -686,7 +686,7 @@ query_listview::add_current_tag(uint tag_id)
   tag_node root_tag;
   root_tag.get_child_tags(tag_list);
   const tag_node* node = root_tag.find(tag_id);
-  query_tag_lvitem* q = new query_tag_lvitem(m_item_current_tags, query_lvitem::current_tagged, QString::null, tag_id);
+  query_tag_lvitem* q = new query_tag_lvitem(m_item_current_tags, query_lvitem::current_tagged, QString(), tag_id);
   q->set_title(node->hierarchy());
   m_item_current_tags->sortChildren(0, Qt::AscendingOrder);
   qs_mail_map* m = new qs_mail_map();
@@ -948,7 +948,7 @@ query_listview::context_menu(const QPoint& pos)
     // user action
     if (selected==action_remove) {
       // remove this user query
-      int r=QMessageBox::warning(this, tr("Please confirm"), tr("Delete user query?"), tr("OK"), tr("Cancel"), QString::null);
+      int r=QMessageBox::warning(this, tr("Please confirm"), tr("Delete user query?"), tr("OK"), tr("Cancel"), QString());
       if (r==0) {
 	if (user_queries_repository::remove_query(item->text(0))) {
 	  delete item;

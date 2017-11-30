@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2007 Daniel Vérité
+/* Copyright (C) 2005-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -107,5 +107,5 @@ prog_chooser::find_in_path(const QString& program)
       }
     }
   }
-  return QString::null;
+  return QString();
 }

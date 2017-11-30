@@ -274,7 +274,7 @@ bool
 attch_listview::confirm_write(const QString fname)
 {
   if (QFile::exists(fname)) {
-    int res = QMessageBox::question(this, QObject::tr("Please confirm"), QObject::tr("A file '%1' already exists. Overwrite?").arg(fname), QObject::tr("&Yes"), QObject::tr("&No"), QString::null, 0, 1);
+    int res = QMessageBox::question(this, QObject::tr("Please confirm"), QObject::tr("A file '%1' already exists. Overwrite?").arg(fname), QObject::tr("&Yes"), QObject::tr("&No"), QString(), 0, 1);
     if (res==1)
       return false;
   }

@@ -372,7 +372,7 @@ message_tag::reload()
       s >> m_name >> m_parent_id;
     }
     else {
-      m_name=QString::null;
+      m_name=QString();
       m_parent_id=0;
     }
   }

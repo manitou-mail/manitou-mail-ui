@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2017 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -681,8 +681,8 @@ filter_edit::renumber_items()
 void
 filter_edit::clear_expr()
 {
-  ql_expr_name->setText(QString::null);
-  ql_expr_full->setText(QString::null);
+  ql_expr_name->setText(QString());
+  ql_expr_full->setText(QString());
   m_current_expr=NULL;
   lv_expr->clearSelection();
   untie_actions();
@@ -858,7 +858,7 @@ filter_edit::delete_expr()
   if (!m_current_expr) {
     return;
   }
-  int r=QMessageBox::warning(this, tr("Please confirm"), tr("Delete filter?"), tr("OK"), tr("Cancel"), QString::null);
+  int r=QMessageBox::warning(this, tr("Please confirm"), tr("Delete filter?"), tr("OK"), tr("Cancel"), QString());
   if (r==0) {
     expr_lvitem* item=dynamic_cast<expr_lvitem*>(lv_expr->currentItem());
     if (!item) {

@@ -333,7 +333,7 @@ tags_dialog::ok()
     // Definitive removal
     std::set<int>::iterator itd;
     for (itd=m_delete.begin(); itd!=m_delete.end(); ++itd) {
-      message_tag mt(*itd, QString::null);
+      message_tag mt(*itd, QString());
       if (mt.remove()) {
 	update=true;
       }

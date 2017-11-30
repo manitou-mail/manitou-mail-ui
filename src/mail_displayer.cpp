@@ -252,7 +252,7 @@ mail_displayer::sprint_headers(int show_headers_level, mail_msg* msg)
   };
 
   if (show_headers_level==0)
-    return QString::null;	// don't show any header
+    return QString();	// don't show any header
 
   const QString& h=msg->get_headers();
   uint nPos=0;
