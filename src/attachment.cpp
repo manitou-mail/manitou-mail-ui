@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2017 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -375,6 +375,8 @@ attachment::get_contents()
   }
 }
 
+#if 0
+// Unused: see streamout_chunk
 void
 attachment::streamout_content(std::ofstream& of)
 {
@@ -419,6 +421,7 @@ attachment::streamout_content(std::ofstream& of)
     DBEXCPT(p);
   }
 }
+#endif
 
 int
 attachment::open_lo(struct lo_ctxt* slo)
@@ -463,13 +466,13 @@ attachment::open_lo(struct lo_ctxt* slo)
 /* Transfer a chunk of data from a already opened large object to an
   ofstream */
 int
-attachment::streamout_chunk(struct lo_ctxt* slo, std::ofstream& of)
+attachment::streamout_chunk(struct lo_ctxt* slo, QIODevice* of)
 {
   char data[8192];
   unsigned int nread;
   PGconn* c = slo->db->connection();
   nread = lo_read(c, slo->lfd, data, sizeof(data));
-  of.write(data, nread);
+  of->write(data, (qint64)nread);
   return (nread==sizeof(data));	// true if not done yet
 }
 

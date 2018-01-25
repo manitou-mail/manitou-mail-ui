@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2017 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -79,10 +79,12 @@ attch_lvitem::set_note(const QString& note)
   m_type = type_note;
 }
 
-/* download the attachment into 'destfilename'
+/* Download the attachment into 'destfilename'
    stop when finished or when *abort becomes true, which may
    happen in the same thread by way of progress_report()
-   calling processEvents() */
+   calling processEvents().
+   May emit an app_exception.
+ */
 bool
 attch_lvitem::download(const QString destfilename, bool *abort)
 {
@@ -90,16 +92,24 @@ attch_lvitem::download(const QString destfilename, bool *abort)
   struct attachment::lo_ctxt lo;
   if (m_attach.open_lo(&lo)) {
     QByteArray qba = destfilename.toLocal8Bit();
-    std::ofstream of(qba.constData(), std::ios::out|std::ios::binary);
-    lview()->progress_report(-(int)((lo.size+lo.chunk_size-1)/lo.chunk_size));
-    int steps=0;
-    int r;
-    do {
-      r = m_attach.streamout_chunk(&lo, of);
-      lview()->progress_report(++steps);
-    } while (r && (!abort || *abort==false));
+    QFile file(destfilename);
+    if (file.open(QIODevice::WriteOnly)) {
+      lview()->progress_report(-(int)((lo.size+lo.chunk_size-1)/lo.chunk_size));
+      int steps=0;
+      int r;
+      do {
+	r = m_attach.streamout_chunk(&lo, &file);
+	lview()->progress_report(++steps);
+      } while (r && (!abort || *abort==false));
+      file.close();
+    }
+    else {
+      // can't open file
+      m_attach.close_lo(&lo);
+      throw app_exception(file.errorString());
+    }
     m_attach.close_lo(&lo);
-    of.close();
+
     if (*abort) {
       QFile::remove(destfilename);
     }
@@ -108,6 +118,10 @@ attch_lvitem::download(const QString destfilename, bool *abort)
   return false;
 }
 
+// Save to a file and return the directory
+// TODO: let the caller deal with the directory (return nothing?)
+//  and probably take an opened QIODevice
+// May emit an app_exception.
 QString
 attch_lvitem::save_to_disk(const QString fname, bool* abort)
 {
@@ -312,26 +326,31 @@ attch_listview::save_attachments()
     dir = get_config().get_string("attachments_directory");
   }
   std::list<attch_lvitem*>::iterator it;
+  m_abort = false;
   if (list_name.size()>1) {
     // several named attachments: ask only for the directory
     dir = QFileDialog::getExistingDirectory(this, tr("Save to directory..."), dir);
     if (!dir.isEmpty()) { // if accepted
-      for (it=list_name.begin(); it!=list_name.end(); ++it) {
+      for (it=list_name.begin(); it!=list_name.end() && !m_abort; ++it) {
 	attachment* pa = (*it)->get_attachment();
 	fname = dir + "/" + pa->filename();
 	if (!confirm_write(fname))
 	  continue;
 	emit init_progress(tr("Downloading attachment into: %1").arg(fname));
-	m_abort=false;
-	dir=(*it)->save_to_disk(fname, &m_abort);
+	try {
+	  dir = (*it)->save_to_disk(fname, &m_abort);
+	}
+	catch(app_exception excpt) {
+	  QMessageBox::critical(this, APP_NAME, excpt.m_err_msg);
+	  m_abort = true;
+	}
 	emit finish_progress();
-	if (m_abort)
-	  break;
       }
     }
     else
       return;			// cancel
   }
+
   if (list_name.size()==1) {
     it=list_name.begin();
     attachment* pa = (*it)->get_attachment();
@@ -343,18 +362,30 @@ attch_listview::save_attachments()
     DBG_PRINTF(5, "fname=%s", fname.toLocal8Bit().constData());
     if (!fname.isEmpty()) {
       emit init_progress(tr("Downloading attached file: %1").arg(fname));
-      m_abort=false;
-      dir=(*it)->save_to_disk(fname, &m_abort);
+      try {
+	dir=(*it)->save_to_disk(fname, &m_abort);
+      }
+      catch(app_exception excpt) {
+	QMessageBox::critical(this, APP_NAME, excpt.m_err_msg);
+	m_abort = true;
+      }
       emit finish_progress();
     }
   }
+
   if (!list_noname.empty()) {
-    for (it=list_noname.begin(); it!=list_noname.end(); ++it) {
+    m_abort = false;
+    for (it=list_noname.begin(); it!=list_noname.end() && !m_abort; ++it) {
       fname = QFileDialog::getSaveFileName(this, tr("File"), dir);
       if (!fname.isEmpty()) {
 	emit init_progress(tr("Downloading attachment into: %1").arg(fname));
-	m_abort=false;
-	dir=(*it)->save_to_disk(fname, &m_abort);
+	try {
+	  dir=(*it)->save_to_disk(fname, &m_abort);
+	}
+	catch(app_exception excpt) {
+	  QMessageBox::critical(this, APP_NAME, excpt.m_err_msg);
+	  m_abort = true;
+	}
 	emit finish_progress();
       }
       else
@@ -362,7 +393,7 @@ attch_listview::save_attachments()
     }
   }
   if (!dir.isEmpty())
-    attch_listview::m_last_attch_dir=dir;
+    attch_listview::m_last_attch_dir = dir;
 }
 
 attch_dialog_save::attch_dialog_save()

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -94,8 +94,9 @@ public:
   virtual ~attch_lvitem() {}
   void fill_columns();
 
-  // ask for a filename and put the attachment contents to disk if confirmed
-  // returns the filename
+  // Ask for a filename and store the attachment contents to disk if confirmed.
+  // Returns the filename.
+  // May emit an app_exception.
   QString save_to_disk(const QString filename, bool *abort);
 
   // download the attachment into 'destfilename'

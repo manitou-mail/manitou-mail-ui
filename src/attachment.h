@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2017 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -61,9 +61,11 @@ public:
 
   int open_lo(struct lo_ctxt*);
   void close_lo(struct lo_ctxt*);
-  int streamout_chunk(struct lo_ctxt* slo, std::ofstream& of);
+  int streamout_chunk(struct lo_ctxt* slo, QIODevice* of);
 
+#if 0
   void streamout_content(std::ofstream&);
+#endif
   bool store(mail_id_t mail_id, ui_feedback* ui=NULL);
 
   /* Reinsert an identical attachment and assign it to a different mail
