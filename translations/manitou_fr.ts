@@ -999,7 +999,7 @@ Cette pièce jointe doit être supprimée du message en cours de composition.</t
     </message>
     <message>
         <source>Downloading attachment into: %1</source>
-        <translation>Charge l&apos;attachment dans: %1</translation>
+        <translation>Enregistre la pièce jointe dans: %1</translation>
     </message>
     <message>
         <source>File</source>
