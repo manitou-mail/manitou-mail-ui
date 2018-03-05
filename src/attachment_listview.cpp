@@ -46,18 +46,19 @@
 void
 attch_lvitem::fill_columns()
 {
-  QString sSize;
+  QString fsize;
   if (m_type==type_attachment) {
     setText(0, m_attach.mime_type());
-    QFileInfo fi(m_attach.filename());
-    setText(1, fi.fileName());
-    setToolTip(1, m_attach.filename());
-    sSize = m_attach.human_readable_size();
+    setText(1, m_attach.display_filename());
+    if (m_attach.getId() == 0)	// file on local filesystem
+      if (!m_attach.filename().isEmpty())
+	setToolTip(1, m_attach.filename());
+    fsize = m_attach.human_readable_size();
   }
   else if (m_type==type_note) {
     setText(0, "(private note)");
     setText(1, m_note);
-    sSize.sprintf("%d", m_note.length());
+    fsize.sprintf("%d", m_note.length());
     QBrush brush(QColor("#f1db20"));
     setBackground(0, brush);
     setBackground(1, brush);
@@ -65,7 +66,8 @@ attch_lvitem::fill_columns()
   }
   else
     return; // shouldn't happen
-  setText(2, sSize);
+
+  setText(2, fsize);
   setTextAlignment(0, Qt::AlignTop);
   setTextAlignment(1, Qt::AlignTop);
   setTextAlignment(2, Qt::AlignTop);
@@ -77,6 +79,17 @@ attch_lvitem::set_note(const QString& note)
 {
   m_note = note;
   m_type = type_note;
+}
+
+attachment*
+attch_lvitem::get_attachment()
+{
+  if (m_type == type_attachment) {
+    m_attach.set_final_filename(this->text(1));
+    return &m_attach;
+  }
+  else
+    return NULL;
 }
 
 /* Download the attachment into 'destfilename'
@@ -127,6 +140,40 @@ attch_lvitem::save_to_disk(const QString fname, bool* abort)
 {
   download(fname, abort);
   return QFileInfo(fname).canonicalPath();
+}
+
+/* Open an in-place editor to change the filename of an attachment when
+   composing. Other columns are made non-editable by this delegate. */
+QWidget*
+attach_item_editor_delegate::createEditor(QWidget* parent,
+					  const QStyleOptionViewItem &option,
+					  const QModelIndex &index) const
+{
+  // index 0 is for the MIME content type, index 1 for the filename.
+  if (index.column() == 1) {
+    attached_filename_editor* ed = new attached_filename_editor(parent);
+    /* The editor seems to get destroyed when it looses focus, so
+       that returning from a slot might crash if it's called directly
+       and it has shifted the focus elsewhere (for instance displaying
+       a clickable box). We use a QueuedConnection to avoid that. */
+    connect(ed, SIGNAL(invalid_filename(const QString)),
+	    this, SLOT(show_warning(const QString)), Qt::QueuedConnection);
+    return ed;
+  }
+  else
+    return nullptr;
+}
+
+void
+attach_item_editor_delegate::show_warning(const QString errmsg)
+{
+  QMessageBox::warning(NULL, tr("Warning"), errmsg);
+}
+
+void
+attch_lvitem::set_editable(bool b)
+{
+  setFlags(b? (flags()|Qt::ItemIsEditable) : (flags()&~Qt::ItemIsEditable));
 }
 
 attch_listview::attch_listview(QWidget* parent):
@@ -295,7 +342,6 @@ attch_listview::confirm_write(const QString fname)
   return true;
 }
 
-
 void
 attch_listview::save_attachments()
 {
@@ -433,4 +479,23 @@ int
 attch_dialog_save::choice()
 {
   return (m_rb_launch->isChecked()) ? 2 : 1;
+}
+
+attached_filename_editor::attached_filename_editor(QWidget* parent) : QLineEdit(parent)
+{
+  connect(this, SIGNAL(returnPressed()), this, SLOT(validate()));
+}
+
+/* Check for unsafe characters in a filename for an attachment.
+   Fix them if necessary, warning the user. */
+void
+attached_filename_editor::validate()
+{
+  QString errstr;
+  if (!attachment::check_filename(this->text(), errstr)) {
+    emit invalid_filename(tr("Characters that are unsafe in file names have been replaced by underscores."));
+    QString s = this->text().trimmed();
+    attachment::fixup_filename(s);
+    setText(s);
+  }
 }

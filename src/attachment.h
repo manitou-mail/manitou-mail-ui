@@ -80,6 +80,7 @@ public:
   static QString extension(const QString);
 
   const QString filename() { return m_filename; }
+  QString display_filename() const;
   QString mime_type() { return m_mime_type; }
   QString charset() { return m_charset; }
   uint size() { return m_size; }
@@ -99,11 +100,11 @@ public:
 
   void setAll(attach_id_t id, uint size, const QString filename, const QString mime_type,
 	      const QString charset=QString()) {
-    m_Id=id;
-    m_filename=filename;
-    m_size=size;
-    m_mime_type=mime_type;
-    m_charset=charset;
+    m_Id = id;
+    m_filename = filename;
+    m_size = size;
+    m_mime_type = mime_type;
+    m_charset = charset;
   }
   void set_mime_content_id(const QString id) {
     m_mime_content_id=id;
@@ -119,6 +120,10 @@ public:
   void set_mime_type(const QString mimetype) {
     m_mime_type = mimetype;
   }
+  void set_final_filename(const QString name) {
+    m_final_filename = name;
+  }
+
   // allocate and copy the contents
   void set_contents(const char* contents, uint size);
 
@@ -142,10 +147,17 @@ public:
 
   static bool fetch_filename_suffixes(QMap<QString,QString>&);
 
+  // check for unsafe characters in filenames
+  static bool check_filename(const QString name, QString& error);
+  static void fixup_filename(QString& input);
+
 protected:
-  attach_id_t m_Id;
+  // attachments.attachment_id in database, 0 when not in database
+  attach_id_t m_Id = 0;
+
   char *m_data;			// with malloc() and free()
   QString m_filename;
+  QString m_final_filename;	// to insert in db with a different name than on filesystem
   QString m_charset;
   QString m_mime_type;
   QString m_mime_content_id;
@@ -156,6 +168,8 @@ private:
   // dummy
   void free_data();
   struct lo_ctxt m_lo;
+  // characters to avoid in attachment filenames
+  static const QChar avoid_chars[9];
 };
 
 class attachment_network_reply : public QNetworkReply

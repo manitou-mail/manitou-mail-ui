@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2017 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -245,18 +245,23 @@ new_mail_widget::new_mail_widget(mail_msg* msg, QWidget* parent)
   m_qAttch=new attch_listview(split);
   m_qAttch->allow_delete(true);
   m_qAttch->setAcceptDrops(true);
+
   if (m_msg.attachments().size()==0)
     m_qAttch->hide();
   else {
     std::list<attachment>::iterator it;
     for (it=m_msg.attachments().begin(); it!=m_msg.attachments().end(); ++it) {
       attch_lvitem* item = new attch_lvitem(m_qAttch, &(*it));
+      item->set_editable(true);
       item->fill_columns();
     }
     m_qAttch->show();
   }
   connect(m_qAttch, SIGNAL(attach_file_request(const QUrl)),
 	  this, SLOT(attach_file(const QUrl)));
+
+  attach_item_editor_delegate* delegate = new attach_item_editor_delegate(m_qAttch);
+  m_qAttch->setItemDelegate(delegate);
 
   resize(900,600);
 
@@ -1115,6 +1120,7 @@ new_mail_widget::attach_files()
 
     // Insert the attachment's listviewitem at the end of the listview
     attch_lvitem* pItem = new attch_lvitem(m_qAttch, &attch);
+    pItem->set_editable(true);
     pItem->fill_columns();
   }
   m_qAttch->show();
@@ -1132,6 +1138,7 @@ new_mail_widget::attach_file(const QUrl url)
 
     // Insert the attachment's listviewitem at the end of the listview
     attch_lvitem* pItem = new attch_lvitem(m_qAttch, &attch);
+    pItem->set_editable(true);
     pItem->fill_columns();
     m_qAttch->show();
   }

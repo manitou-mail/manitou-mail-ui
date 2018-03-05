@@ -27,6 +27,7 @@
 #include <QDir>
 #include <QRegExp>
 #include <QTextCodec>
+#include <QObject>
 #include <QProcess>
 #include <QMessageBox>
 #include <QTimer>
@@ -51,6 +52,7 @@ attachment::attachment(const attachment& a)
   m_data = a.m_data;
   m_Id = a.m_Id;
   m_filename = a.m_filename;
+  m_final_filename = a.m_final_filename;
   m_mime_type = a.m_mime_type;
   m_size = a.m_size;
   m_charset = a.m_charset;
@@ -66,6 +68,7 @@ attachment::dup_no_data() const
   a.m_data = NULL;
   a.m_Id = m_Id;
   a.m_filename = m_filename;
+  a.m_final_filename = m_final_filename;
   a.m_mime_type = m_mime_type;
   a.m_size = m_size;
   a.m_charset = m_charset;
@@ -89,6 +92,49 @@ attachment::is_binary()
   }
   return false;
 }
+
+const QChar attachment::avoid_chars[9] = {
+  '/', '<', '>', ':', '"', '\\', '|', '?', '*'
+};
+
+/* Check for unsafe characters in attachment filenames */
+//static
+bool
+attachment::check_filename(const QString name, QString& error)
+{
+  error.truncate(0);
+  for (unsigned int i=0; i < sizeof(avoid_chars)/sizeof(avoid_chars[0]); i++) {
+    if (name.contains(avoid_chars[i])) {
+      error = QObject::tr("cannot contain character '%1'").arg(avoid_chars[i]);
+      return false;
+    }
+  }
+  for (int i=0; i<32; i++) {
+    if (name.contains(QChar(i))) {
+      error = QObject::tr("cannot contain control character of code %1").arg(i);
+      return false;
+    }
+  }
+  return true;
+}
+
+/* Replace unsafe characters in attachment filenames with underscores */
+//static
+void
+attachment::fixup_filename(QString& input)
+{
+  for (unsigned int i=0; i < sizeof(avoid_chars)/sizeof(avoid_chars[0]); i++) {
+    if (input.contains(avoid_chars[i])) {
+      input.replace(avoid_chars[i], '_');
+    }
+  }
+  for (int i=0; i<32; i++) {
+    if (input.contains(QChar(i))) {
+      input.replace(QChar(i), '_');
+    }
+  }
+}
+
 
 QString
 attachment::default_os_application()
@@ -137,6 +183,27 @@ attachment::sha1_to_base64(unsigned int digest[5])
     res.append(alpha[idx]);
   }
   return res;
+}
+
+/* Return a relative file name suitable for display.
+   Can be the future (renamed, "final") version in case of a file
+   not yet inserted into the db.
+*/
+QString attachment::display_filename() const
+{
+  if (m_Id == 0) {
+    /* set up QFileInfo only for attachments related to files supposedly
+       on the local filesystem, not yet stored in the database */
+    if (m_final_filename.isEmpty()) {
+      QFileInfo fi(m_filename);
+      return fi.fileName();
+    }
+    else
+      return m_final_filename;
+  }
+  else {
+    return m_filename;
+  }
 }
 
 void
@@ -575,7 +642,8 @@ attachment::store(mail_id_t mail_id, ui_feedback* ui)
 
     sql_stream s("INSERT INTO attachments(attachment_id, mail_id, content_type, content_size, filename,mime_content_id) VALUES (:p1, :p2, ':p3', :p4, ':p5', :cid)", db);
     QFileInfo fi(m_filename);
-    s << m_Id << mail_id << m_mime_type << m_size << fi.fileName();
+    s << m_Id << mail_id << m_mime_type << m_size;
+    s << (m_final_filename.isEmpty() ? fi.fileName() : m_final_filename);
 
     if (!m_mime_content_id.isEmpty())
       s << m_mime_content_id;

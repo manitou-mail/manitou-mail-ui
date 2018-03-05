@@ -20,14 +20,20 @@
 #ifndef INC_ATTACHMENT_LISTVIEW_H
 #define INC_ATTACHMENT_LISTVIEW_H
 
-#include <QPalette>
-#include <QTreeWidget>
 #include <QDialog>
+#include <QItemDelegate>
+#include <QLineEdit>
+#include <QPalette>
+#include <QStyleOptionViewItem>
+#include <QTreeWidget>
+
 #include "attachment.h"
 
+class QLabel;
 class QMimeData;
 class QRadioButton;
-class QLabel;
+
+class attch_lvitem;
 
 class attch_listview: public QTreeWidget
 {
@@ -45,6 +51,7 @@ protected:
 
 private:
   bool m_abort; //  attachment download aborted
+
 signals:
   void progress(int);
   void attach_file_request(const QUrl);
@@ -85,7 +92,7 @@ public:
       m_type = type_attachment;
     }
     else
-      m_type = type_note;
+       m_type = type_note;
   }
 
   attch_listview* lview() const {
@@ -102,14 +109,14 @@ public:
   // download the attachment into 'destfilename'
   bool download(const QString destfilename, bool* abort);
 
-  attachment* get_attachment() {
-    return m_type == type_attachment ? &m_attach : NULL;
-  }
+  attachment* get_attachment();
 
   void set_note(const QString& note);
   bool is_note() const {
     return (m_type == type_note);
   }
+  // Attachments can be renamed in-place when composing new messages.
+  void set_editable(bool b);
 private:
   //  int m_type; // 0=attachment, 1=note
   enum row_type {
@@ -119,6 +126,29 @@ private:
   attachment m_attach;
   QString m_note;
   QPalette m_palette_for_notes;
+};
+
+class attach_item_editor_delegate: public QItemDelegate
+{
+  Q_OBJECT
+public:
+  attach_item_editor_delegate(QObject* parent) : QItemDelegate(parent) {}
+  QWidget* createEditor(QWidget* parent,
+			const QStyleOptionViewItem &option,
+			const QModelIndex &index) const;
+public slots:
+  void show_warning(const QString warning);
+};
+
+class attached_filename_editor: public QLineEdit
+{
+  Q_OBJECT
+public:
+  attached_filename_editor(QWidget* parent);
+public slots:
+  void validate();
+signals:
+  void invalid_filename(const QString);
 };
 
 class attch_dialog_save: public QDialog
