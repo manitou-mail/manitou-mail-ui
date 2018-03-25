@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2017 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -287,7 +287,7 @@ private:
 
   QString sprint_headers(mail_msg*);
   void display_msg_note();
-  void display_body();
+  void display_body(bool keep_part=false);
 
   // menu entries
   enum {

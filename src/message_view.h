@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2017 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -51,7 +51,14 @@ public:
   void highlight_terms(const std::list<searched_text>&);
 
   QSize sizeHint() const;
-  void display_body(const display_prefs& prefs, int preferred_format=0);
+  /* which part should be displayed */
+  enum display_part {
+    default_conf = 0, // text or html, as decided by the configuration
+    text_part,	      // choose text
+    html_part	      // choose html
+  };
+  void display_body(const display_prefs& prefs,
+		    display_part preferred_format = default_conf);
   void set_html_contents(const QString& body, int type);
   QString selected_text() const;
   int content_type_shown() const;
@@ -60,6 +67,9 @@ public:
   void prepend_body_fragment(const QString& fragment);
   QString hovered_link() const {
     return m_hovered_link;
+  }
+  display_part displayed_part() const {
+    return m_displayed_part;
   }
 protected:
   void keyPressEvent(QKeyEvent*);
@@ -95,6 +105,7 @@ private:
   bool m_ext_contents;
   bool m_has_text_part;
   bool m_has_html_part;
+  display_part m_displayed_part = default_conf;
   QString m_hovered_link;
   qreal m_zoom_factor;
   std::list<searched_text> m_highlight_words;

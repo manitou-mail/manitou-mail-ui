@@ -1,4 +1,4 @@
-/* Copyright (C) 2011 Daniel Verite
+/* Copyright (C) 2011-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -224,7 +224,7 @@ filter_result_message_view::set_headers_visibility(int level)
   if (level>2)
     level=2;
   prefs.m_show_headers_level = level;
-  m_msg_view->display_body(prefs, 0);
+  m_msg_view->display_body(prefs, message_view::default_conf);
 }
 
 void
@@ -233,7 +233,7 @@ filter_result_message_view::set_message(mail_msg* msg)
   m_msg_view->set_mail_item(msg);
   display_prefs prefs;
   prefs.init();
-  m_msg_view->display_body(prefs, 0);
+  m_msg_view->display_body(prefs, message_view::default_conf);
 
   // display attachments
   m_attch_listview->clear();

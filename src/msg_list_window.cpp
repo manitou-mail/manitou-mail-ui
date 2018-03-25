@@ -121,7 +121,7 @@ msg_list_window::search_text_changed(const QString& newtext)
     m_highlighted_text.clear();
     if (!m_fetch_on_demand) {
       m_msgview->clear();
-      display_body();
+      display_body(true);
     }
   }
 }
@@ -378,7 +378,7 @@ msg_list_window::tag_toggled(int tag_id, bool checked)
   }
   if (m_pCurrentItem) {
     // redisplay the body
-    display_body();
+    display_body(true);
   }
   QString msg_result = checked ? tr("%1 message(s) tagged.") : tr("%1 message(s) untagged.");
   statusBar()->showMessage(msg_result.arg(idx), 3000);
@@ -915,7 +915,7 @@ msg_list_window::toggle_include_tags_in_headers(bool include)
 {
   display_vars.m_show_tags_in_headers = include;
   if (!m_fetch_on_demand)
-    display_body();  
+    display_body(true);
 }
 
 void
@@ -923,7 +923,7 @@ msg_list_window::toggle_hide_quoted(bool hide)
 {
   display_vars.m_hide_quoted = hide;
   if (!m_fetch_on_demand)
-    display_body();
+    display_body(true);
 }
 
 void
@@ -931,7 +931,7 @@ msg_list_window::toggle_show_filters_log(bool show)
 {
   display_vars.m_show_filters_trace = show;
   if (!m_fetch_on_demand)
-    display_body();
+    display_body(true);
 }
 
 void
@@ -2613,7 +2613,7 @@ msg_list_window::search_finished()
   m_highlighted_text.clear();
   if (!m_fetch_on_demand) {
     m_msgview->clear();
-    display_body();
+    display_body(true);
   }
 }
 
@@ -3544,11 +3544,17 @@ msg_list_window::apply_conf(app_config& conf)
   }
 }
 
+/*
+  keep_part: when true, keep the previous text/html choice.
+  otherwise, choose text or html per configuration
+*/
 void
-msg_list_window::display_body()
+msg_list_window::display_body(bool keep_part)
 {
   if (m_pCurrentItem) {
-    m_msgview->display_body(display_vars, 0);
+    m_msgview->display_body(display_vars,
+			    keep_part ? m_msgview->displayed_part() :
+			    message_view::default_conf);
     m_msgview->highlight_terms(m_highlighted_text);
   }
 }

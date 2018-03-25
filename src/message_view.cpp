@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2017 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -262,7 +262,7 @@ message_view::set_show_on_demand(bool b)
   }
   else {
     if (m_parent)
-      display_body(m_parent->get_display_prefs(), 0);    
+      display_body(m_parent->get_display_prefs(), default_conf);
   }
 }
 
@@ -314,17 +314,14 @@ message_view::ask_for_external_contents()
   enable_command("fetch", true);
 }
 
-/*
-  preferred_format: 0=from config, 1=text, 2=html
-*/
 void
-message_view::display_body(const display_prefs& prefs, int preferred_format)
+message_view::display_body(const display_prefs& prefs, display_part preferred_part)
 {
   if (!m_pmsg)
     return;
 
-  if (preferred_format==0) {
-    preferred_format = get_config().get_string("display/body/preferred_format").toLower()=="text" ? 1: 2;
+  if (preferred_part == default_conf) {
+    preferred_part = get_config().get_string("display/body/preferred_format").toLower()=="text" ? text_part: html_part;
   }
 
   reset_state();
@@ -346,7 +343,7 @@ message_view::display_body(const display_prefs& prefs, int preferred_format)
     attchs.fetch();
   }
 
-  if (preferred_format==1) {
+  if (preferred_part == text_part) {
     if (body_text.isEmpty()) {
       if (attchs.size() > 0) {
 	attachments_list::iterator iter;
@@ -375,7 +372,7 @@ message_view::display_body(const display_prefs& prefs, int preferred_format)
   m_has_text_part = !body_text.isEmpty();
   m_has_html_part = (html_attachment!=NULL || !body_html.isEmpty());
 
-  if (preferred_format==1 || body_html.isEmpty()) {
+  if (preferred_part==text_part || body_html.isEmpty()) {
     QString b2 = "<html><body>";
     b2.append(h);
     b2.append("<div id=\"manitou-body\">");
@@ -508,9 +505,10 @@ void
 message_view::show_text_part()
 {
   if (m_parent)
-    display_body(m_parent->get_display_prefs(), 1);
+    display_body(m_parent->get_display_prefs(), text_part);
   enable_command("to_html", m_has_html_part);
   enable_command("to_text", false);
+  m_displayed_part = message_view::text_part;
   display_commands();
 }
 
@@ -518,9 +516,10 @@ void
 message_view::show_html_part()
 {
   if (m_parent)
-    display_body(m_parent->get_display_prefs(), 2);
+    display_body(m_parent->get_display_prefs(), html_part);
   enable_command("to_text", m_has_text_part);
   enable_command("to_html", false);
+  m_displayed_part = message_view::html_part;
   display_commands();
 }
 
