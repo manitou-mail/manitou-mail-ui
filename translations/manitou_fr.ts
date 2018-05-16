@@ -4130,7 +4130,7 @@ Voulez-vous le mettre à jour malgré cela?</translation>
     </message>
     <message>
         <source>Send after:</source>
-        <translation>Envoie après:</translation>
+        <translation>Envoi après:</translation>
     </message>
 </context>
 <context>
@@ -4339,7 +4339,7 @@ Etes-vous certain de vouloir l&apos;écraser?</translation>
     </message>
     <message>
         <source>Send after:</source>
-        <translation>Envoie après:</translation>
+        <translation>Envoi après:</translation>
     </message>
 </context>
 <context>
