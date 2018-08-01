@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -30,6 +30,7 @@ public:
   virtual QList<QString> get_all_completions() {
     return QList<QString>();
   }
+  virtual int get_prefix_pos(const QString text, int cursor_pos);
 };
 
 #endif // INC_EDIT_ADDRESS_WIDGET_H

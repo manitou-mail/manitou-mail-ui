@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -19,12 +19,12 @@
 
 #include "line_edit_autocomplete.h"
 
-#include <QTimer>
-#include <QListWidget>
 #include <QApplication>
-#include <QKeyEvent>
-#include <QScrollBar>
 #include <QDesktopWidget>
+#include <QKeyEvent>
+#include <QListWidget>
+#include <QScrollBar>
+#include <QTimer>
 
 /* Generic completer. Inherit and provide an implementation for get_completions() */
 line_edit_autocomplete::line_edit_autocomplete(QWidget* parent) : QLineEdit(parent),
@@ -208,6 +208,11 @@ line_edit_autocomplete::completion_chosen(QListWidgetItem* item)
   this->setText(before + item->text() + after);
 }
 
+/*
+ Return the zero-based offset of the completion prefix inside 'text' when
+ the cursor is at 'cursor_pos', 'cursor_pos' being 0 when 'text' is empty.
+ return -1 if no completion prefix is found.
+*/
 int
 line_edit_autocomplete::get_prefix_pos(const QString text, int cursor_pos)
 {
@@ -217,6 +222,7 @@ line_edit_autocomplete::get_prefix_pos(const QString text, int cursor_pos)
   while (pos>=0 && text.at(pos).isLetterOrNumber()) {
     pos--;
   }
+  /* pos will be -1 if we went up to the start of the string */
   if (pos<0 || text.at(pos)==' ' || text.at(pos)==',')
     return pos+1;
   else

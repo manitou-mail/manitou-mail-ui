@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -17,8 +17,8 @@
    Boston, MA 02111-1307, USA.
 */
 
-#include "edit_address_widget.h"
 #include "addresses.h"
+#include "edit_address_widget.h"
 
 /* Completer for email addresses */
 
@@ -38,4 +38,30 @@ edit_address_widget::get_completions(const QString prefix)
     }
   }
   return res;
+}
+
+/*
+ Return the zero-based offset of the completion prefix inside 'text' when
+ the cursor is at 'cursor_pos', 'cursor_pos' being 0 when 'text' is empty.
+ return -1 if no completion prefix is found.
+ Compared to the base class implementation, dash/dot/at-sign are considered
+ part of the prefix.
+*/
+int
+edit_address_widget::get_prefix_pos(const QString text, int cursor_pos)
+{
+  if (cursor_pos==0)
+    return -1;
+  int pos = cursor_pos-1;
+  while (pos>=0 && (text.at(pos).isLetterOrNumber()
+		    || text.at(pos) == '-' || text.at(pos) == '.'
+		    || text.at(pos) == '@'))
+  {
+    pos--;
+  }
+  /* pos will be -1 if we went up to the start of the string */
+  if (pos<0 || text.at(pos)==' ' || text.at(pos)==',')
+    return pos+1;
+  else
+    return -1;
 }
