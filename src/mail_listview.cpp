@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2017 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -17,18 +17,18 @@
    Boston, MA 02111-1307, USA.
 */
 
+#include "date.h"
+#include "icons.h"
 #include "mail_listview.h"
 #include "msg_list_window.h"
 #include "selectmail.h"
-#include "icons.h"
-#include "date.h"
 
-#include <QKeyEvent>
 #include <QHeaderView>
-#include <QMenu>
-#include <QMessageBox>
 #include <QItemSelection>
 #include <QItemSelectionModel>
+#include <QKeyEvent>
+#include <QMenu>
+#include <QMessageBox>
 
 flag_item::flag_item(const QIcon& icon) : QStandardItem(icon, "")
 {
@@ -737,11 +737,9 @@ mail_listview::popup_ctxt_menu(const QPoint& pos)
   mail_id_t preselected_id = 0;
 
   // Same thread
-  if (msg->thread_id()) {
-    action_thread = qmenu.addAction(tr("Show thread on new page"));
-  }
-  else
-    action_thread = NULL;
+  action_thread = qmenu.addAction(tr("Show thread on new page"));
+  // enabled only if the message is part of an existing thread
+  action_thread->setEnabled((msg->thread_id()!=0));
 
   // Message properties
   action_properties = qmenu.addAction(tr("Pr&operties"));
