@@ -20,25 +20,25 @@
 #include "db.h"
 #include "main.h"
 
-#include "message_view.h"
 #include "body_view.h"
 #include "browser.h"
 #include "mail_displayer.h"
+#include "message_view.h"
 #include "msg_list_window.h"
 
 #include <QFrame>
-#include <QWebFrame>
 #include <QHBoxLayout>
-#include <QResizeEvent>
+#include <QKeySequence>
 #include <QMessageBox>
-#include <QScrollBar>
 #include <QPalette>
-#include <QPrinter>
 #include <QPrintDialog>
+#include <QPrinter>
+#include <QResizeEvent>
+#include <QScrollBar>
+#include <QShortcut>
 #include <QTextDocument>
 #include <QVariant>
-#include <QShortcut>
-#include <QKeySequence>
+#include <QWebFrame>
 
 #if QT_VERSION>=0x040600
 #include <QWebElement>
@@ -187,7 +187,6 @@ message_view::reset_state()
   m_ext_contents=false;
   m_zoom_factor=1.0;
   m_bodyv->setTextSizeMultiplier(m_zoom_factor);
-  //  m_highlight_words.clear();
 }
 
 // content_type is 1 if contents come from text part, 2 if html part
@@ -226,14 +225,11 @@ message_view::enable_page_nav(bool back, bool forward)
 }
 
 void
-message_view::highlight_terms(const std::list<searched_text>& lst)
+message_view::highlight_terms(const QList<searched_text>& lst)
 {
-  if (m_bodyv->is_loaded()) {
+  m_highlight_words = lst;
+  if (m_bodyv->is_loaded())
     m_bodyv->highlight_terms(lst);
-  }
-  else {
-    m_highlight_words=lst;
-  }
 }
 
 void

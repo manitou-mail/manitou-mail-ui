@@ -20,10 +20,10 @@
 #ifndef INC_MESSAGE_VIEW_H
 #define INC_MESSAGE_VIEW_H
 
-#include <QString>
+#include <QList>
 #include <QMap>
+#include <QString>
 #include <QUrl>
-#include <list>
 
 #include "body_view.h"
 #include "mail_displayer.h"
@@ -48,7 +48,7 @@ public:
   void copy();
   void set_mail_item (mail_msg*);
   void set_show_on_demand(bool);
-  void highlight_terms(const std::list<searched_text>&);
+  void highlight_terms(const QList<searched_text>&);
 
   QSize sizeHint() const;
   /* which part should be displayed */
@@ -108,7 +108,7 @@ private:
   display_part m_displayed_part = default_conf;
   QString m_hovered_link;
   qreal m_zoom_factor;
-  std::list<searched_text> m_highlight_words;
+  QList<searched_text> m_highlight_words;
   int m_content_type_shown;
 signals:
   void on_demand_show_request();

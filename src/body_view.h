@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -20,23 +20,22 @@
 #ifndef INC_BODY_VIEW_H
 #define INC_BODY_VIEW_H
 
-#include <QString>
-#include <QWebView>
 #include <QBuffer>
 #include <QFont>
-
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include <QString>
+#include <QWebView>
 
 #include "searchbox.h"
 
+class QContextMenuEvent;
 class QNetworkRequest;
 class QPaintEvent;
 class QResizeEvent;
-class QContextMenuEvent;
-class mail_msg;
 class QUrl;
-//class QWheelEvent;
+
+class mail_msg;
 
 class network_manager : public QNetworkAccessManager
 {
@@ -79,7 +78,7 @@ public:
   void redisplay();
   void clear();
   void copy();
-  void highlight_terms(const std::list<searched_text>& );
+  void highlight_terms(const QList<searched_text>& );
   void authorize_external_contents(bool b);
   QSize sizeHint() const;
   void set_body_style();

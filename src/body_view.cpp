@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -17,20 +17,20 @@
    Boston, MA 02111-1307, USA.
 */
 
-#include "main.h"
-#include "body_view.h"
-#include "mailheader.h"
 #include "attachment.h"
+#include "body_view.h"
 #include "db.h"
+#include "mailheader.h"
+#include "main.h"
 #include "xface/xface.h"
 
 #include <QKeyEvent>
 #include <QPainter>
 #include <QTextEdit>
-#include <QWebPage>
-#include <QWebFrame>
-#include <QUrlQuery>
 #include <QTimer>
+#include <QUrlQuery>
+#include <QWebFrame>
+#include <QWebPage>
 
 body_view::body_view(QWidget* parent) : QWebView(parent)
 {
@@ -197,9 +197,9 @@ body_view::prepend_body_fragment(const QString& fragment)
 }
 
 void
-body_view::highlight_terms(const std::list<searched_text>& lst)
+body_view::highlight_terms(const QList<searched_text>& lst)
 {
-  std::list<searched_text>::const_iterator it = lst.begin();
+  QList<searched_text>::const_iterator it = lst.begin();
   if (it==lst.end())
     return;
 

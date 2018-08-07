@@ -418,7 +418,7 @@ private:
   QMenu* m_pPopupAttach;
 
   QString m_lastSubjectSearch;
-  std::list<searched_text> m_highlighted_text;
+  QList<searched_text> m_highlighted_text;
   bool m_highlightedCaseSensitive;
   search_box* m_wSearch;
 
