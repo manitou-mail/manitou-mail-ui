@@ -800,7 +800,6 @@ msg_list_window::msg_list_window (const msgs_filter* filter, display_prefs* dpre
   QSplitter* l2 = new QSplitter(Qt::Vertical, lvert);
 
   m_query_lv = new query_listview(l2);
-  m_query_lv->init();
 
   connect(m_query_lv, SIGNAL(itemActivated(QTreeWidgetItem *,int)),
 	  this, SLOT(quick_query_selection(QTreeWidgetItem *,int)));

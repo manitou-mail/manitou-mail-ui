@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2007 Daniel Vérité
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -40,9 +40,10 @@ user_queries_repository::m_map;
 bool user_queries_repository::m_uq_map_fetched = false;
 
 // title is the user's choosen name for the query
-void save_filter_query(msgs_filter* f, int mode, const QString title)
+void
+save_filter_query(msgs_filter* filter, int mode, const QString title)
 {
-  save_query_box* w = new save_query_box(0, f, mode, title);
+  save_query_box* w = new save_query_box(0, filter, mode, title);
   QString initial_title = title;
 //  DBG_PRINTF(3, "initial_title=%s\n", initial_title.latin1());
   int r=w->exec();
@@ -56,7 +57,8 @@ void save_filter_query(msgs_filter* f, int mode, const QString title)
 	// rename the title and replace the SQL sentence
 	sql_stream s("UPDATE user_queries SET title=:p1,sql_stmt=:p2 WHERE title=:p3", db);
 	s << w->m_name->text() << w->m_sql << initial_title;
-	user_queries_repository::remove_query(initial_title);
+	// remove entry, to add it with the new title (at the end of the outer block)
+	user_queries_repository::m_map.erase(initial_title);
       }
       else if (user_queries_repository::name_exists(w->m_name->text())) {
 	// replace (has been confirmed in the dialog)
@@ -81,14 +83,15 @@ void save_filter_query(msgs_filter* f, int mode, const QString title)
   mode=0: new query, no title suggested and sql is read-only
   mode=1: edit query, title and sql can be updated
 */
-save_query_box::save_query_box(QWidget* parent, msgs_filter* f, int mode,
+save_query_box::save_query_box(QWidget* parent, msgs_filter* filter, int mode,
 			       const QString title) :
   QDialog(parent)
 {
-  setWindowTitle("User query");
+  setWindowTitle(tr("User query"));
   QVBoxLayout* top_layout = new QVBoxLayout(this);
 
-  m_sql = f->user_query();
+  if (filter)
+    m_sql = filter->user_query();
   m_initial_title = title;
 
   QLabel* lq = new QLabel(tr("SQL statement:"), this);

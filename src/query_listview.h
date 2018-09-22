@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2017 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -124,7 +124,6 @@ class query_listview: public QTreeWidget
 public:
   query_listview(QWidget* parent=0);
   virtual ~query_listview();
-  void init();
   void set_focus_on_id(int id);
   int current_id();
   void clear_selection();
@@ -163,6 +162,8 @@ private:
     // that can get recreated
     index_branch_current=1
   };
+
+  void init();
 
   query_lvitem* create_branch_current(const tag_node* root);
 

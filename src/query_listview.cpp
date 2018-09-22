@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2017 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -18,29 +18,33 @@
 */
 
 #include "main.h"
-#include "query_listview.h"
-#include "tags.h"
-#include "user_queries.h"
-#include "selectmail.h"
-#include "message_port.h"
-#include "msg_status_cache.h"
 
 #include "db.h"
-
+#include "message_port.h"
+#include "msg_status_cache.h"
+#include "query_listview.h"
+#include "selectmail.h"
 #include "sqlstream.h"
-#include <QMenu>
+#include "tags.h"
+#include "user_queries.h"
+
+#include <QBrush>
 #include <QCursor>
+#include <QMenu>
 #include <QMessageBox>
 #include <QMouseEvent>
+#include <QTimer>
 #include <QTreeWidgetItemIterator>
-#include <QBrush>
 
 int
 query_lvitem::id_generator;
 
 query_listview::query_listview(QWidget* parent): QTreeWidget(parent)
 {
+  init();
+
   setContextMenuPolicy(Qt::CustomContextMenu);
+
   connect(this, SIGNAL(customContextMenuRequested(const QPoint&)),
 	  this, SLOT(context_menu(const QPoint&)));
   // connect to any change to tags
@@ -49,7 +53,6 @@ query_listview::query_listview(QWidget* parent): QTreeWidget(parent)
   // subscribe to new messages notifications
   message_port::connect_receiver(SIGNAL(new_mail_imported(mail_id_t)),
 				 this, SLOT(got_new_mail(mail_id_t)));
-
 }
 
 query_listview::~query_listview()
@@ -933,10 +936,22 @@ query_listview::context_menu(const QPoint& pos)
 {
   query_lvitem* item = dynamic_cast<query_lvitem*>(itemAt(pos));
 
+  extern void save_filter_query(msgs_filter*, int, const QString); // FIXME
+
   if (item && item != currentItem())
     setCurrentItem(item);
 
-  if (item && item->m_type==query_lvitem::user_defined) {
+  if (item && item == m_item_user_queries) {
+    // root of the "user queries" tree
+    QMenu qmenu(this);
+    QAction* action_new = qmenu.addAction(tr("New query"));
+    QAction* selected = qmenu.exec(QCursor::pos());
+    if (selected == action_new) {
+      save_filter_query(NULL, 1, "");
+      QTimer::singleShot(0, this, SLOT(reload_user_queries()));
+    }
+  }
+  else if (item && item->m_type==query_lvitem::user_defined) {
     // contextual menu
     QMenu qmenu(this);
     qmenu.setTitle(item->text(0));
@@ -957,7 +972,6 @@ query_listview::context_menu(const QPoint& pos)
     }
     else if (selected==action_edit) {
       // edit the user query
-      extern void save_filter_query(msgs_filter*, int, const QString); // FIXME
       msgs_filter f;
       f.set_user_query(item->m_sql);
       save_filter_query(&f, 1, item->text(0));
