@@ -4748,7 +4748,7 @@ Save now?</source>
     </message>
     <message>
         <source>(*)  Fields marked with &lt;sup&gt;(*)&lt;/sup&gt; apply across all databases of this server.&lt;br&gt;(**) Fields marked with &lt;sup&gt;(**)&lt;/sup&gt; apply only to the current database: &lt;b&gt;%1&lt;/b&gt;.</source>
-        <translation>(*) Les champs marqués avec &lt;sup&gt;(*)&lt;/sup&gt; s&apos;appliquent à toutes les bases de ce server&lt;br&gt;(**)Les champs marqués avec &lt;sup&gt;(**)&lt;/sup&gt; s&apos;appliquent seulement à la base en cours: &lt;b&gt;%1&lt;/b&gt;.</translation>
+        <translation>(*) Les champs marqués avec &lt;sup&gt;(*)&lt;/sup&gt; s&apos;appliquent à toutes les bases de ce serveur.&lt;br&gt;(**)Les champs marqués avec &lt;sup&gt;(**)&lt;/sup&gt; s&apos;appliquent seulement à la base en cours: &lt;b&gt;%1&lt;/b&gt;.</translation>
     </message>
     <message>
         <source>The passwords don&apos;t match.</source>
