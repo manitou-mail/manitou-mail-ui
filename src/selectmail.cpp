@@ -1036,11 +1036,6 @@ msgs_filter::asynchronous_fetch(fetch_thread* t, int direction)
    1. OK
    2. A condition doesn't match even before running the main query
      (example: non-existing email address)
-
-  'fetch_more' can be set on subsequent invocations to fetch more results
-  (think "next page") based on the lower/higher (msg_date,mail_id) previously
-  retrieved
-
 */
 int
 msgs_filter::fetch(mail_listview* qlv, int direction)

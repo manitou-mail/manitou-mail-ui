@@ -89,20 +89,20 @@ public:
 class result_segment
 {
 public:
-  /* the bounds are (date_{min,max}, mailid_{min,max}) as a pair.
+  /* The bounds are (date_{min,max}, mailid_{min,max}) as a pair.
      mail_id is a tie-breaker for the date */
   QString date_min;		// format: YYYYMMDDHHMISS, with HH being 24-hour
   mail_id_t mail_id_min;
   QString date_max;		// same format as date_min
   mail_id_t mail_id_max;
-  /* first segment of the resultset. Either a first fetch for a query
+
+  /* First segment of the resultset. Either a first fetch for a query
      or a subsequent backward fetch that retrieved less results than
      the limit */
   bool is_first = true;
 
-  /* we know that there's no more results after a segment by asking
-     for N+1 results instead of N and noting than N+1 results came
-     back */
+  /* We know whether there are still results after a segment by asking
+     for N+1 results instead of N and getting N+1 results back. */
   bool is_last;
 
   // whether the other fields are initialized and valid
