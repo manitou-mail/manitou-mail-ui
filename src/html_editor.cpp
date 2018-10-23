@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -567,6 +567,16 @@ html_editor::append_paragraph(const QString& fragment)
   h.replace("'", "\\'");
   h.replace("\n", "<br>");
   QString jscript = QString("try {var b=document.getElementsByTagName('body')[0]; var p=document.createElement('p'); p.innerHTML='%1'; b.appendChild(p); 1;} catch(e) { e; }").arg(h);
+  QVariant res = page()->mainFrame()->evaluateJavaScript(jscript);
+}
+
+void
+html_editor::prepend_paragraph(const QString& fragment)
+{
+  QString h = fragment;
+  h.replace("'", "\\'");
+  h.replace("\n", "<br>");
+  QString jscript = QString("try {var b=document.getElementsByTagName('body')[0]; var p=document.createElement('p'); p.innerHTML='%1'; b.insertBefore(p, b.firstChild); 1;} catch(e) { e; }").arg(h);
   QVariant res = page()->mainFrame()->evaluateJavaScript(jscript);
 }
 

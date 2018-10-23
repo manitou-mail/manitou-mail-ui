@@ -1331,6 +1331,22 @@ new_mail_widget::insert_signature()
   }
 }
 
+void
+new_mail_widget::prepend_html_paragraph(const QString para)
+{
+  if (m_edit_mode == html_mode) {
+    m_html_edit->prepend_paragraph(para);
+  }
+}
+
+void
+new_mail_widget::append_html_paragraph(const QString para)
+{
+  if (m_edit_mode == html_mode) {
+    m_html_edit->append_paragraph(para);
+  }
+}
+
 QString
 new_mail_widget::expand_signature(const QString sig, const mail_identity& identity)
 {

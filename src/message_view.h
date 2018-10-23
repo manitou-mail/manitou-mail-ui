@@ -59,6 +59,8 @@ public:
   };
   void display_body(const display_prefs& prefs,
 		    display_part preferred_format = default_conf);
+
+  // Set contents: type is 1 if contents come from text part, 2 if html part
   void set_html_contents(const QString& body, int type);
   QString selected_text() const;
   int content_type_shown() const;

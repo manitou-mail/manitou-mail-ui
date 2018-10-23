@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2017 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -69,6 +69,9 @@ public:
     m_bodyw->setPlainText(b);
   }
   void insert_signature();
+  void prepend_html_paragraph(const QString para);
+  void append_html_paragraph(const QString para);
+
   // interpolate variables inside the signature
   QString expand_signature(const QString signature, const mail_identity& identity);
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2017 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -24,6 +24,7 @@
 #include "time.h"
 
 #include <QDateTime>
+#include <QPair>
 #include <QString>
 #include <QVector>
 
@@ -218,6 +219,7 @@ public:
 
   mail_msg setup_reply(const QString& quoteText, int whom_to, body_format format);
   mail_msg setup_forward();
+  static QPair<QString,QString> forwarding_enclosing_markers();
 
   // Write the status to the database. If force is true, write it
   // even if the value in memory is the same as the new

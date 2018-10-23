@@ -1932,10 +1932,34 @@ msg_list_window::forward()
     QMessageBox::information(this, APP_NAME, tr("Only one message can be forwarded at a time."));
     return;
   }
+
   mail_msg msg = v_sel[0]->setup_forward();
+
   new_mail_widget* w = new new_mail_widget(&msg, 0);
+
+  if (m_msgview->content_type_shown() == 2) {
+    w->format_html_text();
+    /* Incorporate the forwarding mini-headers at the top of the HTML
+       body. This can't be done before instantiating the HTML view,
+       because the insertion into the document relies on a JS call through
+       the QWebPage. */
+    QString quoted_header = v_sel[0]->forwarded_header_excerpt();
+    QString para = mail_displayer::htmlize(quoted_header);
+    para.append("<hr>");
+    /* Also preprend the line introducing the forward */
+    QPair<QString,QString> enclosing = mail_msg::forwarding_enclosing_markers();
+    w->prepend_html_paragraph(mail_displayer::htmlize(enclosing.first) + "<p>" + para);
+    /* Append the line marking the end of the forwarded mail */
+    w->append_html_paragraph(mail_displayer::htmlize(enclosing.second));
+  }
+  else {
+    w->set_body_text(msg.get_body_text());
+    w->format_plain_text();
+  }
+
   w->insert_signature();
   w->start_edit();
+
   /* A signal will be emitted when the reply is stored, and we connect
      that to a visual update on all our listviews of the original mail
      new status (now forwarded)  */

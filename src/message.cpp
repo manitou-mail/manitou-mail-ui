@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2017 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -1357,6 +1357,21 @@ mail_msg::setup_reply(const QString& quoted_text, int whom_to, body_format forma
   return msg;
 }
 
+//static
+QPair<QString,QString>
+mail_msg::forwarding_enclosing_markers()
+{
+  QString start = get_config().get_string("forward_start_quote");
+  if (start.isEmpty()) {
+    start = QObject::tr("------------------------- start of forwarded message ------------------------");
+  }
+  QString end = get_config().get_string("forward_end_quote");
+  if (end.isEmpty()) {
+    end = QObject::tr("------------------------- end of forwarded message ---------------------------");
+  }
+  return QPair<QString,QString>(start, end);
+}
+
 mail_msg
 mail_msg::setup_forward()
 {
@@ -1385,32 +1400,70 @@ mail_msg::setup_forward()
     }
   }
 
-  QString sf_quote = conf.get_string("forward_start_quote");
-  if (sf_quote.isEmpty()) {
-    sf_quote=QObject::tr("------------------------- start of forwarded message ------------------------");
-  }
-  QString ef_quote = conf.get_string("forward_end_quote");
-  if (ef_quote.isEmpty()) {
-    ef_quote=QObject::tr("------------------------- end of forwarded message ---------------------------");
-  }
+  QPair<QString,QString> fwd_quotes = forwarding_enclosing_markers();
+
   QString fwd_body;
+  // Get the text body, either directly or assembled from attached text parts
   find_text_to_quote(fwd_body);
 
   QString quoted_header = this->forwarded_header_excerpt();
-  fwd_body = sf_quote + "\n" + quoted_header + "\n" + fwd_body + "\n" + ef_quote + "\n";
-  
+  fwd_body = fwd_quotes.first + "\n" +
+    quoted_header + "\n" +
+    fwd_body + "\n" +
+    fwd_quotes.second + "\n";
+
   msg.set_body_text(fwd_body);
   msg.set_fwded_mail_id(this->get_id());
 
-  /* Optionally pre-include the attachments of the forwarded mail */
+  attachments_list& al_dst = msg.attachments();
+
+  /* HTML body */
+  QString html_body = get_body_html();
+  attachment* html_attachment = NULL;
+  attachments_list& al_src = attachments();
+
+  if (!html_body.isEmpty()) {
+    // The HTML part is in body.bodyhtml
+    msg.set_body_html(html_body);
+  }
+  else {
+    // No HTML part in body.bodyhtml, but it might exist as an attachment
+    html_attachment = body_html_attached_part();
+    if (html_attachment != NULL) {
+      // Set it as the body, and attach the other parts
+      html_body.truncate(0); 		// for safety
+      html_attachment->append_decoded_contents(html_body);
+    }
+  }
+
+  if (!html_body.isEmpty()) {
+    msg.set_body_html(html_body);
+  }
+
+  for (std::list<attachment>::iterator it = al_src.begin(); it != al_src.end(); ++it) {
+    /* Include attachments that:
+       - have a content-id, since they might be referenced by the html part.
+       - are not the html body itself if it exists as an attachment.
+    */
+    if (!(*it).mime_content_id().isEmpty() &&
+	(html_attachment==NULL ||
+	 (*it).getId() != html_attachment->getId()))
+    {
+      DBG_PRINTF(4, "forward: attaching " MAIL_ID_FMT_STRING "as html part",
+		 (*it).getId());
+      al_dst.push_back((*it).dup_no_data());
+    }
+  }
+
+  /* Optionally pre-include the attachments of the forwarded mail that are not
+     related to the HTML part */
   if (conf.get_bool("forward_includes_attachments")) {
     DBG_PRINTF(4, "forward_includes_attachments is true");
-    attachments_list& al_src = attachments();
-    attachments_list& al_dst = msg.attachments();
     for (std::list<attachment>::iterator it = al_src.begin(); it != al_src.end(); ++it) {
       /* Keep the attachment if it has a filename and no content-id.
 	 This is meant to avoid contents related to HTML parts */
       if (!(*it).filename().isEmpty() && (*it).mime_content_id().isEmpty()) {
+	DBG_PRINTF(4, "forward: attaching " MAIL_ID_FMT_STRING "as non-html part");
 	al_dst.push_back((*it).dup_no_data());
       }
     }

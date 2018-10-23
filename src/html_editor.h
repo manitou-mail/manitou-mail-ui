@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -47,6 +47,7 @@ public:
   QString html_text() const;
   void set_html_text(const QString&);
   void append_paragraph(const QString& fragment);
+  void prepend_paragraph(const QString& fragment);
   void finish_load();
   // Return a list of paths of local files referenced by the HTML doc
   QStringList collect_local_references();
