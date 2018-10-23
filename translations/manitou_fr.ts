@@ -66,7 +66,7 @@
     </message>
     <message>
         <source>------------------------- end of forwarded message ---------------------------</source>
-        <translation>--------------------------- fin de message transmis ---------------------------</translation>
+        <translation type="unfinished">------------------------- fin de message transmis --------------------------</translation>
     </message>
     <message>
         <source>(filter deleted)</source>
@@ -1857,7 +1857,7 @@ Les messages non encore importés seront perdus.</translation>
     </message>
     <message>
         <source>Recent To:</source>
-        <translation>Dest. récents:</translation>
+        <translation>Destinataires récents:</translation>
     </message>
     <message>
         <source>Recent From:</source>
@@ -3692,7 +3692,7 @@ Expédier malgré tout?</translation>
     </message>
     <message>
         <source>Tags panel</source>
-        <translation></translation>
+        <translation>Panneau des étiquettes</translation>
     </message>
     <message>
         <source>Load template</source>
@@ -4069,7 +4069,7 @@ Expédier malgré tout?</translation>
     </message>
     <message>
         <source>Search</source>
-        <translation>Chercher</translation>
+        <translation>Recherche</translation>
     </message>
     <message>
         <source>Initial fetch</source>
