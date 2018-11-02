@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2017 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -1243,12 +1243,14 @@ msg_select_dialog::msg_select_dialog(bool open_new/*=true*/) : QDialog(0)
   hldate->addWidget(m_date_cb);
 
   m_chk_datemin = new QCheckBox(tr("Start"));
+  connect(m_chk_datemin, SIGNAL(stateChanged(int)), this, SLOT(select_date_range(int)));
   //  m_chk_datemin->setStyleSheet("QCheckBox{spacing:0px}");
   m_wmin_date = new QDateEdit;
   m_wmin_date->setCalendarPopup(true);
   m_wmin_date->setDate(QDate::currentDate());
 
   m_chk_datemax = new QCheckBox(tr("End"));
+  connect(m_chk_datemax, SIGNAL(stateChanged(int)), this, SLOT(select_date_range(int)));
   //  m_chk_datemax->setStyleSheet("QCheckBox{spacing:0px}");
   m_wmax_date = new QDateEdit;
   m_wmax_date->setCalendarPopup(true);
@@ -1411,10 +1413,26 @@ msg_select_dialog::date_cb_changed(int index)
     m_chk_datemax->setEnabled(true);
     m_chk_datemin->setEnabled(true);
     if (!m_chk_datemax->isChecked() && !m_chk_datemin->isChecked()) {
-      /* if the user chooses the range option and no bound is checked yet,
+      /* If the dual-date range is choosen and no bound is checked yet,
 	 check one automatically to avoid no-range-at-all results */
       m_chk_datemin->setChecked(true);
     }
+  }
+  else {
+    /* When the dual-date range is unselected, clear the checkboxes */
+    m_chk_datemax->setChecked(false);
+    m_chk_datemin->setChecked(false);
+  }
+}
+
+void
+msg_select_dialog::select_date_range(int check_state)
+{
+  /* Set the quick date selector to "Range" */
+  if (check_state == Qt::Checked) {
+    int id_range = m_date_cb->findData(QVariant("range"), Qt::UserRole);
+    if (id_range >= 0)
+      m_date_cb->setCurrentIndex(id_range);
   }
 }
 
@@ -1680,9 +1698,9 @@ msg_select_dialog::enable_date_range()
 {
   int idx=m_date_cb->currentIndex();
   bool en=(idx>=0 && m_date_cb->itemData(idx)=="range");
-  m_chk_datemax->setEnabled(en);
+  m_chk_datemax->setEnabled(true);
   m_wmax_date->setEnabled(en);
-  m_chk_datemin->setEnabled(en);
+  m_chk_datemin->setEnabled(true);
   m_wmin_date->setEnabled(en);
 }
 

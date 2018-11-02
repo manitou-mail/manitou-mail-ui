@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2017 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -391,6 +391,7 @@ private slots:
   void zoom_on_sql();
   void timer_done();
   void date_cb_changed(int);
+  void select_date_range(int);
 
 private:
   void set_date_style();
