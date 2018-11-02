@@ -677,7 +677,7 @@ attachment::guess_mime_type(const QString filename)
 
   QString ext = extension(filename);
   if (!ext.isEmpty()) {
-    mt::const_iterator it = extension_map.constFind(ext);
+    mt::const_iterator it = extension_map.constFind(ext.toLower());
     if (it != extension_map.constEnd())
       return it.value();
   }
@@ -712,7 +712,7 @@ attachment::fetch_filename_suffixes(QMap<QString,QString>& m)
 {
   db_cnx db;
   try {
-    sql_stream s("SELECT suffix, mime_type FROM mime_types", db);
+    sql_stream s("SELECT lower(suffix), mime_type FROM mime_types", db);
     QString suffix;
     QString mime_type;
     while (!s.eos()) {
