@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -42,13 +42,12 @@ public:
   bool m_is_restricted;
 
   // internal fields
-  QString m_orig_email_addr;	// m_email_addr at load time
-  int m_internal_id;
   bool m_dirty;
   bool m_is_default;
   bool m_fetched;
 
-  bool update_db();
+  bool update_db(db_ctxt* db=NULL);
+  bool delete_db(db_ctxt* db);
   bool compare_fields(const mail_identity&);
 };
 

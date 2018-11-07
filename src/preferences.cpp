@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2017 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -17,38 +17,37 @@
    Boston, MA 02111-1307, USA.
 */
 
-#include "preferences.h"
-#include "helper.h"
-#include "identities.h"
 #include "app_config.h"
+#include "db.h"
+#include "helper.h"
+#include "icons.h"
+#include "identities.h"
+#include "preferences.h"
 #include "tags.h"
+#include "ui_controls.h"
 
-#include <QTabWidget>
+#include <QApplication>
+#include <QButtonGroup>
+#include <QCheckBox>
 #include <QComboBox>
-#include <QLabel>
+#include <QDialog>
 #include <QDir>
 #include <QFileDialog>
-#include <QLineEdit>
-#include <QPlainTextEdit>
+#include <QGridLayout>
+#include <QHBoxLayout>
+#include <QLabel>
 #include <QLayout>
-#include <QCheckBox>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QPlainTextEdit>
+#include <QPushButton>
 #include <QRadioButton>
 #include <QSpinBox>
-#include <QDialog>
-#include <QApplication>
-#include <QPushButton>
-#include <QValidator>
-#include <QMessageBox>
-#include <QHBoxLayout>
-#include <QVBoxLayout>
-#include <QGridLayout>
-#include <QTreeWidget>
-#include <QButtonGroup>
 #include <QStyleFactory>
-
-#include "db.h"
-#include "ui_controls.h"
-#include "icons.h"
+#include <QTabWidget>
+#include <QTreeWidget>
+#include <QVBoxLayout>
+#include <QValidator>
 
 struct prefs_dialog::preferences_widgets {
   // identities tab
@@ -1352,98 +1351,64 @@ prefs_dialog::email_edited()
 bool
 prefs_dialog::update_identities_db()
 {
-  db_cnx db;
   bool in_trans=false;
+  db_ctxt dbc(true);
+
+  /* m_ids_map(email=>mail_identity) contains the original list as
+     fetched from the database.
+
+     m_ids is the list of identities after user modifications.
+   */
 
   try {
-    /* Identities that have their email changed are completely removed
-       using the old email as the key and then reinserted with the new
-       email. This is because the email being the primary key, changing
-       rows by successive update can fail, for instance if two
-       email addresses are to be swapped, we would get a PK violation
-       when doing the first update. While doing a first pass with
-       updates, we're collecting such identities in 'ri_list' */
-    QList<mail_identity*> ri_list;
-
-    QList<mail_identity*>::iterator it;
     mail_identity* p;
-    identities::iterator iter;
-    // identities (original emails) that have been processed
-    std::set<QString> done_set;
+    // identities (by identity_id) that have been processed
+    std::set<int> done_set;
 
-    for (it=m_ids.begin(); it!=m_ids.end(); ++it) {
-      p=(*it);
-      if (p->m_email_addr.isEmpty())
-	continue;			// ignore empty identities, shouldn't happen
-      done_set.insert(p->m_orig_email_addr);
-      if (p->m_orig_email_addr != p->m_email_addr) {
-	// when an identity is newly created, its p->m_orig_email_addr is empty
-	// ri_list includes those new identities as well as renamed identities
-	ri_list.append(p);
+    for (QList<mail_identity*>::iterator it = m_ids.begin();
+	 it != m_ids.end();
+	 ++it)
+    {
+      p = (*it);
+      done_set.insert(p->m_identity_id);
+      mail_identity* ps = NULL;
+      if (p->m_identity_id != 0) {
+	ps = m_ids_map.get_by_id(p->m_identity_id);
+	if (!ps)
+	  continue;		// shouldn't happen? assert?
       }
-      else {
-	// update db
-	iter=m_ids_map.find(p->m_email_addr);
-	if (iter!=m_ids_map.end()) {
-	  mail_identity* ps = &(iter->second); // before change
-	  if (!ps->compare_fields(*p)) { // have fields been changed?
-	    if (!in_trans) {
-	      db.begin_transaction();
-	      in_trans=true;
-	    }
-	    p->update_db();
-	  }
-	}
-	else {
-	  /* If the identity is not to be found in the list before
-	     editing let's process it later by insert. Currently this
-	     case shouldn't happen anyway since it's m_orig_email_addr
-	     should be empty */
-	  ri_list.append(p);
-	}
-      }
-    }
-
-    /* Delete the identities that were present initially but not in the final map */
-    sql_stream sd("DELETE FROM identities WHERE email_addr=:p1", db);
-    for (iter=m_ids_map.begin(); iter!=m_ids_map.end(); ++iter) {
-      if (done_set.find(iter->first) == done_set.end()) {
+      if (p->m_identity_id==0 || !ps->compare_fields(*p)) { // have fields been changed?
+	// update or insert in database
 	if (!in_trans) {
-	  db.begin_transaction();
+	  dbc.m_db->begin_transaction();
 	  in_trans=true;
 	}
-	sd << iter->second.m_email_addr;
+	p->update_db(&dbc);
       }
     }
 
-    /* Now process 'ri_list' */
-    if (!ri_list.isEmpty()) {
-      if (!in_trans) {
-	db.begin_transaction();
-	in_trans=true;
-      }
-
-      for (it=ri_list.begin(); it!=ri_list.end(); ++it) {
-	p=*it;
-	if (!p->m_orig_email_addr.isEmpty())
-	  sd << p->m_email_addr;
-      }
-
-      for (it=ri_list.begin(); it!=ri_list.end(); ++it) {
-	p=*it;
-	/* update_db() will do an insert because the row, if it existed, has
-	   been deleted just above */
-	p->update_db();
+    /* Delete the identities that were present in the fetch but are
+       not in the final map */
+    for (identities::iterator iter = m_ids_map.begin();
+	 iter != m_ids_map.end();
+	 ++iter)
+    {
+      if (done_set.find(iter->second.m_identity_id) == done_set.end()) {
+	if (!in_trans) {
+	  dbc.m_db->begin_transaction();
+	  in_trans=true;
+	}
+	iter->second.delete_db(&dbc);
       }
     }
 
     if (in_trans) {
-      db.commit_transaction();
+      dbc.m_db->commit_transaction();
     }
   }
   catch(db_excpt& p) {
     if (in_trans)
-      db.rollback_transaction();
+      dbc.m_db->rollback_transaction();
     DBEXCPT(p);
     return false;
   }

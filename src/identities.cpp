@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -17,10 +17,10 @@
    Boston, MA 02111-1307, USA.
 */
 
-#include "main.h"
 #include "app_config.h"
-#include "identities.h"
 #include "db.h"
+#include "identities.h"
+#include "main.h"
 #include "sqlstream.h"
 
 mail_identity::mail_identity() : m_identity_id(0),
@@ -67,7 +67,6 @@ identities::fetch(bool force/*=false*/)
 	continue;
       }
       id.m_fetched=true;
-      id.m_orig_email_addr = id.m_email_addr;
       id.m_is_default = (id.m_email_addr == default_email);	
       (*this)[id.m_email_addr]=id;
     }
@@ -93,24 +92,52 @@ identities::get_by_id(int id)
 }
 
 bool
-mail_identity::update_db()
+mail_identity::delete_db(db_ctxt* dbc)
 {
-  db_cnx db;
+  bool result=true;
+  db_cnx db0;
+  db_cnx* db = dbc ? dbc->m_db : &db0;
+
   try {
-    sql_stream ss("SELECT 1 FROM identities WHERE email_addr=:p1", db);
-    ss << m_orig_email_addr;
-    if (!ss.eos()) {
-      sql_stream su("UPDATE identities SET email_addr=:p1, username=:p2, xface=:p3, signature=:p4, restricted=:r, root_tag=nullif(:t,0) WHERE email_addr=:p5", db);
-      su << m_email_addr << m_name << m_xface << m_signature << m_is_restricted << m_root_tag_id;
-      su << m_orig_email_addr;
-    }
-    else {
-      sql_stream si("INSERT INTO identities(email_addr,username,xface,signature,restricted,root_tag) VALUES (:p1,:p2,:p3,:p4,:p5,nullif(:p6,0))", db);
-      si << m_email_addr << m_name << m_xface << m_signature << m_is_restricted << m_root_tag_id;
-    }
-    m_orig_email_addr = m_email_addr;
+    sql_stream s1("UPDATE mail SET identity_id=NULL WHERE identity_id=:p1", *db);
+    s1 << m_identity_id;
+    sql_stream s2("DELETE FROM identities_permissions WHERE identity_id=:p1", *db);
+    s2 << m_identity_id;
+    sql_stream s3("DELETE FROM identities WHERE identity_id=:p1", *db);
+    s3 << m_identity_id;
   }
   catch(db_excpt& p) {
+    if (dbc && dbc->propagate_exceptions)
+      throw p;
+    DBEXCPT(p);
+    result=false;
+  }
+  return result;
+}
+
+bool
+mail_identity::update_db(db_ctxt* dbc)
+{
+  // Update, or insert if identity_id is not set.
+  db_cnx db0;
+  db_cnx* db = dbc ? dbc->m_db : &db0;
+  try {
+    if (m_identity_id != 0) {
+      sql_stream su("UPDATE identities SET email_addr=:p1, username=:p2, xface=:p3, signature=:p4, restricted=:r, root_tag=nullif(:t,0) WHERE identity_id=:p5", *db);
+      su << m_email_addr << m_name << m_xface << m_signature << m_is_restricted << m_root_tag_id;
+      su << m_identity_id;
+    }
+    else {
+      sql_stream si("INSERT INTO identities(email_addr,username,xface,signature,restricted,root_tag) VALUES (:p1,:p2,:p3,:p4,:p5,nullif(:p6,0)) RETURNING identity_id", *db);
+      si << m_email_addr << m_name << m_xface << m_signature << m_is_restricted << m_root_tag_id;
+      if (!si.eos()) {
+	si >> m_identity_id;
+      }
+    }
+  }
+  catch(db_excpt& p) {
+    if (dbc && dbc->propagate_exceptions)
+      throw p;
     DBEXCPT(p);
     return false;
   }
