@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2017 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -322,7 +322,7 @@ message_tag::store()
 	s << sql_null();
     }
     else {
-      sql_stream s("UPDATE tags SET name=':p1',parent_id=:p3 where tag_id=:p2", db);
+      sql_stream s("UPDATE tags SET name=:p1, parent_id=:p3 where tag_id=:p2", db);
       s << m_name;
       if (m_parent_id)
 	s << m_parent_id;

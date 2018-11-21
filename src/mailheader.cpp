@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2017 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -162,7 +162,7 @@ mail_header::store()
   make();
   store_addresses();
   db_cnx db;
-  sql_stream s("INSERT INTO header(mail_id,lines) VALUES (:p1, ':p2')",
+  sql_stream s("INSERT INTO header(mail_id,lines) VALUES (:p1, :p2)",
 	      db);
   s << m_mail_id << m_lines;
   return true;

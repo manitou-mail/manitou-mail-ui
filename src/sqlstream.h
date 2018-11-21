@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -32,24 +32,36 @@ class sql_bind_param
 {
 public:
   sql_bind_param() {}
-  sql_bind_param(const std::string s, int pos) {
-    m_name=s;
-    m_initialOffsetInQuery=m_offsetInQuery=pos;
+  sql_bind_param(const std::string s, int pos, bool enclosed = false) {
+    m_name = s;
+    m_initialOffsetInQuery = m_offsetInQuery = pos;
+    m_enclosed = enclosed;
   }
   virtual ~sql_bind_param() {}
-  void offset(int off) {
-    m_offsetInQuery+=off;
-  }
   void resetOffset() {
     m_offsetInQuery=m_initialOffsetInQuery;
   }
   const std::string name() const { return m_name; }
   int pos() const { return m_offsetInQuery; }
+  int total_length() const {
+    // +1 char for one colon character, +3 for one colon plus two single quotes
+    return m_name.size() + (m_enclosed ? 3 : 1);
+  }
+  void add_offset(int off) {
+    m_offsetInQuery += off;
+  }
+  /* True if @c is accepted in a parameter's name.
+     Names can start with a digit. */
+  static bool is_valid_char(char c) {
+    return (c == '_' || (c >= '0' && c <= '9') ||
+	    (c >= 'A' && c<='Z') || (c >= 'a' && c<='z'));
+  }
 private:
   std::string m_name;
   std::string m_value;
   int m_offsetInQuery;		/* position of the ':' character in query */
   int m_initialOffsetInQuery;
+  bool m_enclosed = false;
 };
 
 /**
@@ -111,6 +123,7 @@ public:
   int row_count() const;
 private:
   void init(const char* query);
+  void parse(const char* query);
   void check_binds();
   void reset_results();
   void next_result();

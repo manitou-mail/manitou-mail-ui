@@ -237,14 +237,14 @@ attachment::application() const
 {
   db_cnx db;
   try {
-    sql_stream s("SELECT program_name FROM programs WHERE content_type=':p1' AND conf_name=:p2", db);
+    sql_stream s("SELECT program_name FROM programs WHERE content_type=:p1 AND conf_name=:p2", db);
     s << m_mime_type << get_config().name();
     QString prog;
     if (!s.eof()) {
       s >> prog;
     }
     else {
-      sql_stream s2("SELECT program_name FROM programs WHERE content_type=':p1' AND conf_name is null", db);
+      sql_stream s2("SELECT program_name FROM programs WHERE content_type=:p1 AND conf_name is null", db);
       s2 << m_mime_type;
       if (!s2.eof()) {
 	s2 >> prog;
@@ -640,7 +640,7 @@ attachment::store(mail_id_t mail_id, ui_feedback* ui)
       compute_sha1_fp();
     }
 
-    sql_stream s("INSERT INTO attachments(attachment_id, mail_id, content_type, content_size, filename,mime_content_id) VALUES (:p1, :p2, ':p3', :p4, ':p5', :cid)", db);
+    sql_stream s("INSERT INTO attachments(attachment_id, mail_id, content_type, content_size, filename,mime_content_id) VALUES (:p1, :p2, :p3, :p4, :p5, :cid)", db);
     QFileInfo fi(m_filename);
     s << m_Id << mail_id << m_mime_type << m_size;
     s << (m_final_filename.isEmpty() ? fi.fileName() : m_final_filename);

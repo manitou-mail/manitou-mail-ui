@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -41,6 +41,140 @@ sql_stream::sql_stream(const char *query, db_cnx& db, bool auto_exec) :
 }
 
 void
+sql_stream::parse(const char* query)
+{
+  const char* ptr = query;
+  const char* pstart = query;		// param start. Initialized to avoid a warning.
+  const char* errparse = NULL;
+  char c;
+
+  int state = 1;
+  int nstate = 1;
+
+  while (!errparse) {
+    c = *ptr;
+    switch(state) {
+      // initial state
+    case 1:
+      if (c == ':')
+	nstate = 2;
+      else if (c == '\'')
+	nstate = 3;
+      else if (c == '"')
+	nstate = 8;
+      // else stay in state 1
+      break;
+
+      // colon :
+    case 2:
+      if (c == '\'') {
+	pstart = ptr;
+	nstate = 4;
+      }
+      else if (sql_bind_param::is_valid_char(c)) {
+	pstart = ptr;
+	nstate = 5;
+      }
+      else
+	nstate = 1;
+      break;
+
+      // string literals enclosed in single quotes
+    case 3:
+      if (c == '\'')
+	nstate = 6;
+      else
+	nstate = 3;
+      break;
+
+      // in :'param'
+    case 4:
+      if (c == '\'') {
+	if (ptr-pstart-1 == 0) {
+	  errparse = "Empty parameter name";
+	}
+	else {
+	  DBG_PRINTF(8, "Adding param '%s' from pos %d",
+		     std::string(pstart+1, ptr-pstart-1).c_str(),
+		     pstart-query-1);
+	  sql_bind_param p(std::string(pstart+1, ptr-pstart-1),
+			   pstart-query-1,
+			   true);
+	  m_vars.push_back(p);
+	}
+	nstate = 1;
+      }
+      else if (sql_bind_param::is_valid_char(c)) {
+	nstate = 4;
+      }
+      else {
+	errparse = "Illegal character in parameter name";
+      }
+      break;
+
+      // in :param
+    case 5:
+      if (sql_bind_param::is_valid_char(c)) {
+	nstate = 5;
+      }
+      else {
+	DBG_PRINTF(8, "Adding param '%s' from pos %d",
+		   std::string(pstart, ptr-pstart).c_str(),
+		   pstart-query-1);
+	sql_bind_param p(std::string(pstart, ptr-pstart),
+			 pstart-query-1,
+			 false);
+	m_vars.push_back(p);
+	nstate = 1;
+      }
+      break;
+
+    case 6:
+      if (c == '\'')
+	nstate = 3;
+      else
+	nstate = 1;
+      break;
+
+      // in double quotes
+    case 8:
+      if (c == '"')
+	nstate = 9;
+      break;
+
+    case 9:			// double quote in double quote
+      if (c == '"')
+	nstate = 8;
+      else
+	nstate = 1;
+      break;
+
+    } // switch(state)
+
+    if (*ptr != '\0')
+      ptr++;
+    else
+      break;
+    state = nstate;
+  }
+
+  if (errparse != NULL) {
+    if (*ptr == '\0' && (state == 1 || state == 5 || state == 6 || state == 9)) {
+      // reached a final state at the end of string, good.
+    }
+    else {
+      errparse = "Unexpected end of string";
+    }
+  }
+
+  if (errparse != NULL) {
+    throw db_excpt(QString(query),
+		   QString(errparse),
+		   db_excpt::client_assertion);
+  }
+}
+
+void
 sql_stream::init(const char *query)
 {
   m_nArgPos = 0;
@@ -58,38 +192,8 @@ sql_stream::init(const char *query)
   m_queryLen=m_initialQueryLen=len;
   strcpy(m_queryBuf, query);
 
-  const char* q=query;
-  while (*q) {
-//     if (*q=='\'') {
-//       q++;
-//       while (*q && *q!='\'') q++;
-//     }
-//     else
-    if (*q==':') {
-      q++;
-      const char* start_var=q;
-      while ((*q>='A' && *q<='Z') || (*q>='a' && *q<='z') ||
-	     (*q>='0' && *q<='9') || *q=='_')
-	{
-	  q++;
-	}
-      if (q-start_var>0) {
-	// if the ':' was actually followed by a parameter name
-	sql_bind_param p(std::string(start_var,q-start_var), (start_var-1)-query);
-	m_vars.push_back(p);
-      }
-      else {
-	/* '::' is a special case because we don't want the parser to
-	   find the second colon at the start of the loop. Otherwise
-	   '::int' will be understood as a colon followed by the
-	   parameter ':int'. So in this case, we skip the second colon */
-	if (*q==':')
-	  q++;
-      }
-    }
-    else
-      q++;
-  }
+  parse(query);
+
   if (m_vars.size()==0 && m_auto_exec)
     execute();
 }
@@ -128,11 +232,15 @@ sql_stream::reset_results()
   m_queryLen=m_initialQueryLen;
 }
 
+/*
+ * Check if there is at least enough free space to add @len bytes to
+ * the buffer.  If not, make it grow to fit
+ */
 void
 sql_stream::query_make_space(int len)
 {
   if (m_queryLen+len < m_queryBufSize)
-    return;			// m_queryBuf is big enough
+    return;			// m_queryBuf is large enough
   if (m_queryBuf==m_localQueryBuf) {
     char* p=(char*)malloc(1+m_queryBufSize+len+m_chunk_size);
     if (p) {
@@ -144,29 +252,33 @@ sql_stream::query_make_space(int len)
     m_queryBuf=(char*)realloc(m_queryBuf, 1+m_queryBufSize+len+m_chunk_size);
   }
   if (!m_queryBuf)
-    throw "not enough memory";
+    throw std::bad_alloc();
   m_queryBufSize+=len+m_chunk_size;
   m_chunk_size<<=1;
 }
 
+/*
+ * Replace the placeholder with the value.
+ * @size does not include a NULL terminator.
+ */
 void
 sql_stream::replace_placeholder(int argPos, const char* buf, int size)
 {
   query_make_space(size);
-  sql_bind_param& p=m_vars[argPos];
-  // Replace the placeholder with the value
-  int placeholder_len=p.name().size()+1; // +1 for the leading ':'
+  sql_bind_param& p = m_vars[argPos];
+  int placeholder_len = p.total_length();
+  DBG_PRINTF(8, "placeholder_len=%d for arg=%d", placeholder_len, argPos);
   // shift the substring at the right of the placeholder
   memmove(m_queryBuf+p.pos()+size,
 	  m_queryBuf+p.pos()+placeholder_len,
 	  m_queryLen-(p.pos()+placeholder_len));
   // insert the value where the placeholder was
   memcpy(m_queryBuf+p.pos(), buf, size);
-  m_queryLen+=(size-placeholder_len);
-  m_queryBuf[m_queryLen]='\0';
+  m_queryLen += (size-placeholder_len);
+  m_queryBuf[m_queryLen] = '\0';
   // change the offsets of the remaining placeholders
-  for (unsigned int i=argPos+1; i<m_vars.size(); i++) {
-    m_vars[i].offset(size-placeholder_len);
+  for (unsigned int i = argPos+1; i < m_vars.size(); i++) {
+    m_vars[i].add_offset(size-placeholder_len);
   }
 }
 
@@ -181,42 +293,25 @@ sql_stream&
 sql_stream::operator<<(const char* p)
 {
   check_binds();
-  size_t len=p?strlen(p):0;
+  size_t len = p ? strlen(p) : 0;
   char local_buf[1024+1];
   char* buf;
-  if (len<(sizeof(local_buf)-1)/2)
-    buf=local_buf;
+  if (len < (sizeof(local_buf)-1)/2)
+    buf = local_buf;
   else
-    buf=(char*)malloc(2*len+1);
-  int escaped_size=PQescapeString(buf, p, len);
-  buf[escaped_size]='\0';
+    buf = (char*)malloc(2*len+2+1);
 
-  /* Very bad kludge here: if the bind parameter inside the query
-     doesn't start with a quote, we add quotes around the value at this point.
-     TODO: make all the callers NOT enclose the values, since it's a
-     problem for backends that support real bind parameters
-     (oracle) */
-  int pos = m_vars[m_nArgPos].pos();
-  if (pos>0 && m_queryBuf[pos-1]!='\'') {
-    //    DBG_PRINTF(5,"bindpos=%d", pos);
-    if (p) {
-      char placeholder[2+escaped_size+1];
-      placeholder[0]='\'';
-      strcpy(placeholder+1, buf);
-      placeholder[1+escaped_size]='\'';
-      placeholder[1+escaped_size+1]='\0';
-      replace_placeholder(m_nArgPos, placeholder, escaped_size+2);
-    }
-    else {
-      // null pointer => null sql value
-      replace_placeholder(m_nArgPos, "null", 4);
-    }
+  buf[0] = '\'';
+  int escaped_size = PQescapeString(buf+1, p, len);
+  buf[escaped_size+1]='\'';
+  buf[escaped_size+2]='\0';
+
+  if (p != NULL) {
+    replace_placeholder(m_nArgPos, buf, escaped_size+2);
   }
   else {
-    if (p)
-      replace_placeholder(m_nArgPos, buf, escaped_size);
-    else
-      replace_placeholder(m_nArgPos, "null", 4);
+    // null pointer => null sql value
+    replace_placeholder(m_nArgPos, "null", 4);
   }
 
   if (buf!=local_buf)
