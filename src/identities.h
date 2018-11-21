@@ -22,6 +22,7 @@
 
 #include <QString>
 #include <map>
+#include "database.h"
 
 /*
   An identity contains the mail address and associated information we
