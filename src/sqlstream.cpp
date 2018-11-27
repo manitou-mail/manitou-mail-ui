@@ -347,11 +347,11 @@ sql_stream&
 sql_stream::operator<<(char c)
 {
   check_binds();
-  char buf[1];
-  buf[0]=c;
-  replace_placeholder(m_nArgPos, buf, 1);
-  next_bind();
-  return *this;
+  char buf[2];
+  buf[0] = c;
+  buf[1] = '\0';
+  /* apply the same quoting rules for characters as for strings */
+  return operator<<(buf);
 }
 
 sql_stream&
