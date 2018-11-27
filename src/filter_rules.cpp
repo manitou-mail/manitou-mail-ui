@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -220,9 +220,9 @@ expr_list::update_db()
   db_cnx db;
   try {
     db.begin_transaction();
-    sql_stream s_upd("UPDATE filter_expr SET name=:name,expression=:expr, user_lastmod=:user, last_update=now(),direction=':d',apply_order=:a WHERE expr_id=:id", db);
+    sql_stream s_upd("UPDATE filter_expr SET name=:name,expression=:expr, user_lastmod=:user, last_update=now(),direction=:d,apply_order=:a WHERE expr_id=:id", db);
     sql_stream s_del_expr("DELETE FROM filter_expr WHERE expr_id=:id", db);
-    sql_stream s_ins("INSERT INTO filter_expr(expr_id,name,expression,direction,apply_order) VALUES (:id,:name,:expr,':dir',:a)", db);
+    sql_stream s_ins("INSERT INTO filter_expr(expr_id,name,expression,direction,apply_order) VALUES (:id,:name,:expr,:dir,:a)", db);
     // TODO: use a sequence
     sql_stream s_seq("SELECT nextval('seq_filter_expr_id')", db, false);
     sql_stream s_del_act("DELETE FROM filter_action WHERE expr_id=:p1", db);
