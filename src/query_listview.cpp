@@ -30,6 +30,7 @@
 
 #include <QBrush>
 #include <QCursor>
+#include <QInputDialog>
 #include <QMenu>
 #include <QMessageBox>
 #include <QMouseEvent>

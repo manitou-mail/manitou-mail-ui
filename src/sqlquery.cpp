@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2012 Daniel Verite
+/* Copyright (C) 2004-2018 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -117,9 +117,9 @@ sql_query::get()
 QString
 sql_query::subquery(const QString select_list)
 {
-  QString s = QString("SELECT ") + select_list + " FROM " + m_tables;
+  QString s = QString("SELECT %1 FROM %2").arg(select_list).arg(m_tables);
   if (!m_where.isEmpty())
-    s += " WHERE " + m_where;
+    s.append(" WHERE " + m_where);
   // no m_end
   return s;
 }

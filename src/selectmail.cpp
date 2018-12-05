@@ -465,7 +465,16 @@ msgs_filter::build_query(sql_query& q)
     }
 
     if (!m_sql_stmt.isEmpty()) {
-      q.add_clause(QString("m.mail_id in (") + m_sql_stmt + QString(")"));
+      QString subquery = m_sql_stmt;
+      if (!m_user_query_params.isEmpty()) {
+      // Replace parameters by their values
+	sql_stream s(subquery, db, false);
+	for (const auto param: m_user_query_params) {
+	  s << param.m_value.toUtf8().constData();
+	}
+	subquery = s.query_text();
+      }
+      q.add_clause(QString("m.mail_id in (%1)").arg(subquery));
     }
 
     if (m_min_prio <= max_possible_prio) {
@@ -1027,6 +1036,34 @@ msgs_filter::asynchronous_fetch(fetch_thread* t, int direction)
     t->start();
   }
   return r;
+}
+
+QList<msgs_filter_user_param>
+msgs_filter::parse_user_query_parameters()
+{
+  QList<msgs_filter_user_param> result;
+  if (!m_sql_stmt.isEmpty()) {
+    db_cnx db;
+    try {
+      // parse the subquery without executing it
+      sql_stream s(m_sql_stmt, db, false);
+
+      if (s.vars().size() > 0) {
+	// extract each parameter name and comment
+	for (auto &v : s.vars()) {
+	  msgs_filter_user_param p;
+	  p.m_name = QString::fromStdString(v.name());
+	  p.m_title = QString::fromStdString(v.comment());
+	  result.append(p);
+	}
+      }
+    }
+    catch (db_excpt& e) {
+	  QMessageBox::warning(NULL, APP_NAME,
+			       QObject::tr("Unable to parse query.") + QString("\n")+ m_errmsg);
+    }
+  }
+  return result;
 }
 
 /*

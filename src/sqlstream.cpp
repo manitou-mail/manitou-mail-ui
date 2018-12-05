@@ -45,7 +45,9 @@ sql_stream::parse(const char* query)
 {
   const char* ptr = query;
   const char* pstart = query;		// param start. Initialized to avoid a warning.
+  const char* comment_start = NULL;
   const char* errparse = NULL;
+  int nested_brackets = 0;
   char c;
 
   int state = 1;
@@ -75,6 +77,18 @@ sql_stream::parse(const char* query)
 	pstart = ptr;
 	nstate = 5;
       }
+      else if (c == ':') {	// two colons
+	nstate = 10;
+      }
+      else
+	nstate = 1;
+      break;
+
+    case 10:			// after two colons, same transitions as state 1
+      if (c == '\\')
+	nstate = 3;
+      else if (c == '"')
+	nstate = 8;
       else
 	nstate = 1;
       break;
@@ -112,7 +126,7 @@ sql_stream::parse(const char* query)
       }
       break;
 
-      // in :param
+      // in :param (at least one letter long)
     case 5:
       if (sql_bind_param::is_valid_char(c)) {
 	nstate = 5;
@@ -125,13 +139,25 @@ sql_stream::parse(const char* query)
 			 pstart-query-1,
 			 false);
 	m_vars.push_back(p);
-	nstate = 1;
+	if (c == '{') {
+	  /* the param placeholder is followed by a comment
+	     (:param{this is a comment}) */
+	  nested_brackets = 1;
+	  comment_start = ptr;
+	  nstate = 11;
+	}
+	else
+	  nstate = 1;
       }
       break;
 
-    case 6:
+    case 6:			// on a single quote inside single-quoted text
       if (c == '\'')
 	nstate = 3;
+      else if (c == ':')
+	nstate = 2;
+      else if (c == '"')
+	nstate = 8;
       else
 	nstate = 1;
       break;
@@ -142,14 +168,38 @@ sql_stream::parse(const char* query)
 	nstate = 9;
       break;
 
-    case 9:			// double quote in double quote
+    case 9:			// on a double quote inside double-quoted text
       if (c == '"')
 	nstate = 8;
+      else if (c == ':')
+	nstate = 2;
+      else if (c == '\'')
+	nstate = 3;
       else
 	nstate = 1;
       break;
 
+    case 11:
+      if (c == '}') {
+	if (--nested_brackets == 0) {
+	  sql_bind_param& p = m_vars.back();
+	  p.set_comment(std::string(comment_start+1, ptr-comment_start-1));
+	  DBG_PRINTF(4, "Setting comment '%s' to var '%s'", p.comment().c_str(),
+		     p.name().c_str());
+	  nstate = 1;
+	}
+	else
+	  errparse = "Unbalanced curly brackets";
+      }
+      else if (c == '{') {
+	nested_brackets++;
+      }
+      break;
+
     } // switch(state)
+
+    if (state != nstate)
+      DBG_PRINTF(8, "At char '%c', state %d => %d", c, state, nstate);
 
     if (*ptr != '\0')
       ptr++;
@@ -267,6 +317,9 @@ sql_stream::replace_placeholder(int argPos, const char* buf, int size)
   query_make_space(size);
   sql_bind_param& p = m_vars[argPos];
   int placeholder_len = p.total_length();
+  if (p.comment().size() > 0)
+    placeholder_len += p.comment().size() + 2; // {comment text}
+
   DBG_PRINTF(8, "placeholder_len=%d for arg=%d", placeholder_len, argPos);
   // shift the substring at the right of the placeholder
   memmove(m_queryBuf+p.pos()+size,

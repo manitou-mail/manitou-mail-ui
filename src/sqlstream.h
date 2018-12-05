@@ -56,9 +56,16 @@ public:
     return (c == '_' || (c >= '0' && c <= '9') ||
 	    (c >= 'A' && c<='Z') || (c >= 'a' && c<='z'));
   }
+  void set_comment(const std::string comment) {
+    m_comment = comment;
+  }
+  const std::string comment() const {
+    return m_comment;
+  }
 private:
   std::string m_name;
   std::string m_value;
+  std::string m_comment;
   int m_offsetInQuery;		/* position of the ':' character in query */
   int m_initialOffsetInQuery;
   bool m_enclosed = false;
@@ -121,6 +128,12 @@ public:
     return m_affected_rows;
   }
   int row_count() const;
+  const std::vector<sql_bind_param>& vars() const { return m_vars; }
+
+  QString query_text() const {
+    return QString::fromUtf8(m_queryBuf);
+  }
+
 private:
   void init(const char* query);
   void parse(const char* query);

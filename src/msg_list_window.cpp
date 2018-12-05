@@ -43,26 +43,25 @@
 #include "filter_log.h"
 #include "notepad.h"
 
+#include <QAction>
 #include <QApplication>
-#include <QStatusBar>
-#include <QProgressBar>
-
-#include <QPushButton>
-#include <QToolBar>
-
+#include <QCloseEvent>
+#include <QComboBox>
+#include <QCursor>
 #include <QFileDialog>
 #include <QFontDialog>
-#include <QComboBox>
-#include <QMessageBox>
-#include <QLayout>
-#include <QSplitter>
 #include <QHeaderView>
-#include <QCursor>
+#include <QInputDialog>
+#include <QLayout>
 #include <QMenuBar>
-#include <QAction>
-#include <QTimer>
-#include <QCloseEvent>
+#include <QMessageBox>
+#include <QProgressBar>
+#include <QPushButton>
 #include <QShortcut>
+#include <QSplitter>
+#include <QStatusBar>
+#include <QTimer>
+#include <QToolBar>
 
 #include "msg_properties.h"
 #include "users.h"
@@ -2240,9 +2239,33 @@ void
 msg_list_window::sel_filter(const msgs_filter& f)
 {
   msgs_filter* filter = new msgs_filter(f);
-  // First build of the query to check for validity
+
+  QList<msgs_filter_user_param> params = filter->parse_user_query_parameters();
+
+  // ask for values of parameters
+  for (auto& param : params) {
+    bool ok;
+    QString param_label = param.m_name;
+    if (!param.m_title.isEmpty())
+      param_label.append(QString(" (%1)").arg(param.m_title));
+
+    param.m_value = QInputDialog::getText(this,
+					  tr("Query parameter"),
+					  param_label,
+					  QLineEdit::Normal,
+					  QString(),
+					  &ok);
+    if (!ok) {
+      delete filter;
+      return;
+    }
+  }
+
+  filter->set_user_query_parameters(params);
+
   sql_query fquery;
   int r0 = filter->build_query(fquery);
+
   if (r0 == 3) {
     // failure
     delete filter;
@@ -2279,7 +2302,7 @@ msg_list_window::sel_filter(const msgs_filter& f)
   else if (r==2) {
     QMessageBox::information(this, APP_NAME, tr("No results"));
   }
-  /* if (r==3) ignored. Shouldn't happen given the pre-check at the
+  /* if (r==3) ignored. Shouldn't happen given the initial check at the
      beginning of the function */
 }
 

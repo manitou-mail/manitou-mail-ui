@@ -111,6 +111,14 @@ public:
   void print();
 };
 
+class msgs_filter_user_param
+{
+public:
+  QString m_name;
+  QString m_title;
+  QString m_value;
+};
+
 class msgs_filter
 {
 public:
@@ -147,6 +155,11 @@ public:
   // returns a valid query that will always fetch an empty list of messages
   static sql_query empty_list_query();
   static const char* select_list_mail_columns;
+
+  // return the list of parameters refered to in the user query
+  QList<msgs_filter_user_param>& user_query_parameters() {
+    return m_user_query_params;
+  }
 
   //private:
 
@@ -227,6 +240,13 @@ public:
   int build_query (sql_query&);
   //  mail_msg* in_list(mail_id_t id);
   static int load_result_list(PGresult* res, std::list<mail_result>* l, int max_nb=-1);
+
+  /* User parameters names and values for m_user_query */
+  QList<msgs_filter_user_param> parse_user_query_parameters();
+
+  void set_user_query_parameters(const QList<msgs_filter_user_param>& list) {
+    m_user_query_params = list;
+  }
 
   QTime m_start_time;
   int m_exec_time;
@@ -312,6 +332,8 @@ private:
      SELECT <columns> FROM mail WHERE mail_id IN (m_user_query) ORDER BY
      ... LIMIT ... */
   QString m_user_query;
+
+  QList<msgs_filter_user_param> m_user_query_params;
 
   /* used to fetch another set of results that are older/newer
      (depending on m_order) */
