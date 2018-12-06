@@ -40,6 +40,9 @@ tags_repository::fetch()
 {
   db_cnx db;
   try {
+    /* The coalesce() converting parent_id from NULL to 0 is not technically
+       necessary, because the sqlstream>>(int&) operator does it anyway,
+       it's just for being explicit. */
     sql_stream s("SELECT tag_id,name,coalesce(parent_id,0) FROM tags", db);
     while (!s.eof()) {
       int id, parent_id;
@@ -393,7 +396,7 @@ tags_definition_list::fetch(bool force /*=false*/)
 
   try {
     db_cnx db;
-    sql_stream s ("SELECT tag_id,name,parent_id FROM tags ORDER BY name", db);
+    sql_stream s ("SELECT tag_id,name,coalesce(parent_id,0) FROM tags ORDER BY name", db);
     while (!s.eos()) {
       int id, parent_id;
       QString name;
@@ -402,6 +405,8 @@ tags_definition_list::fetch(bool force /*=false*/)
       tag.set_parent_id(parent_id);
       push_back(tag);
     }
+
+    DBG_PRINTF(5, "tags_definition_list: has %d tags", this->size());
 
     /* To build the list of tag_id to exclude:
        - start with all root_tag in identities where restricted=true
@@ -482,14 +487,14 @@ tag_node::get_child_tags(tags_definition_list& l)
   tags_definition_list::iterator iter;
   for (iter=l.begin(); iter!=l.end(); ++iter) {
     if (iter->parent_id()==(int)m_id) {
-      if (l.is_excluded_subtree(iter->id()))
-	return;
-      tag_node* t = new tag_node(this);
-      t->m_id = iter->id();
-      t->m_name = iter->getName();
-      t->m_parent_id = this->m_id;
-      this->m_childs.push_back(t);
-      t->get_child_tags(l);
+      if (!l.is_excluded_subtree(iter->id())) {
+	tag_node* t = new tag_node(this);
+	t->m_id = iter->id();
+	t->m_name = iter->getName();
+	t->m_parent_id = this->m_id;
+	this->m_childs.push_back(t);
+	t->get_child_tags(l);
+      }
     }
   }
 }
