@@ -342,10 +342,37 @@ users_repository::get_list()
   QList<user> list;
   db_cnx db;
   try {
-    sql_stream s("SELECT coalesce(u.user_id,0),fullname,pu.rolname,login,email,custom_field1,custom_field2,custom_field3,pu.rolcanlogin,pu.rolsuper,pg_catalog.has_database_privilege(pu.rolname,current_database(),'connect'),pu.oid FROM users u RIGHT JOIN pg_roles pu ON (pu.rolname=u.login) ORDER BY pu.rolname", db);
+    sql_stream s
+      ("SELECT coalesce(u.user_id,0)"
+       ",fullname"
+       ",pu.rolname"
+       ",login"
+       ",email"
+       ",custom_field1"
+       ",custom_field2"
+       ",custom_field3"
+       ",pu.rolcanlogin"
+       ",pu.rolsuper"
+       ",pg_catalog.has_database_privilege(pu.rolname,current_database(),'connect')"
+       ",pu.oid"
+       " FROM users u RIGHT JOIN pg_roles pu"
+       " ON (pu.rolname=u.login)"
+       " WHERE (pu.oid >= 16384 OR pu.rolname=current_user)"  // filter out builtin roles
+       " ORDER BY pu.rolname", db);
     while (!s.eos()) {
       user u;
-      s >> u.m_user_id >> u.m_fullname >> u.m_db_login >> u.m_login >> u.m_email >> u.m_custom_field1 >> u.m_custom_field2 >> u.m_custom_field3 >> u.m_can_login >> u.m_is_superuser >> u.m_can_connect >> u.m_role_oid;
+      s >> u.m_user_id
+	>> u.m_fullname
+	>> u.m_db_login
+	>> u.m_login
+	>> u.m_email
+	>> u.m_custom_field1
+	>> u.m_custom_field2
+	>> u.m_custom_field3
+	>> u.m_can_login
+	>> u.m_is_superuser
+	>> u.m_can_connect
+	>> u.m_role_oid;
       list.append(u);
     }
   }
