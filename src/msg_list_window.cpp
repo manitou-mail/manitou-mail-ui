@@ -2013,15 +2013,20 @@ msg_list_window::enable_interaction(bool b)
   if (!b) {
     m_widgets_enable_state.clear();
     m_actions_enable_state.clear();
+    m_interaction_state_focus_widget = NULL;
   }
   // Widgets
   for (uint i=0; i<sizeof(w)/sizeof(w[0]); i++) {
     if (!b) {
       m_widgets_enable_state.push_back(w[i]->isEnabled());
+      if (w[i]->hasFocus())
+	m_interaction_state_focus_widget = w[i];
       w[i]->setEnabled(false);
     }
     else {
       w[i]->setEnabled(m_widgets_enable_state.takeFirst());
+      if (m_interaction_state_focus_widget == w[i])
+	w[i]->setFocus();
     }
   }
   // Actions

@@ -462,6 +462,9 @@ private:
   std::list<mail_result> m_auto_refresh_results;
   QList<bool> m_widgets_enable_state;
   QList<bool> m_actions_enable_state;
+  /* the widget having the focus when enable_interaction(false) is called */
+  QWidget* m_interaction_state_focus_widget;
+
   /* Each window has pages that consist of a splitter and its
      descendants, mostly a listview and a webview for the message
      body */
