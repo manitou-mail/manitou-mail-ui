@@ -282,7 +282,7 @@ msgs_filter::parse_search_string(QString s, fts_options& opt)
 	state=10;
       }
       else if (state==45) {
-	opt.m_operators.insertMulti(curr_op, curr_opval);
+	opt.m_operators.insertMulti(curr_op.toLower(), curr_opval);
 	state=10;
       }
       else if (state==50) {
@@ -302,7 +302,7 @@ msgs_filter::parse_search_string(QString s, fts_options& opt)
     }
     else if (state==20) {
       if (c==' ') {
-	opt.m_operators.insertMulti(curr_op, curr_opval);
+	opt.m_operators.insertMulti(curr_op.toLower(), curr_opval);
 	state=10;
       }
       else
