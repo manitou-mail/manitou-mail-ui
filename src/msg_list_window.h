@@ -138,6 +138,7 @@ public slots:
   void sender_properties();
 
   void enable_commands();
+  void enable_commands_threads();
   void enable_segments();
   void add_segments();
 
@@ -182,6 +183,14 @@ public slots:
   void sel_tag_status(unsigned int tag_id,int status_set,int status_unset);
   void fetch_more();
 
+  // Threads menu
+  void collapse_all_threads();
+  void expand_all_threads();
+  void select_all_in_thread();
+  void complete_thread();
+  void thread_auto_archive(bool);
+  void thread_auto_trash(bool);
+
   // Display menu
   void toggle_show_tags(bool);
   void toggle_threaded(bool);
@@ -216,7 +225,6 @@ public slots:
   void save_body();
   void edit_body();
   //  void save_to_mbox();
-  void select_all_in_threads();
   void msg_print();
   void msg_trash();
   void msg_untrash();
@@ -337,8 +345,17 @@ private:
     me_Message_Print,
     me_Message_Goto_Next,
     me_Message_Goto_Prev,
+    // Threads
+    me_Threads_Display,
+    me_Threads_Expand_All,
+    me_Threads_Collapse_All,
+    me_Threads_Fetch_Complete,
+    me_Threads_Open_Page,
+    me_Threads_Select_Current,
+    me_Threads_Auto_Archive,
+    me_Threads_Auto_Trash,
+    // Display
     me_Display_Tags,
-    me_Display_Threaded,
     me_Display_WrapLines,
     me_Display_FastBrowse,
     me_Display_Font_All,
@@ -407,6 +424,7 @@ private:
   QMenu* m_pMenuEdit;
   QMenu* m_pMenuSelection;
   QMenu* m_pMenuMessage;
+  QMenu* m_pMenuThreads;
   QMenu* m_pMenuDisplay;
 //  QPopupMenu* m_pMenuConfig;
   QMenu* m_pMenuHelp;
@@ -437,7 +455,6 @@ private:
   QAction* m_action_msg_untrash;
   QAction* m_action_msg_forward;
   QAction* m_action_msg_print;
-  QAction* m_action_select_thread;
 
   QAction* m_action_find_text;
   QAction* m_action_msg_sender_details;

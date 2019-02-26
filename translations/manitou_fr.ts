@@ -66,7 +66,7 @@
     </message>
     <message>
         <source>------------------------- end of forwarded message ---------------------------</source>
-        <translation type="unfinished">------------------------- fin de message transmis --------------------------</translation>
+        <translation>------------------------- fin de message transmis --------------------------</translation>
     </message>
     <message>
         <source>(filter deleted)</source>
@@ -444,6 +444,18 @@
         <source>Unable to parse date expression.</source>
         <translation>Echec d&apos;analyse de la date.</translation>
     </message>
+    <message>
+        <source>cannot contain character &apos;%1&apos;</source>
+        <translation>Ne peut contenir le caractère &apos;%1&apos;</translation>
+    </message>
+    <message>
+        <source>cannot contain control character of code %1</source>
+        <translation>Ne peut contenir le caractère de contrôle de code %1</translation>
+    </message>
+    <message>
+        <source>Unable to parse query.</source>
+        <translation>Impossible d&apos;analyser la requête.</translation>
+    </message>
 </context>
 <context>
     <name>about_box</name>
@@ -492,8 +504,8 @@
         <translation>Email:&lt;br&gt;support%1manitou-mail.org&lt;/a&gt;</translation>
     </message>
     <message>
-        <source>This is &lt;b&gt;Manitou-Mail&lt;/b&gt; version %1, (c) 2004-2017 Daniel V&amp;#233;rit&amp;#233; (&lt;i&gt;daniel@manitou-mail.org&lt;/i&gt;).</source>
-        <translation>&lt;b&gt;Manitou-Mail&lt;/b&gt; version %1, (c) 2004-2017 Daniel V&amp;#233;rit&amp;#233; (&lt;i&gt;daniel@manitou-mail.org&lt;/i&gt;).</translation>
+        <source>This is &lt;b&gt;Manitou-Mail&lt;/b&gt; version %1, (c) 2004-2019 Daniel V&amp;#233;rit&amp;#233; (&lt;i&gt;daniel@manitou-mail.org&lt;/i&gt;).</source>
+        <translation>&lt;b&gt;Manitou-Mail&lt;/b&gt; version %1, (c) 2004-2019 Daniel V&amp;#233;rit&amp;#233; (&lt;i&gt;daniel@manitou-mail.org&lt;/i&gt;).</translation>
     </message>
 </context>
 <context>
@@ -913,6 +925,20 @@
     <message>
         <source>Other email addresses for </source>
         <translation>Autres adresses pour </translation>
+    </message>
+</context>
+<context>
+    <name>attach_item_editor_delegate</name>
+    <message>
+        <source>Warning</source>
+        <translation>Avertissement</translation>
+    </message>
+</context>
+<context>
+    <name>attached_filename_editor</name>
+    <message>
+        <source>Characters that are unsafe in file names have been replaced by underscores.</source>
+        <translation>Les caractères interdits dans les noms de fichier ont été remplacés par des blanc soulignés.</translation>
     </message>
 </context>
 <context>
@@ -2874,10 +2900,6 @@ Les messages non encore importés seront perdus.</translation>
         <translation>&amp;Quitter</translation>
     </message>
     <message>
-        <source>&amp;Threaded</source>
-        <translation>&amp;Fils de discussion</translation>
-    </message>
-    <message>
         <source>Collapse quoted text</source>
         <translation>Cacher texte cité</translation>
     </message>
@@ -3294,10 +3316,6 @@ Les messages non encore importés seront perdus.</translation>
         <translation>%1%2 message(s)</translation>
     </message>
     <message>
-        <source>Select threads</source>
-        <translation>Sélectionne fils de discussion</translation>
-    </message>
-    <message>
         <source>%1 message(s) selected.</source>
         <translation>%1 message(s) sélectionnés.</translation>
     </message>
@@ -3307,7 +3325,7 @@ Les messages non encore importés seront perdus.</translation>
     </message>
     <message>
         <source>%1 message(s) tagged.</source>
-        <translation>%1 message(s) étiquetté(s)</translation>
+        <translation>%1 message(s) étiquetté(s).</translation>
     </message>
     <message>
         <source>%1 message(s) untagged.</source>
@@ -3324,6 +3342,58 @@ Les messages non encore importés seront perdus.</translation>
     <message>
         <source>%1 messages selected.</source>
         <translation>%1 messages sélectionnés.</translation>
+    </message>
+    <message>
+        <source>Threads</source>
+        <translation>Fils de discussion</translation>
+    </message>
+    <message>
+        <source>Display hierarchically</source>
+        <translation>Afficher en hiérarchie</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation>Déplier tout</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>Replier tout</translation>
+    </message>
+    <message>
+        <source>Select all in thread</source>
+        <translation>Tout sélectionner dans le fil</translation>
+    </message>
+    <message>
+        <source>Complete current thread</source>
+        <translation>Compléter le fil courant</translation>
+    </message>
+    <message>
+        <source>Auto-archive thread</source>
+        <translation>Auto-archiver le fil</translation>
+    </message>
+    <message>
+        <source>Auto-trash thread</source>
+        <translation>Auto-supprimer le fil</translation>
+    </message>
+    <message>
+        <source>List collapsed into %1 entries.</source>
+        <translation>Liste repliée en %1 entrées.</translation>
+    </message>
+    <message>
+        <source>Not implemented</source>
+        <translation>Pas implémenté</translation>
+    </message>
+    <message>
+        <source>Cannot complete threads for multiple messages</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 message(s) added to selected thread(s).</source>
+        <translation>%1 message(s) ajoutés aux fil(s) sélectionné(s).</translation>
+    </message>
+    <message>
+        <source>Query parameter</source>
+        <translation>Paramètre de requête</translation>
     </message>
 </context>
 <context>
@@ -4226,6 +4296,10 @@ Voulez-vous le mettre à jour malgré cela?</translation>
         <source>Archived messages</source>
         <translation>Messages archivés</translation>
     </message>
+    <message>
+        <source>New query</source>
+        <translation>Nouvelle requête</translation>
+    </message>
 </context>
 <context>
     <name>role_perms_edit_dialog</name>
@@ -4329,6 +4403,10 @@ Voulez-vous le mettre à jour malgré cela?</translation>
 Are you sure you want to overwrite it?</source>
         <translation>Une requête de ce nom existe déjà.
 Etes-vous certain de vouloir l&apos;écraser?</translation>
+    </message>
+    <message>
+        <source>User query</source>
+        <translation>Requête utilisateur</translation>
     </message>
 </context>
 <context>

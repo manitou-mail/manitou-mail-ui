@@ -86,6 +86,9 @@ public:
 
   void sort(int column, Qt::SortOrder order);
 
+  /* row count independently of folding  */
+  int total_row_count() const;
+
   QString m_display_sender_mode;
 
 private:
@@ -144,10 +147,16 @@ public:
   }
   void add_msg(mail_msg*);
   void remove_msg(mail_msg*, bool select_next=true);
+#if 0
   void reparent_msg(mail_msg*,mail_id_t);
+#endif
   // get the list of currently selected items
   void get_selected_indexes(QModelIndexList&);
   void get_selected(std::vector<mail_msg*>&);
+
+  // get the thread_id's of the currently selected messages
+  std::set<mail_thread> selected_threads();
+
   void clear();
   bool empty() const;
 
@@ -195,7 +204,8 @@ private:
   void make_tree(std::list<mail_msg*>& list);
   void collect_expansion_states(QStandardItem* item,
 				QSet<QStandardItem*>& expanded_set);
-  QStandardItem* insert_sub_tree(std::map<mail_id_t,mail_msg*>& m, mail_msg *msg);
+  QStandardItem* insert_sub_tree(std::map<mail_id_t,mail_msg*>&,
+				 mail_msg*);
 
 
 

@@ -17,16 +17,16 @@
    Boston, MA 02111-1307, USA.
 */
 
-#include "main.h"
-#include "db.h"
-#include "sqlstream.h"
-#include "sqlquery.h"
-#include "users.h"
-#include "msg_status_cache.h"
-#include "identities.h"
 #include "app_config.h"
+#include "db.h"
+#include "identities.h"
 #include "mail_displayer.h"
+#include "main.h"
+#include "msg_status_cache.h"
+#include "sqlquery.h"
+#include "sqlstream.h"
 #include "ui_feedback.h"
+#include "users.h"
 
 #include <QUuid>
 #include <QObject>
@@ -1694,6 +1694,160 @@ mail_msg::store_send_datetime(QDateTime dt, db_ctxt* dbc)
       sj << sql_null();
     else
       sj << (quint64)(999+dt.toMSecsSinceEpoch())/1000;
+  }
+  catch(db_excpt& p) {
+    if (dbc && dbc->propagate_exceptions)
+      throw p;
+    DBEXCPT(p);
+    return false;
+  }
+  return true;
+}
+
+// static
+bool
+mail_thread::insert_auto_actions(const std::set<mail_thread> threads,
+				 enum mail_thread_action action,
+				 db_ctxt* dbc)
+{
+  db_cnx db0;
+  db_cnx* db = dbc ? dbc->m_db : &db0;
+  try {
+    db->begin_transaction();
+    sql_stream s("INSERT INTO thread_action(thread_id, mail_id, action_type)"
+		 " VALUES(:p1, :p2, :p3)", *db);
+
+    for (const auto &t: threads) {
+
+      if (t.thread_id) {
+	sql_stream s1("DELETE FROM thread_action WHERE thread_id=:p1", *db);
+	s1 << t.thread_id;
+	s << t.thread_id;
+      }
+      else
+	s << sql_null();
+
+      if (t.mail_id) {
+	sql_stream s2("DELETE FROM thread_action WHERE mail_id=:p1", *db);
+	s2 << t.mail_id;
+	s << t.mail_id;
+      }
+      else
+	s << sql_null();
+      s << (int)action;
+    }
+    db->commit_transaction();
+  }
+  catch(db_excpt& p) {
+    if (dbc && dbc->propagate_exceptions)
+      throw p;
+    db->rollback_transaction();
+    DBEXCPT(p);
+    return false;
+  }
+  return true;
+}
+
+/* Remove all automatic actions from @threads */
+// static
+bool
+mail_thread::remove_auto_actions(const std::set<mail_thread> threads,
+				 db_ctxt* dbc)
+{
+  db_cnx db0;
+  db_cnx* db = dbc ? dbc->m_db : &db0;
+  try {
+    db->begin_transaction();
+
+    for (const auto &t: threads) {
+      if (t.thread_id) {
+	sql_stream s1("DELETE FROM thread_action WHERE thread_id=:p1", *db);
+	s1 << t.thread_id;
+      }
+
+      if (t.mail_id) {
+	sql_stream s2("DELETE FROM thread_action WHERE mail_id=:p1", *db);
+	s2 << t.mail_id;
+      }
+    }
+    db->commit_transaction();
+  }
+  catch(db_excpt& p) {
+    if (dbc && dbc->propagate_exceptions)
+      throw p;
+    db->rollback_transaction();
+    DBEXCPT(p);
+    return false;
+  }
+  return true;
+}
+
+//static
+bool
+mail_thread::trash_messages(const std::set<mail_thread> threads,
+			    db_ctxt* dbc)
+{
+  db_cnx* db = dbc->m_db;
+  try {
+    sql_stream s("SELECT trash_msg_set(array(select mail_id FROM mail"
+		 " WHERE thread_id=:tid OR mail_id=:mid), :opeid)", *db);
+    for (const auto &t: threads) {
+      s << t.thread_id << t.mail_id << user::current_user_id();
+    }
+  }
+  catch(db_excpt& p) {
+    if (dbc->propagate_exceptions)
+      throw p;
+    DBEXCPT(p);
+    return false;
+  }
+  return true;
+}
+
+//static
+bool
+mail_thread::archive_messages(const std::set<mail_thread> threads,
+			      db_ctxt* dbc)
+{
+  db_cnx* db = dbc->m_db;
+  try {
+    sql_stream s("SELECT archive_msg_set(array(select mail_id FROM mail"
+		 " WHERE thread_id=:tid OR mail_id=:mid), :opeid)", *db);
+    for (const auto &t: threads) {
+      s << t.thread_id << t.mail_id << user::current_user_id();
+    }
+  }
+  catch(db_excpt& p) {
+    if (dbc->propagate_exceptions)
+      throw p;
+    DBEXCPT(p);
+    return false;
+  }
+  return true;
+}
+
+// static
+bool
+mail_thread::fetch_auto_actions(mail_id_t mid,
+				thread_id_t tid,
+				std::set<enum mail_thread_action>* actions,
+				db_ctxt* dbc)
+{
+  db_cnx db0;
+  db_cnx* db = dbc ? dbc->m_db : &db0;
+  try {
+    sql_stream s("SELECT action_type FROM thread_action WHERE mail_id=:mid OR thread_id=:tid", *db);
+    s << mid;
+    if (tid)
+      s << tid;
+    else
+      s << sql_null();
+
+    while (!s.eos()) {
+      int action_type;
+      s >> action_type;
+      actions->insert((enum mail_thread::mail_thread_action)action_type);
+    }
   }
   catch(db_excpt& p) {
     if (dbc && dbc->propagate_exceptions)

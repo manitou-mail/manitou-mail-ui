@@ -21,6 +21,7 @@
 #define INC_MESSAGE_H
 
 #include "dbtypes.h"
+#include "database.h"
 #include "time.h"
 
 #include <QDateTime>
@@ -29,14 +30,13 @@
 #include <QVector>
 
 #include "addresses.h"
-#include "mailheader.h"
 #include "attachment.h"
+#include "mailheader.h"
 #include "tags.h"
-//#include "ui_feedback.h"
-
-class ui_feedback;
 
 #include <vector>
+
+class ui_feedback;
 
 class mail_result
 {
@@ -131,14 +131,14 @@ public:
   void set_recipients(const QString r) {
     m_recipients=r;
   }
-  unsigned int threadId() const { return m_thread_id; }
+  thread_id_t threadId() const { return m_thread_id; }
   mail_id_t inReplyTo() const { return m_nInReplyTo; }
   void setInReplyTo(mail_id_t i) { m_nInReplyTo=i; }
 
   const std::vector<mail_id_t>& forwardOf() const { return m_forwarded_mail_vect; }
   void set_fwded_mail_id (mail_id_t i) { m_forwarded_mail_vect.push_back(i); }
 
-  void setThread(int id) { m_thread_id=id; }
+  void setThread(thread_id_t id) { m_thread_id=id; }
 
   // body: TODO: move into its own class
   QString& get_body_text(bool partial=false);
@@ -196,7 +196,7 @@ public:
   QList<tag_counter_transition> m_tags_transitions;
 
   uint status() const { return m_status; }
-  uint thread_id() const { return m_thread_id; }
+  thread_id_t thread_id() const { return m_thread_id; }
   void setStatus(uint status) { m_status=status; }
   void set_status(uint status) { m_status=status; }
   void set_orig_status(uint status) { m_db_status=m_status=status; }
@@ -315,7 +315,7 @@ private:
   QString m_sSubject;
   QString m_recipients;
   QString m_sender_name;
-  unsigned int m_thread_id;
+  thread_id_t m_thread_id;
   int m_pri;			// priority
   int m_identity_id;
   date m_cDate;
@@ -342,6 +342,52 @@ private:
 };
 
 Q_DECLARE_METATYPE(mail_msg*)
+
+
+class mail_thread
+{
+public:
+  mail_thread() {}
+
+  enum mail_thread_action {
+    action_auto_archive = 1,
+    action_auto_trash,
+  };
+
+  bool operator<(const mail_thread& o) const {
+    return (o.mail_id < this->mail_id) || (o.thread_id < this->thread_id);
+  }
+
+  /* trash all messages that belong to @threads */
+  static bool trash_messages(const std::set<mail_thread> threads,
+			     db_ctxt* dbc);
+
+  /* archive all messages that belong to @threads */
+  static bool archive_messages(const std::set<mail_thread> threads,
+			       db_ctxt* dbc);
+
+  static bool insert_auto_actions(const std::set<mail_thread> threads,
+				  enum mail_thread_action action,
+				  db_ctxt* dbc=NULL);
+
+  static bool remove_auto_actions(const std::set<mail_thread> threads,
+				  db_ctxt* dbc=NULL);
+
+  static bool fetch_auto_actions(mail_id_t mid,
+				   thread_id_t tid,
+				   std::set<enum mail_thread_action>* actions,
+				   db_ctxt* dbc=NULL);
+
+  /* One of @mail_id or @thread_id should always be zero.
+     If @mail_id=0, there are several messages in the thread
+     and @thread_id (= mail.thread_id) is not null in the db.
+     If @mail_id!=0, there is no thread yet and it refers to the message
+     that is potentially the first mail of the future thread. */
+
+  mail_id_t mail_id = 0;
+  thread_id_t thread_id = 0;
+
+};
 
 #endif // INC_MESSAGE_H
 

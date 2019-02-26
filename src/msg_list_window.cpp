@@ -226,12 +226,6 @@ msg_list_window::create_actions()
   connect(m_action_find_text, SIGNAL(triggered()),
 	  this, SLOT(find_text()));
 
-  m_action_select_thread = new QAction(tr("Select threads"), this);
-  m_action_select_thread->setShortcut(Qt::CTRL+Qt::Key_T);
-  connect(m_action_select_thread, SIGNAL(triggered()),
-	  this, SLOT(select_all_in_threads()));
-  this->addAction(m_action_select_thread);
-
   m_action_msg_print = new QAction(FT_MAKE_ICON(FT_ICON16_PRINT),
 				   tr("Print"), this);
   connect(m_action_msg_print, SIGNAL(triggered()),
@@ -493,16 +487,43 @@ msg_list_window::init_menu()
   m_pMenuMessage=new QMenu(tr("&Message"), this);
   CHECK_PTR(m_pMenuMessage);
 
+  // Threads
+  m_pMenuThreads = new QMenu(tr("Threads"), this);
+
+  m_menu_actions[me_Threads_Display] =
+    m_pMenuThreads->addAction(tr("Display hierarchically"),
+			      this,
+			      SLOT(toggle_threaded(bool)));
+  m_menu_actions[me_Threads_Display]->setCheckable(true);
+  m_menu_actions[me_Threads_Display]->setChecked(display_vars.m_threaded);
+
+  m_menu_actions[me_Threads_Expand_All] =
+    m_pMenuThreads->addAction(tr("Expand all"), this, SLOT(expand_all_threads()));
+  m_menu_actions[me_Threads_Collapse_All] =
+    m_pMenuThreads->addAction(tr("Collapse all"), this, SLOT(collapse_all_threads()));
+
+  m_menu_actions[me_Threads_Select_Current] =
+    m_pMenuThreads->addAction(tr("Select all in thread"),
+			      this, SLOT(select_all_in_thread()),
+			      Qt::CTRL+Qt::Key_T);
+
+  m_menu_actions[me_Threads_Fetch_Complete] =
+    m_pMenuThreads->addAction(tr("Complete current thread"), this, SLOT(complete_thread()));
+
+  m_menu_actions[me_Threads_Auto_Archive] =
+    m_pMenuThreads->addAction(tr("Auto-archive thread"), this, SLOT(thread_auto_archive(bool)));
+  m_menu_actions[me_Threads_Auto_Archive]->setCheckable(true);
+
+  m_menu_actions[me_Threads_Auto_Trash] =
+    m_pMenuThreads->addAction(tr("Auto-trash thread"), this, SLOT(thread_auto_trash(bool)));
+  m_menu_actions[me_Threads_Auto_Trash]->setCheckable(true);
+
   // Display
   m_pMenuDisplay=new QMenu(tr("&Display"), this);
   CHECK_PTR (m_pMenuDisplay);
   m_menu_actions[me_Display_Tags] = m_pMenuDisplay->addAction(tr("&Tags panel"), this, SLOT(toggle_show_tags(bool)));
   m_menu_actions[me_Display_Tags]->setCheckable(true);
   m_menu_actions[me_Display_Tags]->setChecked(display_vars.m_show_tags);
-
-  m_menu_actions[me_Display_Threaded]=m_pMenuDisplay->addAction(tr("&Threaded"), this, SLOT(toggle_threaded(bool)));
-  m_menu_actions[me_Display_Threaded]->setCheckable(true);
-  m_menu_actions[me_Display_Threaded]->setChecked(display_vars.m_threaded);
 
   m_menu_actions[me_Display_Hide_Quoted] = m_pMenuDisplay->addAction(tr("Collapse quoted text"), this, SLOT(toggle_hide_quoted(bool)), Qt::CTRL+Qt::Key_H);
   m_menu_actions[me_Display_Hide_Quoted]->setCheckable(true);
@@ -655,6 +676,7 @@ msg_list_window::init_menu()
   menu->addMenu(m_pMenuEdit);
   menu->addMenu(m_pMenuSelection);
   menu->addMenu(m_pMenuMessage);
+  menu->addMenu(m_pMenuThreads);
   menu->addMenu(m_pMenuDisplay);
 //  menu->addMenu(tr("&Configuration"), m_pMenuConfig);
   menu->addSeparator();
@@ -662,6 +684,7 @@ msg_list_window::init_menu()
 
   connect(m_pMenuFile, SIGNAL(aboutToShow()), this, SLOT(enable_commands()));
   connect(m_pMenuSelection, SIGNAL(aboutToShow()), this, SLOT(enable_commands()));
+  connect(m_pMenuThreads, SIGNAL(aboutToShow()), this, SLOT(enable_commands_threads()));
   connect(m_pMenuMessage, SIGNAL(aboutToShow()), this, SLOT(enable_commands()));
   connect(m_pMenuDisplay, SIGNAL(aboutToShow()), this, SLOT(enable_commands()));
   connect(m_pPopupHeaders, SIGNAL(aboutToShow()), this, SLOT(enable_commands()));
@@ -1419,9 +1442,7 @@ msg_list_window::enable_commands()
     m_action_msg_trash->setEnabled(can_trash);
     m_action_msg_untrash->setEnabled(!can_trash);
     m_action_msg_delete->setEnabled(true);
-    m_action_select_thread->setEnabled(true);
     m_action_msg_archive->setEnabled(true);
-
     m_action_msg_print->setEnabled(true);
     m_action_msg_sender_details->setEnabled(true);
     m_menu_actions[me_Message_Properties]->setEnabled(true);
@@ -1433,8 +1454,6 @@ msg_list_window::enable_commands()
     m_action_reply_list->setEnabled(false);
     m_action_msg_forward->setEnabled(false);
     m_action_msg_archive->setEnabled(false);
-    m_action_select_thread->setEnabled(false);
-
     m_action_msg_trash->setEnabled(false);
     m_action_msg_untrash->setEnabled(false);
     m_action_msg_delete->setEnabled(false);
@@ -1450,13 +1469,94 @@ msg_list_window::enable_commands()
     m_action_reply_list->setEnabled(false);
     m_action_msg_forward->setEnabled(false);
     m_action_msg_archive->setEnabled(true);
-    m_action_select_thread->setEnabled(true);
     m_action_msg_trash->setEnabled(true);
     m_action_msg_untrash->setEnabled(true);
     m_action_msg_delete->setEnabled(true);
     m_action_msg_print->setEnabled(false);
     m_action_msg_sender_details->setEnabled(false);
     m_menu_actions[me_Message_Properties]->setEnabled(false);
+  }
+}
+
+/* Separate from enable_commands() because it needs to query the db. */
+void
+msg_list_window::enable_commands_threads()
+{
+  std::vector<mail_msg*> v;
+  int size = m_qlist->selection_size();
+
+  if (size == 1) {
+    m_qlist->get_selected(v);
+    size = v.size();
+  }
+
+  if (size == 0) {
+    // none selected
+    m_menu_actions[me_Threads_Select_Current]->setEnabled(false);
+    m_menu_actions[me_Threads_Fetch_Complete]->setEnabled(false);
+    m_menu_actions[me_Threads_Auto_Archive]->setEnabled(false);
+    m_menu_actions[me_Threads_Auto_Trash]->setEnabled(false);
+  }
+  else if (size == 1) {
+    // exactly one message selected
+    m_menu_actions[me_Threads_Select_Current]->setEnabled(true);
+    m_menu_actions[me_Threads_Fetch_Complete]->setEnabled(true);
+    m_menu_actions[me_Threads_Auto_Archive]->setEnabled(true);
+    m_menu_actions[me_Threads_Auto_Trash]->setEnabled(true);
+
+    std::set<enum mail_thread::mail_thread_action> t_actions;
+
+    mail_thread::fetch_auto_actions(v[0]->get_id(), v[0]->thread_id(), &t_actions);
+    /* (ignore a possible db error with the fetch) */
+
+    if (t_actions.find(mail_thread::action_auto_archive) != t_actions.end())
+      m_menu_actions[me_Threads_Auto_Archive]->setChecked(true);
+    else
+      m_menu_actions[me_Threads_Auto_Archive]->setChecked(false);
+
+    if (t_actions.find(mail_thread::action_auto_trash) != t_actions.end())
+      m_menu_actions[me_Threads_Auto_Trash]->setChecked(true);
+    else
+      m_menu_actions[me_Threads_Auto_Trash]->setChecked(false);
+  }
+  else {
+    // several messages selected
+    m_menu_actions[me_Threads_Select_Current]->setEnabled(true);
+    m_menu_actions[me_Threads_Fetch_Complete]->setEnabled(true);
+
+    /* check if all messages belong to the same thread. */
+    m_qlist->get_selected(v);
+    thread_id_t tid = v[0]->thread_id();
+    for (auto *m: v) {
+      if (m->thread_id() != tid) {
+	tid = 0;
+	break;
+      }
+    }
+    /* if same thread, show the state for that thread; otherwise
+       disable the action. */
+    if (tid > 0) {
+      std::set<enum mail_thread::mail_thread_action> t_actions;
+
+      mail_thread::fetch_auto_actions(0, tid, &t_actions);
+      /* (ignore a possible db error with the fetch) */
+
+      if (t_actions.find(mail_thread::action_auto_archive) != t_actions.end())
+	m_menu_actions[me_Threads_Auto_Archive]->setChecked(true);
+      else
+	m_menu_actions[me_Threads_Auto_Archive]->setChecked(false);
+
+      if (t_actions.find(mail_thread::action_auto_trash) != t_actions.end())
+	m_menu_actions[me_Threads_Auto_Trash]->setChecked(true);
+      else
+	m_menu_actions[me_Threads_Auto_Trash]->setChecked(false);
+    }
+    else {
+      m_menu_actions[me_Threads_Auto_Archive]->setEnabled(false);
+      m_menu_actions[me_Threads_Auto_Archive]->setChecked(false);
+      m_menu_actions[me_Threads_Auto_Trash]->setEnabled(false);
+      m_menu_actions[me_Threads_Auto_Trash]->setChecked(false);
+    }
   }
 }
 
@@ -1479,14 +1579,184 @@ msg_list_window::toggle_threaded(bool on)
 {
   display_vars.m_threaded=on; // !display_vars.m_threaded;
 
-//  m_pMenuDisplay->setItemChecked(id, display_vars.m_threaded);
   m_qlist->set_threaded(display_vars.m_threaded);
-  m_qlist->clear();
+
   /* Re-insert the whole list because in-place reparenting is way slower
      with current versions of QTreeView (as of Qt-4.3.3) */
+  m_qlist->clear();
   m_qlist->insert_list(m_filter->m_list_msgs);
   m_qlist->setRootIsDecorated(display_vars.m_threaded);
   add_segments();
+}
+
+void
+msg_list_window::collapse_all_threads()
+{
+  m_qlist->collapseAll();
+  int rows = m_qlist->model()->rowCount();
+  if (rows > 0)
+    statusBar()->showMessage(tr("List collapsed into %1 entries.").arg(rows));
+}
+
+void
+msg_list_window::expand_all_threads()
+{
+  m_qlist->expandAll();
+}
+
+/* Based on the thread_id of the currently selected message(s), load
+   the other messages from the thread(s) and incorporate them into the
+   current page. */
+void
+msg_list_window::complete_thread()
+{
+  msgs_filter filter;
+  std::vector<mail_msg*> v;
+
+  m_qlist->get_selected(v);
+  /* QSet<int> threads;		// set of thread_id */
+  if (v.size() != 1) {
+    QMessageBox::critical(this, tr("Not implemented"),
+			  tr("Cannot complete threads for multiple messages"));
+    return;
+  }
+
+
+  if (v[0]->threadId() != 0) {
+    int list_count = m_qlist->model()->total_row_count();
+    filter.m_thread_id = v[0]->threadId();
+    filter.fetch(m_qlist, 0);
+    m_qlist->select_message(v[0]->get_id(), true);
+    statusBar()->showMessage(tr("%1 message(s) added to selected thread(s).").
+			     arg(m_qlist->model()->total_row_count() - list_count),
+			     3000);
+  }
+}
+
+
+void
+msg_list_window::thread_auto_archive(bool active)
+{
+  std::set<mail_thread> threads = m_qlist->selected_threads();
+
+  if (threads.size() != 1) {
+    DBG_PRINTF(2, "Unexpected number of selected threads: %d", threads.size());
+    return;
+  }
+
+  QString msg;
+  if (active)
+    msg = QObject::tr("Archive current and future messages of this thread?");
+  else
+    msg = QObject::tr("Stop archiving future messages of this thread?");
+
+  if (QMessageBox::question
+      (this,
+       tr("Confirmation"),
+       msg,
+       QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel
+       ) != QMessageBox::Ok)
+    return;
+
+  db_ctxt dbc;
+  dbc.propagate_exceptions = true;
+
+  try {
+    dbc.m_db->begin_transaction();
+
+    if (active) {
+      // update in database
+      mail_thread::archive_messages(threads, &dbc);
+
+      mail_thread::insert_auto_actions(threads,
+				       mail_thread::action_auto_archive,
+				       &dbc);
+
+      // reflect the new status of messages in the list
+      mail_thread tinst = *(threads.begin());
+      std::list<mail_msg*> s;
+      for (auto msg : m_filter->m_list_msgs) {
+	if (msg->thread_id() == tinst.thread_id || msg->get_id() == tinst.mail_id)
+	  s.push_back(msg);
+      }
+
+      for (auto msg: s) {
+	msg->set_status(msg->status() | mail_msg::statusArchived);
+	m_qlist->update_msg(msg);
+	propagate_status(msg);
+      }
+    }
+    else {
+      mail_thread::remove_auto_actions(threads, &dbc);
+    }
+    dbc.m_db->commit_transaction();
+  }
+  catch(db_excpt& p) {
+    dbc.m_db->rollback_transaction();
+    DBEXCPT (p);
+  }
+}
+
+void
+msg_list_window::thread_auto_trash(bool active)
+{
+  QString msg;
+  if (active)
+    msg = QObject::tr("Move current and future messages of this thread into the trashcan?");
+  else
+    msg = QObject::tr("Stop moving future messages of this thread into the trashcan?");
+
+  if (QMessageBox::question
+      (this,
+       tr("Confirmation"),
+       msg,
+       QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel
+       ) == QMessageBox::Ok)
+  {
+    db_ctxt dbc;
+    dbc.propagate_exceptions = true;
+    std::set<mail_thread> threads = m_qlist->selected_threads();
+    if (threads.size() != 1) {
+      DBG_PRINTF(2, "Unexpected number of selected threads: %d", threads.size());
+      return;
+    }
+
+    try {
+      dbc.m_db->begin_transaction();
+
+      if (active) {
+
+	mail_thread::trash_messages(threads, &dbc);
+
+	mail_thread::insert_auto_actions(threads,
+					 mail_thread::action_auto_trash,
+					 &dbc);
+	// reflect the new status of messages in the list
+	mail_thread tinst = *(threads.begin());
+	std::list<mail_msg*> s;
+	for (auto msg : m_filter->m_list_msgs) {
+	  if (msg->thread_id() == tinst.thread_id || msg->get_id() == tinst.mail_id)
+	    s.push_back(msg);
+	}
+
+	uint cnt = 0;
+	for (auto msg: s) {
+	  msg->set_status(msg->status() | mail_msg::statusTrashed);
+	  remove_msg(msg, ++cnt == s.size());
+	  propagate_status(msg, 0);
+	}
+	set_title();
+      }
+      else {
+	mail_thread::remove_auto_actions(threads, &dbc);
+      }
+      dbc.m_db->commit_transaction();
+    }
+    catch(db_excpt& p) {
+      dbc.m_db->rollback_transaction();
+      DBEXCPT (p);
+    }
+  }
 }
 
 void
@@ -2827,14 +3097,13 @@ msg_list_window::sender_properties()
 }
 
 void
-msg_list_window::select_all_in_threads()
+msg_list_window::select_all_in_thread()
 {
   std::vector<mail_msg*> v_sel;
   QSet<uint> threads;
   int msg_cnt = 0;
 
   m_qlist->get_selected(v_sel);
-  DBG_PRINTF(4, "select_all_in_threads() sel=%d", v_sel.size());
 
   // collect the distinct threads
   for (auto const &pmsg : v_sel) {
@@ -3550,10 +3819,13 @@ msg_list_window::apply_conf(app_config& conf)
     m_menu_actions[me_Display_Tags]->setChecked(display_vars.m_show_tags);
   }
 
-  if (conf.get_bool("display_threads") != display_vars.m_threaded) {
-    toggle_threaded(display_vars.m_threaded);
-    m_menu_actions[me_Display_Threaded]->setChecked(display_vars.m_threaded);
+  bool threading = display_vars.m_threaded;
+  if (conf.get_bool("display_threads") != threading) {
+    toggle_threaded(threading);
+    m_menu_actions[me_Threads_Display]->setChecked(threading);
   }
+  m_menu_actions[me_Threads_Collapse_All]->setEnabled(threading);
+  m_menu_actions[me_Threads_Expand_All]->setEnabled(threading);
 
   int headers_level = conf.get_number("show_headers_level");
   if (display_vars.m_show_headers_level != headers_level) {

@@ -29,10 +29,12 @@
 #if defined(DB_MAIL_ID_32)
 typedef quint32 mail_id_t;
 typedef quint32 attach_id_t;
+typedef quint32 thread_id_t;
 #define MAIL_ID_FMT_STRING "%u"
 #elif defined(DB_MAIL_ID_64)
 typedef quint64 mail_id_t;
 typedef quint64 attach_id_t;
+typedef quint64 thread_id_t;
 #define MAIL_ID_FMT_STRING "%llu"
 #endif
 

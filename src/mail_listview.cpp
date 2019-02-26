@@ -119,6 +119,12 @@ mail_item_model::first_top_level_item() const
     return NULL;
 }
 
+int
+mail_item_model::total_row_count() const
+{
+  return items_map.count();
+}
+
 // returns an icon showing the message status
 QIcon*
 mail_item_model::icon_status(uint status)
@@ -1101,22 +1107,6 @@ mail_listview::remove_msg(mail_msg* msg, bool select_next)
   }
 }
 
-void
-mail_listview::reparent_msg(mail_msg* msg, mail_id_t parent_id)
-{
-#if QT_VERSION<0x040303
-  QStandardItem* parent=model->reparent_msg(msg, parent_id);
-  /* Each row is expanded individually because of a probable bug in
-     Qt<4.3.3. The bug makes the treeview appear to be empty on screen
-     after the expandAll() call */
-  if (parent) {
-    expand(model()->indexFromItem(parent));
-  }
-#else
-  model()->reparent_msg(msg, parent_id);
-#endif
-}
-
 mail_msg*
 mail_listview::find(mail_id_t mail_id)
 {
@@ -1184,6 +1174,31 @@ mail_listview::get_selected(std::vector<mail_msg*>& vect)
     if (v.isValid())
       vect.push_back(v.value<mail_msg*>()); // add the mail_msg* to the vector
   }
+}
+
+std::set<mail_thread>
+mail_listview::selected_threads()
+{
+  std::set<mail_thread> result;
+  QModelIndexList li = selectedIndexes();
+
+  for (int i=0; i<li.size(); i++) {
+    const QModelIndex idx=li.at(i);
+    if (idx.column()!=0)	// we only want one item per row
+      continue;
+    QStandardItem* item = model()->itemFromIndex(idx);
+    QVariant v=item->data(mail_item_model::mail_msg_role);
+    if (v.isValid()) {
+      mail_msg* msg = v.value<mail_msg*>();
+      mail_thread thr;
+      if (msg->threadId())
+	thr.thread_id = msg->threadId();
+      else
+	thr.mail_id = msg->get_id();
+      result.insert(thr);
+    }
+  }
+  return result;
 }
 
 int
@@ -1287,26 +1302,28 @@ mail_listview::scroll_to_bottom()
 }
 
 /*
-  Insert an item with its parent. Recurse if the parent is not yet inserted
+  Insert @msg, with its parents if they're not yet inserted, recursively.
+  @m holds the mail_id=>[ptr to mail_msg] for the entire list.
 */
 QStandardItem*
 mail_listview::insert_sub_tree(std::map<mail_id_t,mail_msg*>& m, mail_msg *msg)
 {
-  QStandardItem* parent=NULL; // default to top-level item
-  mail_id_t parent_id=msg->inReplyTo();
+  QStandardItem* parent = NULL; // default to top-level item
+  mail_id_t parent_id = msg->inReplyTo();
   if (parent_id!=0) {
-    std::map<mail_id_t,mail_msg*>::iterator parent_iter=m.find(parent_id);
-    if (parent_iter!=m.end()) {
+    parent = model()->item_from_id(parent_id);  // parent in the listview?
+    std::map<mail_id_t,mail_msg*>::iterator parent_iter = m.find(parent_id);
+    if (parent_iter != m.end()) {
       // has a parent in the list
-      parent = model()->item_from_id(parent_id);
       if (!parent) {
-	// recurse to insert msg's parent before msg
+	// not yet inserted: recurse to insert msg's parent before msg
 	parent = insert_sub_tree(m, parent_iter->second);
       }
     }
   }
   if (isSortingEnabled()) {
-    return model()->insert_msg_sorted(msg, parent,
+    return model()->insert_msg_sorted(msg,
+				      parent,
 				      header()->sortIndicatorSection(),
 				      header()->sortIndicatorOrder());
   }
@@ -1318,24 +1335,68 @@ mail_listview::insert_sub_tree(std::map<mail_id_t,mail_msg*>& m, mail_msg *msg)
 void
 mail_listview::make_tree(std::list<mail_msg*>& list)
 {
-  DBG_PRINTF(8, "make_tree()");
-  std::list<mail_msg*>::iterator iter;
+  DBG_PRINTF(6, "make_tree()");
   std::map<mail_id_t,mail_msg*> m;
 
-  /* build a map [ mail_id => pointer to the message ]. The map is
-     used inside insert_sub_tree to quickly find if a parent belongs
-     to the list or not */
-  for (iter=list.begin(); iter!=list.end(); ++iter) {
-    m[(*iter)->get_id()]=*(iter);
+  /* Newly inserted messages that are the parents of other messages
+     already in the listview */
+  std::map<mail_id_t, mail_id_t> reparent_map;
+
+  int rows = model()->rowCount();
+
+  for (std::list<mail_msg*>::iterator iter=list.begin(); iter!=list.end(); ++iter) {
+    /* build a map [ mail_id => pointer to the message ]. The map is
+       used inside insert_sub_tree to quickly find if a parent belongs
+       to the list or not */
+    m[(*iter)->get_id()] = *(iter);
   }
 
-  for (iter=list.begin(); iter!=list.end(); ++iter) {
-    mail_msg* msg = model()->find((*iter)->get_id());
-    if (!msg) {			// msg not already in list
-      insert_sub_tree(m, *iter);
+  for (int i=0; i<rows; i++) {
+    /* build reparent_map: each existing item whose parent is missing
+       in the view and is found in the new items to insert. */
+    QModelIndex index = model()->index(i, 0);
+    QStandardItem* item = model()->itemFromIndex(index);
+    if (item) {
+      QVariant v = item->data(mail_item_model::mail_msg_role);
+      mail_msg* msg = v.value<mail_msg*>();
+      if (!msg) {
+	// DBG_PRINTF(2, "No mail_msg* for item at row %d", i);
+	continue;		/* skip the non-mail items (currently, command items).
+				   FIXME: use item->type() to check for mail items,
+				   but first they must exist as a derived class of QStandardItem */
+      }
+      mail_id_t parent_id = msg->inReplyTo();
+      if (parent_id != 0) {
+	DBG_PRINTF(6, "item at row %d has in_reply_to=%u", i, parent_id);
+	std::map<mail_id_t,mail_msg*>::iterator parent_iter = m.find(parent_id);
+	if (parent_iter != m.end()) {
+	  DBG_PRINTF(6, "adding reparent_map[%u] = %u",
+		     (parent_iter->second)->get_id(),
+		     parent_id);
+	  reparent_map[msg->get_id()] = parent_id;  // child => parent
+	}
+      }
     }
   }
-  expandAll();
+
+  /* Insert items */
+  for (std::list<mail_msg*>::iterator iter=list.begin(); iter!=list.end(); ++iter) {
+    mail_msg* msg = model()->find((*iter)->get_id());
+    if (!msg) {			// msg not already in list
+      insert_sub_tree(m, *iter);  // updates the model
+    }
+  }
+
+  /* Reparent old items when necessary */
+  std::map<mail_id_t,mail_id_t>::iterator itrep;
+  for (itrep = reparent_map.begin(); itrep != reparent_map.end(); ++itrep) {
+    DBG_PRINTF(6, "search for item %u", itrep->first);
+    mail_msg* msg = model()->find(itrep->first);
+    if (msg)
+      model()->reparent_msg(msg, itrep->second);
+  }
+
+  expandAll();  // FIXME: expand only branches we've just added.
 }
 
 void
