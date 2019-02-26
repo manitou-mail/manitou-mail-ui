@@ -473,7 +473,9 @@ mail_item_model::update_msg(const mail_msg* msg)
   bool bold=isubject->font().bold();
   DBG_PRINTF(5, "mail_id=" MAIL_ID_FMT_STRING ", status=%d, bold=%d",
 	     msg->get_id(), msg->status(), bold);
-  if ((msg->status()!=0 && bold) || (msg->status()==0 && !bold)) {
+  if (((msg->status()&mail_msg::statusRead)!=0 && bold) ||
+      ((msg->status()&mail_msg::statusRead)==0 && !bold))
+  {
     // reverse bold attribute
     QFont f=isubject->font();
     f.setBold(!bold);
