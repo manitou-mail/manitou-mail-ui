@@ -456,6 +456,22 @@
         <source>Unable to parse query.</source>
         <translation>Impossible d&apos;analyser la requête.</translation>
     </message>
+    <message>
+        <source>Archive current and future messages of this thread?</source>
+        <translation>Archiver les messages en cours et futurs de ce fil de discussion?</translation>
+    </message>
+    <message>
+        <source>Stop archiving future messages of this thread?</source>
+        <translation>Arrêter d&apos;archiver les messages futurs de ce fil de discussion?</translation>
+    </message>
+    <message>
+        <source>Move current and future messages of this thread into the trashcan?</source>
+        <translation>Déplacer les messages en cours et futurs de ce fil de discussion dans la corbeille?</translation>
+    </message>
+    <message>
+        <source>Stop moving future messages of this thread into the trashcan?</source>
+        <translation>Ne plus déplacer les futurs messages de ce fil de discussion dans la corbeille?</translation>
+    </message>
 </context>
 <context>
     <name>about_box</name>
@@ -3385,7 +3401,7 @@ Les messages non encore importés seront perdus.</translation>
     </message>
     <message>
         <source>Cannot complete threads for multiple messages</source>
-        <translation type="unfinished"></translation>
+        <translation>Il n&apos;est pas possible de compléter les fils de discussions pour plusieurs messages</translation>
     </message>
     <message>
         <source>%1 message(s) added to selected thread(s).</source>
