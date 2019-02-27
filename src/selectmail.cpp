@@ -908,7 +908,6 @@ msgs_filter::process_address_clause(sql_query& q,
 				    bool match)
 {
   for (int si=0; si < vals.size(); ++si) {
-    qDebug() << vals;
     int cnt = ++m_addresses_count;
     int itype;
     switch(atype) {
