@@ -17,11 +17,11 @@
    Boston, MA 02111-1307, USA.
 */
 
-#include "main.h"
 #include "addresses.h"
 #include "db.h"
 #include "helper.h"
 #include "icons.h"
+#include "main.h"
 #include "msg_list_window.h"
 #include "msg_status_cache.h"
 #include "selectmail.h"
@@ -245,6 +245,18 @@ fts_options::clear()
   m_operators.clear();
 }
 
+/* Add an operator:value search condition */
+void
+fts_options::add_operator(const QString op, const QString val)
+{
+  QString lo = op.toLower();
+  if (op.size() > 1 && op.at(0) == '-')
+    m_minus_operators.insertMulti(lo.mid(1), val);
+  else
+    m_operators.insertMulti(lo, val);
+}
+
+
 /*
   Parse a searchbar expression. No semantic analysis, just extraction of tokens.
 */
@@ -270,7 +282,7 @@ msgs_filter::parse_search_string(QString s, fts_options& opt)
   uint len=s.length();
   for (uint i=0; i<len; i++) {
     QChar c=s.at(i);
-    DBG_PRINTF(7, "p i=%u, char=%c, state=%d", i, c.toLatin1(), state);
+    /*    DBG_PRINTF(7, "p i=%u, char=%c, state=%d", i, c.toLatin1(), state);*/
     if (c==QChar('"')) {
       if (state==10)
 	state=40;
@@ -282,7 +294,7 @@ msgs_filter::parse_search_string(QString s, fts_options& opt)
 	state=10;
       }
       else if (state==45) {
-	opt.m_operators.insertMulti(curr_op.toLower(), curr_opval);
+	opt.add_operator(curr_op, curr_opval);
 	state=10;
       }
       else if (state==50) {
@@ -302,7 +314,7 @@ msgs_filter::parse_search_string(QString s, fts_options& opt)
     }
     else if (state==20) {
       if (c==' ') {
-	opt.m_operators.insertMulti(curr_op.toLower(), curr_opval);
+	opt.add_operator(curr_op, curr_opval);
 	state=10;
       }
       else
@@ -349,7 +361,7 @@ msgs_filter::parse_search_string(QString s, fts_options& opt)
     DBG_PRINTF(3, "parse error: state=%d", state);
   }
   if (state==20)
-    opt.m_operators.insertMulti(curr_op.toLower(), curr_opval);
+    opt.add_operator(curr_op, curr_opval);
 
   if (!curr_word.isEmpty()) {
     if (curr_word.at(0)=='-')
@@ -424,6 +436,8 @@ msgs_filter::build_query(sql_query& q)
     }
 
     main_table="mail m";
+    m_addresses_count = 0;
+
     if (m_tag_name == "(No tag set)") {
       /* optimize the cases of "no tag set" condition AND'ed with
 	 some particular values for the status */
@@ -453,7 +467,7 @@ msgs_filter::build_query(sql_query& q)
     q.add_table(main_table);
 
 
-    /* m_segment should be valid, but in the abormal case when it's not,
+    /* m_segment should be valid, but in the abnormal case when it's not,
        ignore the bounds to mitigate the problem. */
     if (m_segment.is_valid) {
       if ((m_direction > 0 && m_order < 0) || (m_direction < 0 && m_order > 0)) {
@@ -569,6 +583,27 @@ msgs_filter::build_query(sql_query& q)
     }
     if (m_fts.m_operators.contains("cc")) {
       process_address_clause(q, cc_address, m_fts.m_operators.values("cc"));
+    }
+
+    if (m_fts.m_minus_operators.contains("from")) {
+      process_address_clause(q,
+			     from_address,
+			     m_fts.m_minus_operators.values("from"),
+			     false);
+    }
+
+    if (m_fts.m_minus_operators.contains("to")) {
+      process_address_clause(q,
+			     to_address,
+			     m_fts.m_minus_operators.values("to"),
+			     false);
+    }
+
+    if (m_fts.m_minus_operators.contains("cc")) {
+      process_address_clause(q,
+			     cc_address,
+			     m_fts.m_minus_operators.values("cc"),
+			     false);
     }
 
     // tag clause
@@ -862,14 +897,18 @@ msgs_filter::process_status_clause(sql_query& q,
 
 /*
   Create SQL clauses to filter on from/to/cc
-  <vals> are interpreted as email addresses (no name)
+  @vals are interpreted as email addresses (no name)
+  @match=true means the address must be a match
+  @match=false means the address must not match (not exists (...))
 */
 void
 msgs_filter::process_address_clause(sql_query& q,
 				    address_type atype,
-				    QList<QString> vals)
+				    QList<QString> vals,
+				    bool match)
 {
   for (int si=0; si < vals.size(); ++si) {
+    qDebug() << vals;
     int cnt = ++m_addresses_count;
     int itype;
     switch(atype) {
@@ -882,22 +921,40 @@ msgs_filter::process_address_clause(sql_query& q,
     default:
       throw QString("Unexpected address type %1").arg((int)atype);
     }
-    q.add_table(QString("mail_addresses ma%1").arg(cnt));
-    q.add_table(QString("addresses a%1").arg(cnt));
 
-    q.add_clause(QString("ma%1.addr_type=%2").arg(cnt).arg(itype));
-    q.add_clause(QString("m.mail_id=ma%1.mail_id").arg(cnt));
-    q.add_clause(QString("ma%1.addr_id=a%1.addr_id").arg(cnt));
+    db_cnx db;
     QString email_addr = vals.at(si).toLower();
+    QString email_clause;
+
     if (email_addr.contains('@')) {
       // fully qualified address: exact match
-      q.add_clause(QString("a%1.email_addr").arg(cnt), vals.at(si).toLower());
+      email_clause = QString("a%1.email_addr='%2'").arg(cnt)
+	.arg(db.escape_string_literal(email_addr));
     }
     else {
       // address without domain part: exact match on local part, matches any domain
-      db_cnx db;
-      QString like = QString("%1@%").arg(db.escape_like_arg(vals.at(si).toLower()));
-      q.add_clause(QString("a%1.email_addr LIKE '%2'").arg(cnt).arg(like));
+      email_clause = QString("a%1.email_addr LIKE '%2@%'").arg(cnt)
+	.arg(db.escape_like_arg(email_addr));
+    }
+
+    if (match) {
+      // old-style join (with where clauses)
+      q.add_table(QString("mail_addresses ma%1").arg(cnt));
+      q.add_table(QString("addresses a%1").arg(cnt));
+
+      q.add_clause(QString("ma%1.addr_type=%2").arg(cnt).arg(itype));
+      q.add_clause(QString("m.mail_id=ma%1.mail_id").arg(cnt));
+      q.add_clause(QString("ma%1.addr_id=a%1.addr_id").arg(cnt));
+      q.add_clause(email_clause);
+    }
+    else {
+      // non-match (anti-join)
+      QString subq =
+	QString("NOT EXISTS ("
+		"select 1 from mail_addresses ma JOIN addresses a%1 USING(addr_id)"
+		" where ma.mail_id=m.mail_id AND ma.addr_type=%2 AND %3)")
+	.arg(cnt).arg(itype).arg(email_clause);
+      q.add_clause(subq);
     }
   }
 }

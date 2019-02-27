@@ -28,13 +28,14 @@
 #include <QMap>
 
 #include <vector>
+
 #include "db.h"
-#include "words.h"
-#include "sqlquery.h"
-#include "mail_listview.h"
 #include "edit_address_widget.h"
-#include "filter_rules.h"
 #include "fetch_thread.h"
+#include "filter_rules.h"
+#include "mail_listview.h"
+#include "sqlquery.h"
+#include "words.h"
 
 class QButtonGroup;
 class QCheckBox;
@@ -54,12 +55,14 @@ class button_group;
 class fts_options
 {
 public:
-  void clear();
-  //  QString m_word;
   QStringList m_words;		// full-text search: words to find
   QStringList m_exclude_words;  // full-text search: words to exclude
   QStringList m_substrs;	// full-text search: substrings to find
-  QMap<QString,QString> m_operators;
+  QMap<QString,QString> m_operators;  // operator:value
+  QMap<QString,QString> m_minus_operators; // -operator:value (negates the criterion)
+
+  void clear();
+  void add_operator(const QString op, const QString val);
 };
 
 /*
@@ -289,7 +292,8 @@ private:
   /* Add criteria to the sql_query that correspond to a sender/recipient test */
   void process_address_clause(sql_query& q,
 			      address_type atype,
-			      QList<QString> vals);
+			      QList<QString> vals,
+			      bool match=true);
 
   /* Add criteria to the sql_query for the tag operator */
   void process_tag_clause(sql_query& q, QList<QString> vals);
