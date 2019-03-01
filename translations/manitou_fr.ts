@@ -4230,7 +4230,7 @@ Voulez-vous le mettre à jour malgré cela?</translation>
     <name>query_listview</name>
     <message>
         <source>Tagged</source>
-        <translation>Etiquettés</translation>
+        <translation>Etiquetés</translation>
     </message>
     <message>
         <source>Quick selection</source>
@@ -4246,7 +4246,7 @@ Voulez-vous le mettre à jour malgré cela?</translation>
     </message>
     <message>
         <source>Not tagged</source>
-        <translation>Non étiquettés</translation>
+        <translation>Non étiquetés</translation>
     </message>
     <message>
         <source>Current messages</source>
@@ -4254,7 +4254,7 @@ Voulez-vous le mettre à jour malgré cela?</translation>
     </message>
     <message>
         <source>Not tagged (%1)</source>
-        <translation>Non étiquettés (%1)</translation>
+        <translation>Non étiquetés (%1)</translation>
     </message>
     <message>
         <source>Prioritized</source>
