@@ -104,7 +104,7 @@ msg_status_cache::db_new_mail_notif()
   DBG_PRINTF(5, "We have NEW MAIL!");
   db_cnx db;
   try {
-    sql_stream s("SELECT mail_id,status,sender,sender_fullname,subject,recipients FROM mail WHERE status&status_mask('archived')=0 AND mail_id>:p1", db);
+    sql_stream s("SELECT mail_id,status,sender,sender_fullname,subject,recipients FROM mail WHERE status&32=0 AND mail_id>:p1", db);
     s << m_max_mail_id;
     mail_id_t mail_id;
     int status;
@@ -114,12 +114,12 @@ msg_status_cache::db_new_mail_notif()
       s >> mail_id >> status>> sender >> sender_fullname >> subject >> recipients;
       count++;
       DBG_PRINTF(5, "Seen mail_id %d with status %d", mail_id, status);
-      if (!(status & mail_msg::statusRead)) {
+      if (!(status & (mail_msg::statusRead|mail_msg::statusTrashed))) {
 	if (get_config().get_string("display/notifications/new_mail") != "none")
 	  gl_pApplication->desktop_notify(tr("New mail"), QString("From: %1\nSubject: %2").arg(sender_fullname.isEmpty()?sender:sender_fullname).arg(subject));
       }
       update(mail_id, status);
-      message_port::instance()->broadcast_new_mail(mail_id);
+      message_port::instance()->broadcast_new_mail(mail_id, status);
     }
     if (count>0 && get_config().get_bool("fetch/auto_incorporate_new_results", false)) {
       message_port::instance()->broadcast_list_refresh_request();

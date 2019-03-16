@@ -144,7 +144,7 @@ public slots:
 
   void reload_user_queries();
   void tags_restructured();
-  void got_new_mail(mail_id_t);
+  void got_new_mail(mail_id_t id, int status);
   void context_menu(const QPoint&);
 
 protected:

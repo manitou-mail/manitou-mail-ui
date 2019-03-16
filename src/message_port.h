@@ -37,12 +37,12 @@ private:
   static message_port* m_this;
 public slots:
   void tags_updated();
-  void broadcast_new_mail(mail_id_t);
+  void broadcast_new_mail(mail_id_t, int);
   void broadcast_list_refresh_request();
   void broadcast_mail_deleted(mail_id_t);
 signals:
   void tags_restructured();
-  void new_mail_imported(mail_id_t);
+  void new_mail_imported(mail_id_t, int);
   void list_refresh_request();
   void mail_deleted(mail_id_t);
 };

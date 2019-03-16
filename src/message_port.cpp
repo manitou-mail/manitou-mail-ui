@@ -51,9 +51,8 @@ message_port::init()
 void
 message_port::connect_receiver(const char* signal, QObject* receiver, const char* member)
 {
-  bool res;
   if (m_this) {
-    res=m_this->connect(m_this, signal, receiver, member);
+    m_this->connect(m_this, signal, receiver, member);
   }
 }
 
@@ -61,9 +60,8 @@ message_port::connect_receiver(const char* signal, QObject* receiver, const char
 void
 message_port::connect_sender(QObject* sender, const char* signal, const char* member)
 {
-  bool res;
   if (m_this) {
-    res=m_this->connect(sender, signal, m_this, member);
+    m_this->connect(sender, signal, m_this, member);
   }
 }
 
@@ -74,9 +72,9 @@ message_port::tags_updated()
 }
 
 void
-message_port::broadcast_new_mail(mail_id_t id)
+message_port::broadcast_new_mail(mail_id_t id, int status)
 {
-  emit new_mail_imported(id);
+  emit new_mail_imported(id, status);
 }
 
 void

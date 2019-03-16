@@ -52,8 +52,8 @@ query_listview::query_listview(QWidget* parent): QTreeWidget(parent)
   message_port::connect_receiver(SIGNAL(tags_restructured()),
 				 this, SLOT(tags_restructured()));
   // subscribe to new messages notifications
-  message_port::connect_receiver(SIGNAL(new_mail_imported(mail_id_t)),
-				 this, SLOT(got_new_mail(mail_id_t)));
+  message_port::connect_receiver(SIGNAL(new_mail_imported(mail_id_t,int)),
+				 this, SLOT(got_new_mail(mail_id_t,int)));
 }
 
 query_listview::~query_listview()
@@ -446,12 +446,12 @@ query_listview::store_expanded_state(QTreeWidgetItem* parent,
   the new mail so we just update some counters
 */
 void
-query_listview::got_new_mail(mail_id_t id)
+query_listview::got_new_mail(mail_id_t id, int status)
 {
   DBG_PRINTF(5, "got_new_mail(%d)", id);
   mail_msg msg;
   msg.set_mail_id(id);
-  mail_status_changed(&msg, 0);
+  mail_status_changed(&msg, status);
 }
 
 /*
