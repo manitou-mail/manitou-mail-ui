@@ -397,7 +397,6 @@ mbox_import_window::update_progress(double percent)
 {
   m_progress_bar->setValue((int)percent);
   m_progress_bar->repaint();
-  QApplication::flush();
 }
 
 void
@@ -416,10 +415,8 @@ mbox_import_window::update_progress_import()
 	m_btn_abort_upload->setEnabled(false);
 	m_btn_start->setEnabled(true);
       }
-      DBG_PRINTF(2, "pbar import=%d", (int)(percent*100));
       m_progress_bar->setValue((int)(percent*100));
       m_progress_bar->repaint();
-      QApplication::flush();
     }
   }
   catch(db_excpt& p) {

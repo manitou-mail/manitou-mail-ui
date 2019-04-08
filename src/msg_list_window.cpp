@@ -1227,7 +1227,7 @@ msg_list_window::remove_selected_msgs(int action)
 
     statusBar()->showMessage(status_msg.arg(i+1).arg(nb_msg));
     statusBar()->repaint();
-    QApplication::flush();
+
     QList<tag_counter_transition> cnt_tags_changed;
     try {
       dbc.m_db->begin_transaction();
@@ -3071,7 +3071,6 @@ msg_list_window::show_progress(int progress)
   m_progress_bar->show();
   m_progress_bar->repaint();
   statusBar()->repaint();
-  QApplication::flush();
 }
 
 void
