@@ -26,16 +26,16 @@
 #include "composer_widgets.h"
 #include "mail_template.h"
 
-#include <QMainWindow>
-#include <QDialog>
-#include <QStringList>
-#include <QMap>
 #include <QCloseEvent>
-#include <QKeyEvent>
-#include <QProcess>
-#include <QUrl>
 #include <QDateTime>
+#include <QDialog>
+#include <QKeyEvent>
+#include <QMainWindow>
+#include <QMap>
+#include <QProcess>
+#include <QStringList>
 #include <QTemporaryFile>
+#include <QUrl>
 
 #include <map>
 
@@ -156,6 +156,8 @@ private:
 			  QStringList& bad_addresses,
 			  bool *unparsable=NULL);
 
+  int text_signature_location();
+
   mail_msg m_msg;
   body_edit_widget* m_bodyw;
   html_editor* m_html_edit;
@@ -183,6 +185,7 @@ private:
   QString m_from;		// email only (no name, has to match an identity)
   QString m_other_identity_email;
   QString m_other_identity_name;
+  QString m_signature_marker;	// unique identifier to refer to the signature inside HTML text
   QDateTime m_send_datetime;	// empty = send immediately
   identities m_ids;
   void make_toolbars();

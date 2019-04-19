@@ -19,29 +19,28 @@
 
 #include "html_editor.h"
 
-#include <QToolBar>
-#include <QToolButton>
-#include <QDebug>
-#include <QVariant>
-#include <QWebFrame>
 #include <QAction>
-#include <QLayout>
-#include <QPushButton>
-#include <QLineEdit>
-#include <QLabel>
-#include <QDesktopServices>
-#include <QUrl>
-#include <QFileDialog>
-#include <QFile>
-#include <QColorDialog>
-#include <QMessageBox>
-#include <QFontDatabase>
-#include <QComboBox>
 #include <QApplication>
+#include <QColorDialog>
+#include <QComboBox>
+#include <QDesktopServices>
 #include <QDesktopServices>
 #include <QDropEvent>
-#include <QWebSettings>
+#include <QFile>
+#include <QFileDialog>
+#include <QFontDatabase>
+#include <QLabel>
+#include <QLayout>
+#include <QLineEdit>
+#include <QMessageBox>
 #include <QMimeData>
+#include <QPushButton>
+#include <QToolBar>
+#include <QToolButton>
+#include <QUrl>
+#include <QVariant>
+#include <QWebFrame>
+#include <QWebSettings>
 
 #include "icons.h"
 
@@ -578,6 +577,21 @@ html_editor::prepend_paragraph(const QString& fragment)
   h.replace("\n", "<br>");
   QString jscript = QString("try {var b=document.getElementsByTagName('body')[0]; var p=document.createElement('p'); p.innerHTML='%1'; b.insertBefore(p, b.firstChild); 1;} catch(e) { e; }").arg(h);
   QVariant res = page()->mainFrame()->evaluateJavaScript(jscript);
+}
+
+bool
+html_editor::replace_paragraph(const QString element_id, const QString& fragment)
+{
+  QString h_elt_id = element_id;
+  h_elt_id.replace("'", "\\'");
+  QString h_value = fragment;
+  h_value.replace("'", "\\'");
+  h_value.replace("\n", "<br>");
+  QString jscript = QString("try {var p=document.getElementById('%1');"
+			    "if (p) {p.innerHTML='%2'; true;} else { false; }"
+			    "} catch(e) { e; }").arg(h_elt_id).arg(h_value);
+  QVariant res = page()->mainFrame()->evaluateJavaScript(jscript);
+  return res.canConvert<bool>() ? res.toBool() : false;
 }
 
 QString

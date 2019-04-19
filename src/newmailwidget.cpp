@@ -64,6 +64,7 @@
 #include <QToolBar>
 #include <QToolButton>
 #include <QTreeWidgetItem>
+#include <QUuid>
 #include <QVBoxLayout>
 
 
@@ -411,9 +412,61 @@ new_mail_widget::to_format_plain_text()
 void
 new_mail_widget::to_format_html_text()
 {
-  QString text = mail_displayer::htmlize(m_bodyw->document()->toPlainText());
-  m_html_edit->set_html_text(text.replace("\n", "<br>\n"));
+  QString current_text = m_bodyw->document()->toPlainText();
+
+  /* To handle the automatic change of signature following a change of identity,
+     we need to locate the signature in the text representation, and insert
+     it into the html representation with specific marking. */
+  int sig_pos = this->text_signature_location();
+  QString sig_text;
+  if (sig_pos >= 0) {
+    /* remove it */
+    sig_text = current_text.mid(sig_pos);
+    current_text.truncate(sig_pos);
+  }
+  QString html_text = mail_displayer::htmlize(current_text);
+  html_text.replace("\n", "<br>\n");
+
+  if (!sig_text.isEmpty()) {
+    QString html_sig = mail_displayer::htmlize(sig_text);
+    html_sig.replace("\n", "<br>\n");
+    if (m_signature_marker.isEmpty()) {
+      /* create a unique, non-guessable ID to anchor the signature */
+      m_signature_marker = QString("sig-%1").
+	arg(QUuid::createUuid().toString().remove('{').remove('}'));
+      /* use QUuid::WithoutBraces with QT_VERSION>=5.11 */
+    }
+    html_sig.prepend(QString("<p><div class=\"manitou-sig\" id=\"%1\">").
+		     arg(m_signature_marker));
+    html_sig.append("</div>");
+    html_text.append(html_sig);
+  }
+
+  m_html_edit->set_html_text(html_text);
   format_html_text();
+}
+
+int
+new_mail_widget::text_signature_location()
+{
+  int pos = -1;
+  QString sig;
+
+  identities::iterator iter;
+  for (iter = m_ids.begin(); iter != m_ids.end(); ++iter) {
+    mail_identity* p = &iter->second;
+    if (m_from == p->m_email_addr) {
+      sig = expand_signature(p->m_signature, *p);
+    }
+  }
+
+  if (!sig.isEmpty()) {
+    QString body=m_bodyw->toPlainText();
+    /* TODO FIXME: search from the end of the text */
+    pos = body.lastIndexOf(sig);
+  }
+
+  return pos;
 }
 
 
@@ -581,7 +634,6 @@ new_mail_widget::other_identity()
 void
 new_mail_widget::change_identity()
 {
-  DBG_PRINTF(3, "change_identity()");
   QString old_from=m_from;
   QString old_sig;
   QString new_sig;
@@ -611,14 +663,23 @@ new_mail_widget::change_identity()
     }
     m_action_edit_other->setEnabled(false);
   }
+
   if (old_sig != new_sig && !(old_sig.isEmpty() && new_sig.isEmpty())) {
-    // try to locate the old signature at the end of the body
-    QString body=m_bodyw->toPlainText();
-    int idxb=body.lastIndexOf(old_sig);
-    if (idxb>=0) {
-      // if located, replace it with the signature of the new identity
-      body.replace(idxb, old_sig.length(), new_sig);
-      m_bodyw->setPlainText(body);
+    if (m_edit_mode == plain_mode) {
+      // try to locate the previous signature at the end of the body
+      QString body=m_bodyw->toPlainText();
+      int idxb=body.lastIndexOf(old_sig);
+      if (idxb>=0) {
+	// if located, replace it with the signature of the new identity
+	body.replace(idxb, old_sig.length(), new_sig);
+	m_bodyw->setPlainText(body);
+      }
+    }
+    else if (m_edit_mode == html_mode) {
+      // locate the previous signature in the HTML text
+      if (!m_signature_marker.isEmpty())
+	m_html_edit->replace_paragraph(m_signature_marker,
+				       mail_displayer::htmlize(new_sig));
     }
   }
   DBG_PRINTF(3, "Changing from to %s", m_from.toLatin1().constData());
@@ -1314,6 +1375,7 @@ new_mail_widget::insert_signature()
     QString sig = expand_signature(id->m_signature, *id);
     if (sig.length()>0 && sig.at(0)!='\n')
       sig.prepend("\n");
+
     if (m_edit_mode == plain_mode) {
       // insert the signature and leave the cursor just above
       QTextCursor cursor = m_bodyw->textCursor();
@@ -1325,7 +1387,15 @@ new_mail_widget::insert_signature()
     }
     else if (m_edit_mode == html_mode) {
       QString html_sig = mail_displayer::htmlize(sig);
-      html_sig = "<p><div class=\"manitou-sig\">" + html_sig + "</div>";
+      if (m_signature_marker.isEmpty()) {
+	/* create a unique, non-guessable ID to anchor the signature */
+	m_signature_marker = QString("sig-%1").
+	  arg(QUuid::createUuid().toString().remove('{').remove('}'));
+	/* use QUuid::WithoutBraces with QT_VERSION>=5.11 */
+      }
+      html_sig.prepend(QString("<p><div class=\"manitou-sig\" id=\"%1\">").
+		       arg(m_signature_marker));
+      html_sig.append("</div>");
       m_html_edit->append_paragraph(html_sig);
     }
   }

@@ -48,6 +48,11 @@ public:
   void set_html_text(const QString&);
   void append_paragraph(const QString& fragment);
   void prepend_paragraph(const QString& fragment);
+
+  /* Replace the block identified by @element_id by the contents in @fragment.
+     Return true if the ID has been found, false otherwise (no replacement). */
+  bool replace_paragraph(const QString element_id, const QString& fragment);
+
   void finish_load();
   // Return a list of paths of local files referenced by the HTML doc
   QStringList collect_local_references();
