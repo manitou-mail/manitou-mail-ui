@@ -389,7 +389,7 @@ Did you invoke AT@&t@_WITH_QT before AT@&t@_REQUIRE_QT_VERSION?])
   AC_CACHE_CHECK([for Qt's version], [at_cv_QT_VERSION],
   [echo "$as_me:$LINENO: Running $QMAKE --version:" >&AS_MESSAGE_LOG_FD
   $QMAKE --version >&AS_MESSAGE_LOG_FD 2>&1
-  qmake_version_sed=['/^.*\([0-9]\.[0-9]\.[0-9]\).*$/!d;s//\1/']
+  qmake_version_sed=['/^.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*$/!d;s//\1/']
   at_cv_QT_VERSION=`$QMAKE --version 2>&1 | sed "$qmake_version_sed"`])
   if test x"$at_cv_QT_VERSION" = x; then
     AC_MSG_ERROR([Cannot detect Qt's version.])
