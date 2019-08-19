@@ -1122,21 +1122,10 @@ mail_listview::get_selected_indexes(QModelIndexList& list)
 void
 mail_listview::clear()
 {
-  /* Keep the sort column and set it again after recreating the
-     header. Otherwise sortIndicatorSection() is incremented by
-     count() after init_columns(). (looks like a Qt bug. Example:
-     section=6 before, section=14 after even if count()=8) */
-  int section=-1;
-  Qt::SortOrder order;
-  if (header()->isSortIndicatorShown()) {
-    section=header()->sortIndicatorSection();
-    order=header()->sortIndicatorOrder();
-  }
+  QByteArray headerview_setup = header()->saveState();
   model()->clear();
   init_columns(); // because clearing the model removes the column headers
-  if (section>=0) {
-    header()->setSortIndicator(section, order);
-  }
+  header()->restoreState(headerview_setup);
 }
 
 bool
@@ -1400,7 +1389,7 @@ mail_listview::make_tree(std::list<mail_msg*>& list)
 }
 
 void
-mail_listview::insert_list(std::list<mail_msg*>& list)
+mail_listview::insert_list(std::list<mail_msg*>& list, int insert_flags)
 {
   if (m_display_threads) {
     make_tree(list);
@@ -1409,9 +1398,18 @@ mail_listview::insert_list(std::list<mail_msg*>& list)
     mail_item_model* m = model();    
     msgs_filter::mlist_t::iterator it;
     for (it=list.begin(); it!=list.end(); ++it) {
-      mail_msg* existing_msg = m->find((*it)->get_id());
-      if (!existing_msg)
+      if ((insert_flags & no_preexist_check) == 0) {
+	mail_msg* existing_msg = m->find((*it)->get_id());
+	if (!existing_msg)
+	  m->insert_msg(*it);
+      }
+      else
 	m->insert_msg(*it);
+    }
+    // sort once the list is complete
+    if ((insert_flags & full_sort) != 0 && isSortingEnabled()) {
+      model()->sort(header()->sortIndicatorSection(),
+		    header()->sortIndicatorOrder());
     }
   }
 }

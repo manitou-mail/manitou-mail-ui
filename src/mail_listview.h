@@ -189,7 +189,12 @@ public:
   // select all messages from a set of threads (passed as a set of mail.thread_id)
   int select_threads(const QSet<uint>&);
 
-  void insert_list(std::list<mail_msg*>& list);
+  // flags for insert_list()
+  static const int full_sort = 1;    // sort the whole listview after the insert
+  static const int per_msg_sort = 2; // compute insertion points at each insert
+  static const int no_preexist_check = 4;  // no duplicates possible in list
+  void insert_list(std::list<mail_msg*>& list, int insert_flags=0);
+
   void swap_sender_recipient(bool);
   bool sender_recipient_swapped() const {
     return m_sender_column_swapped;

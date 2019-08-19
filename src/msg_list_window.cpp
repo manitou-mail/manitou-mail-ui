@@ -1584,7 +1584,8 @@ msg_list_window::toggle_threaded(bool on)
   /* Re-insert the whole list because in-place reparenting is way slower
      with current versions of QTreeView (as of Qt-4.3.3) */
   m_qlist->clear();
-  m_qlist->insert_list(m_filter->m_list_msgs);
+  m_qlist->insert_list(m_filter->m_list_msgs,
+		       mail_listview::full_sort | mail_listview::no_preexist_check);
   m_qlist->setRootIsDecorated(display_vars.m_threaded);
   add_segments();
 }
