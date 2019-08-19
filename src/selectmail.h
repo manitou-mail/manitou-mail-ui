@@ -445,7 +445,11 @@ private:
   QCheckBox* m_trash_checkbox;
   int m_status_set_mask;
   int m_status_unset_mask;
-  void to_filter(msgs_filter*);
+
+  /* Instantiate filter fields from widget fields.
+     Returns false on failure or user cancellation. */
+  bool to_filter(msgs_filter*);
+
   msgs_filter m_filter;
   void enable_inputs (bool enable);
   void enable_date_range();

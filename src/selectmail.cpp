@@ -42,6 +42,7 @@
 #include <QFontMetrics>
 #include <QGridLayout>
 #include <QHBoxLayout>
+#include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
@@ -1614,7 +1615,11 @@ msg_select_dialog::zoom_on_sql()
   w->close();
 }
 
-void
+/*
+  Instantiate filter fields from widget fields.
+  Returns false on failure or user cancellation.
+ */
+bool
 msg_select_dialog::to_filter(msgs_filter* filter)
 {
   if (!m_wString->text().isEmpty() && get_config().get_bool("query_dialog/iwi_search")) {
@@ -1626,7 +1631,32 @@ msg_select_dialog::to_filter(msgs_filter* filter)
     filter->m_fts.clear();
   }
   filter->m_subject = m_wSubject->text();
+
+  /* process subquery */
   filter->m_sql_stmt = m_wSqlStmt->text();
+  QList<msgs_filter_user_param> params = filter->parse_user_query_parameters();
+
+  // ask for values of parameters
+  for (auto& param : params) {
+    bool ok;
+    QString param_label = param.m_name;
+    if (!param.m_title.isEmpty())
+      param_label.append(QString(" (%1)").arg(param.m_title));
+
+    param.m_value = QInputDialog::getText(this,
+					  tr("Query parameter"),
+					  param_label,
+					  QLineEdit::Normal,
+					  QString(),
+					  &ok);
+    if (!ok) {
+      return false;		// stop if the user cancelled the input
+    }
+  }
+  /* subquery done */
+
+  filter->set_user_query_parameters(params);
+
   if (!m_wcontact->text().trimmed().isEmpty())
     filter->m_sAddress = mail_address::parse_extract_email(m_wcontact->text().trimmed());
   else
@@ -1672,7 +1702,7 @@ msg_select_dialog::to_filter(msgs_filter* filter)
     filter->m_max_results=m_wMaxResults->text().toUInt(&ok);
     if (!ok) {
       QMessageBox::information(this, "Error", tr("Error: non-numeric value for the maximum number of messages"));
-      return;
+      return false;
     }
   }
 
@@ -1681,6 +1711,8 @@ msg_select_dialog::to_filter(msgs_filter* filter)
 
   filter->m_status_set=m_status_set_mask;
   filter->m_status_unset=m_status_unset_mask;
+
+  return true;			// success
 }
 
 void
@@ -1800,8 +1832,10 @@ msg_select_dialog::enable_date_range()
 void
 msg_select_dialog::ok()
 {
-  //  msgs_filter cFilter;
-  to_filter(&m_filter);
+  /* Instantiate filter fields from widget fields */
+  if (!to_filter(&m_filter))
+    return;
+
   int r = m_filter.asynchronous_fetch(&m_thread);
   // at this point, the query is currently being run in m_thread,
   // and we'll check for its completion in timer_done()
