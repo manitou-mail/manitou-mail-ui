@@ -512,7 +512,7 @@ query_listview::fetch_tag_map()
     // status is current (=NOT(sent OR archived OR trashed))
     sql_stream s(QString("SELECT m.mail_id,mt.tag,m.status,m.priority "
 			 "FROM mail m LEFT OUTER JOIN mail_tags mt ON mt.mail_id=m.mail_id "
-			 "WHERE m.status&status_mask('archived')=0 AND m.status&%1=0")
+			 "WHERE m.status&32=0 AND m.status&%1=0")
 		 .arg(mail_msg::statusSent|mail_msg::statusTrashed),
 		 db);
     mail_id_t mail_id;

@@ -444,17 +444,17 @@ msgs_filter::build_query(sql_query& q)
 	 some particular values for the status */
       if (m_status == -1 && !m_in_trash && m_status_set==0 && m_status_unset == mail_msg::statusArchived) {
 	// current and not tagged
-	q.add_clause(QString("(m.status & status_mask('archived'))=0 AND"
+	q.add_clause(QString("(m.status & 32)=0 AND"
 			     " NOT EXISTS (SELECT 1 FROM mail_tags mt"
 			     " WHERE mt.mail_id=m.mail_id)"));
 	done_with_status=true;
       }
       else if (m_status==0) {
 	/* New and not tagged.
-	   The (m.status & status_mask('archived')) clause is redundant
+	   The (m.status & 32) clause is redundant
 	   with (m.status=0) but it's used to let the planner use the partial
 	   index on current mail. */
-	q.add_clause("(m.status & status_mask('archived'))=0 AND"
+	q.add_clause("(m.status & 32)=0 AND"
 		     " m.status=0 AND"
 		     " NOT EXISTS (SELECT 1 FROM mail_tags mt"
 		     " WHERE mt.mail_id=m.mail_id)");
@@ -693,7 +693,7 @@ msgs_filter::build_query(sql_query& q)
       else {
 	if (status_unset & mail_msg::statusArchived) {
 	  // unprocessed messages: optimize by using the dedicated partial index
-	  s.sprintf("status&status_mask('archived')=0 AND status&%d=0", status_unset);
+	  s.sprintf("status&32=0 AND status&%d=0", status_unset);
 	}
 	else {
 	  s.sprintf("status&%d=0", status_unset);
@@ -704,7 +704,7 @@ msgs_filter::build_query(sql_query& q)
     if (m_status!=-1 && !done_with_status) {
       if (m_status==0) {
 	// new messages: optimize by using the dedicated partial index
-	q.add_clause("status&status_mask('archived')=0 AND status=0");
+	q.add_clause("status&32=0 AND status=0");
       }
       else {
 	QString s;
