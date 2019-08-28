@@ -270,8 +270,10 @@ class db_manitou_config
 public:
   static bool init();
   static bool has_tags_counters();
+  static bool has_thread_action();
 private:
   static bool m_has_tags_counters;
+  static bool m_has_thread_action;
 };
 
 #endif // INC_DATABASE_H

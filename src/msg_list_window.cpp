@@ -1506,7 +1506,8 @@ msg_list_window::enable_commands_threads()
 
     std::set<enum mail_thread::mail_thread_action> t_actions;
 
-    mail_thread::fetch_auto_actions(v[0]->get_id(), v[0]->thread_id(), &t_actions);
+    if (db_manitou_config::has_thread_action())
+      mail_thread::fetch_auto_actions(v[0]->get_id(), v[0]->thread_id(), &t_actions);
     /* (ignore a possible db error with the fetch) */
 
     if (t_actions.find(mail_thread::action_auto_archive) != t_actions.end())

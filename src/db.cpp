@@ -671,9 +671,18 @@ bool
 db_manitou_config::m_has_tags_counters;
 
 bool
+db_manitou_config::m_has_thread_action;
+
+bool
 db_manitou_config::has_tags_counters()
 {
   return m_has_tags_counters;
+}
+
+bool
+db_manitou_config::has_thread_action()
+{
+  return m_has_thread_action;
 }
 
 bool
@@ -681,6 +690,7 @@ db_manitou_config::init()
 {
   db_cnx db;
   m_has_tags_counters = (db.table_exists("tags_counters"));
+  m_has_thread_action = (db.table_exists("thread_action"));
   return true;
 }
 
