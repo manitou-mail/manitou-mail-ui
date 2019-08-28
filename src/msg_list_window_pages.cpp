@@ -261,7 +261,6 @@ msg_list_window::add_msgs_page(const msgs_filter* f, bool if_results _UNUSED_)
 	  this,SLOT(mail_reply_all()));
 
   connect(m_qlist, SIGNAL(scroll_page_down()), m_msgview, SLOT(page_down()));
-  connect(m_qlist, SIGNAL(note_icon_clicked()), this, SLOT(edit_note()));
 
   /* Use queued connection because fetch_segment() may replace the list
      contents. */

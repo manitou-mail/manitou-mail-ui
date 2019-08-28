@@ -870,11 +870,6 @@ mail_listview::item_clicked(const QModelIndex& index)
       emit change_segment(-1);
     }
   }
-
-  else if (index.column() == mail_item_model::column_note) {
-    emit note_icon_clicked();
-  }
-
 }
 
 /*
