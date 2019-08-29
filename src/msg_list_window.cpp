@@ -1401,17 +1401,17 @@ void
 msg_list_window::set_title(const QString title/*=QString()*/)
 {
   if (title.isEmpty()) {
-    QString sTitle;
     /* warning: use the arg() variant with 2 args to avoid wrong
        replacement if there are percent characters in dbname or username */
     QString refdb = QString("%1@[%2]").arg(db_cnx::username(), db_cnx::dbname());
 
-    QString msgs = QString(tr("%1%2 message(s)"))
-      .arg(m_filter->m_list_msgs.size()).
-      arg(m_filter->has_more_results()?"+":"");
+    QString scount = m_qlist ? QString("%1").arg(m_qlist->model()->total_row_count()) : "??";
 
-    QTextStream(&sTitle) <<  refdb << " " << msgs;
-    setWindowTitle(sTitle);
+    QString msgs = QString(tr("%1%2 message(s)"))
+      .arg(scount)
+      .arg(m_filter->has_more_results() ? "+" : "");
+
+    setWindowTitle(QString("%1 %2").arg(refdb).arg(msgs));
   }
   else
     setWindowTitle(title);
@@ -1632,6 +1632,7 @@ msg_list_window::complete_thread()
     statusBar()->showMessage(tr("%1 message(s) added to selected thread(s).").
 			     arg(m_qlist->model()->total_row_count() - list_count),
 			     3000);
+    set_title();
   }
 }
 
