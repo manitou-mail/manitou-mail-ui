@@ -46,14 +46,14 @@ sql_stream::parse(const char* query)
   const char* ptr = query;
   const char* pstart = query;		// param start. Initialized to avoid a warning.
   const char* comment_start = NULL;
-  const char* errparse = NULL;
+  QString errparse;
   int nested_brackets = 0;
   char c;
 
   int state = 1;
   int nstate = 1;
 
-  while (!errparse) {
+  while (errparse.isEmpty()) {
     c = *ptr;
     switch(state) {
       // initial state
@@ -105,7 +105,7 @@ sql_stream::parse(const char* query)
     case 4:
       if (c == '\'') {
 	if (ptr-pstart-1 == 0) {
-	  errparse = "Empty parameter name";
+	  errparse = QObject::tr("Empty parameter name");
 	}
 	else {
 	  DBG_PRINTF(8, "Adding param '%s' from pos %d",
@@ -116,13 +116,13 @@ sql_stream::parse(const char* query)
 			   true);
 	  m_vars.push_back(p);
 	}
-	nstate = 1;
+	nstate = 12;
       }
       else if (sql_bind_param::is_valid_char(c)) {
 	nstate = 4;
       }
       else {
-	errparse = "Illegal character in parameter name";
+	errparse = QObject::tr("Illegal character in parameter name");
       }
       break;
 
@@ -179,6 +179,7 @@ sql_stream::parse(const char* query)
 	nstate = 1;
       break;
 
+      // in a variable's comment inside brackets
     case 11:
       if (c == '}') {
 	if (--nested_brackets == 0) {
@@ -189,13 +190,24 @@ sql_stream::parse(const char* query)
 	  nstate = 1;
 	}
 	else
-	  errparse = "Unbalanced curly brackets";
+	  errparse = QObject::tr("Unbalanced curly brackets");
       }
       else if (c == '{') {
 	nested_brackets++;
       }
       break;
 
+      // after :'param'
+      // accept an optional comment to the parameter
+    case 12:
+      if (c == '{') {
+	nested_brackets = 1;
+	comment_start = ptr;
+	nstate = 11;
+      }
+      else
+	nstate = 1;
+      break;
     } // switch(state)
 
     if (state != nstate)
@@ -208,18 +220,21 @@ sql_stream::parse(const char* query)
     state = nstate;
   }
 
-  if (errparse != NULL) {
-    if (*ptr == '\0' && (state == 1 || state == 5 || state == 6 || state == 9)) {
+  if (errparse.isEmpty()) {
+    static const QList<int> final_states = {1,5,6,9,12};
+    if (*ptr == '\0' && final_states.contains(state)) {
       // reached a final state at the end of string, good.
+      if (nested_brackets != 0)
+	errparse = QObject::tr("Unbalanced curly brackets");
     }
     else {
-      errparse = "Unexpected end of string";
+      errparse = QObject::tr("Unexpected end of string");
     }
   }
 
-  if (errparse != NULL) {
+  if (!errparse.isEmpty()) {
     throw db_excpt(QString(query),
-		   QString(errparse),
+		   errparse,
 		   db_excpt::client_assertion);
   }
 }
