@@ -3342,6 +3342,7 @@ msg_list_window::mails_selected()
     m_msgview->clear();
     m_qAttch->hide();
     statusBar()->showMessage(tr("%1 messages selected.").arg(v.size()), 3000);
+    m_pCurrentItem = NULL;
   }
 
   enable_commands();
