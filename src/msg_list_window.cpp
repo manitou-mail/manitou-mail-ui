@@ -518,6 +518,10 @@ msg_list_window::init_menu()
     m_pMenuThreads->addAction(tr("Auto-trash thread"), this, SLOT(thread_auto_trash(bool)));
   m_menu_actions[me_Threads_Auto_Trash]->setCheckable(true);
 
+  m_menu_actions[me_Threads_Manage_Actions] =
+    m_pMenuThreads->addAction(tr("Manage actions"), this,
+			      SLOT(thread_manage_actions()));
+
   // Display
   m_pMenuDisplay=new QMenu(tr("&Display"), this);
   CHECK_PTR (m_pMenuDisplay);
@@ -1698,6 +1702,13 @@ msg_list_window::thread_auto_archive(bool active)
     dbc.m_db->rollback_transaction();
     DBEXCPT (p);
   }
+}
+
+void
+msg_list_window::thread_manage_actions()
+{
+  extern void open_threads_actions_list(); // threads_dialog.cpp
+  open_threads_actions_list();
 }
 
 void

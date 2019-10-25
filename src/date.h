@@ -39,6 +39,11 @@ public:
     return m_null;
   }
   bool operator<(const date&) const;
+  operator QVariant() const {
+    QVariant v;
+    v.setValue(*this);
+    return v;
+  }
 private:
   QString m_sDate;		// DD/MM/YYYY
   QString m_sYYYYMMDDHHMMSS;

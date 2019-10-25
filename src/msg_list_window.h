@@ -190,6 +190,7 @@ public slots:
   void complete_thread();
   void thread_auto_archive(bool);
   void thread_auto_trash(bool);
+  void thread_manage_actions();
 
   // Display menu
   void toggle_show_tags(bool);
@@ -354,6 +355,7 @@ private:
     me_Threads_Select_Current,
     me_Threads_Auto_Archive,
     me_Threads_Auto_Trash,
+    me_Threads_Manage_Actions,
     // Display
     me_Display_Tags,
     me_Display_WrapLines,

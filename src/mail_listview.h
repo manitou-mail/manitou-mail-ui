@@ -151,7 +151,6 @@ public:
   void reparent_msg(mail_msg*,mail_id_t);
 #endif
   // get the list of currently selected items
-  void get_selected_indexes(QModelIndexList&);
   void get_selected(std::vector<mail_msg*>&);
 
   // get the thread_id's of the currently selected messages

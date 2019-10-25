@@ -44,7 +44,7 @@ manitou_SOURCES = main.cpp main.h msg_list_window.cpp db.cpp \
  users_dialog.cpp users_dialog.h pivot_table.cpp pivot_table.h \
  line_edit_autocomplete.h line_edit_autocomplete.cpp \
  statistics.cpp statistics.h db_error_dialog.cpp db_error_dialog.h \
- image_viewer.cpp image_viewer.h
+ image_viewer.cpp image_viewer.h threads_dialog.cpp threads_dialog.h
 
 EXTRA_manitou_SOURCES = getopt.cpp mygetopt.h getopt1.cpp
 
@@ -65,7 +65,8 @@ MOC_OBJS = main.moc.o msg_list_window.moc.o newmailwidget.moc.o tagsbox.moc.o \
 	database.moc.o mbox_import_wizard.moc.o import_window.moc.o \
 	log_window.moc.o ui_feedback.moc.o fetch_thread.moc.o export_window.moc.o \
 	users_dialog.moc.o pivot_table.moc.o line_edit_autocomplete.moc.o \
-	statistics.moc.o db_error_dialog.moc.o image_viewer.moc.o
+	statistics.moc.o db_error_dialog.moc.o image_viewer.moc.o \
+	threads_dialog.moc.o
 
 manitou_DEPENDENCIES = @EXTRAOBJ@ $(MOC_OBJS) $(XFACE)
 

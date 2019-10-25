@@ -108,6 +108,7 @@ date::output_8() const
   return d.toString(Qt::DefaultLocaleShortDate);
 }
 
+
 // QStandardItem => date_item
 date_item::date_item(date d, int format) // TODO: use an enum for format, or better, deduce it from the locale
 {

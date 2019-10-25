@@ -352,7 +352,7 @@ public:
   enum mail_thread_action {
     action_auto_archive = 1,
     action_auto_trash,
-  };
+  } action;
 
   bool operator<(const mail_thread& o) const {
     return (o.mail_id < this->mail_id) || (o.thread_id < this->thread_id);
@@ -386,8 +386,12 @@ public:
 
   mail_id_t mail_id = 0;
   thread_id_t thread_id = 0;
-
+  QString subject;
+  date date_insert;
+  date date_last_message;
 };
+
+Q_DECLARE_METATYPE(mail_thread);
 
 #endif // INC_MESSAGE_H
 

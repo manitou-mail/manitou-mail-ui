@@ -1109,12 +1109,6 @@ mail_listview::find(mail_id_t mail_id)
 }
 
 void
-mail_listview::get_selected_indexes(QModelIndexList& list)
-{
-  list = selectedIndexes();
-}
-
-void
 mail_listview::clear()
 {
   QByteArray headerview_setup = header()->saveState();
