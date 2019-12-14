@@ -1312,6 +1312,7 @@ msg_list_window::msg_untrash()
 	// else database error in status update should have thrown an exception
       }
     }
+    dbc.m_db->commit_transaction();
   }
   catch(db_excpt& p) {
     DBG_PRINTF(3, "exception caught");
