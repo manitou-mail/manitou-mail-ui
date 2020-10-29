@@ -188,6 +188,7 @@ input_addresses_widget::input_addresses_widget(const QString& addresses)
 
   m_wEdit = new QTextEdit();
   m_wEdit->setText(format_multi_lines(addresses));
+  m_wEdit->setLineWrapMode(QTextEdit::NoWrap);
   topLayout->addWidget(m_wEdit);
 
   QHBoxLayout* h1 = new QHBoxLayout();
