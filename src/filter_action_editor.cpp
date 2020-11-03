@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2019 Daniel Verite
+/* Copyright (C) 2004-2020 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -590,29 +590,44 @@ filter_action_chooser::reset_choice()
 //static
 struct action_line::action_description
 action_line::m_descriptions[action_line::idx_max] = {
-  { QT_TR_NOOP("Assign tag"), QT_TR_NOOP("Assign a tag to the message.") },
-  {  QT_TR_NOOP("Set status"), QT_TR_NOOP("Force the status of the message as already read, archived or trashed.") },
-  {  QT_TR_NOOP("Set priority"), QT_TR_NOOP("Set the priority of the message, either with a fixed value or a relative increment.") },
-  {  QT_TR_NOOP("Redirect"), QT_TR_NOOP("Resend the message to a different email address.") },
-  {  QT_TR_NOOP("Stop filters"), QT_TR_NOOP("Stop the filtering process for the current message.") },
-  {  QT_TR_NOOP("Set header"), QT_TR_NOOP("Set a message header field. If the field is already present, it will be updated with the new value, otherwise the field will be added.") },
-  {  QT_TR_NOOP("Remove header"), QT_TR_NOOP("Remove a message header field. If it appears multiple times, all occurrences will be removed.") },
-  {  QT_TR_NOOP("Set identity"), QT_TR_NOOP("Change the identity assigned to the message to one of the other email addresses defined in the preferences.") },
-  {  QT_TR_NOOP("Discard"), QT_TR_NOOP("Discard the current message.") }
+  { QT_TRANSLATE_NOOP("filter/action_line", "Assign tag"),
+    QT_TRANSLATE_NOOP("filter/action_line", "Assign a tag to the message.") },
+  { QT_TRANSLATE_NOOP("filter/action_line", "Set status"),
+    QT_TRANSLATE_NOOP("filter/action_line", "Force the status of the message as already read, archived or trashed.") },
+  { QT_TRANSLATE_NOOP("filter/action_line", "Set priority"),
+    QT_TRANSLATE_NOOP("filter/action_line", "Set the priority of the message, either with a fixed value or a relative increment.") },
+  { QT_TRANSLATE_NOOP("filter/action_line", "Redirect"),
+    QT_TRANSLATE_NOOP("filter/action_line", "Resend the message to a different email address.") },
+  { QT_TRANSLATE_NOOP("filter/action_line", "Stop filters"),
+    QT_TRANSLATE_NOOP("filter/action_line", "Stop the filtering process for the current message.") },
+  { QT_TRANSLATE_NOOP("filter/action_line", "Set header"),
+    QT_TRANSLATE_NOOP("filter/action_line", "Set a message header field. If the field is already present, it will be updated with the new value, otherwise the field will be added.") },
+  { QT_TRANSLATE_NOOP("filter/action_line", "Remove header"),
+    QT_TRANSLATE_NOOP("filter/action_line", "Remove a message header field. If it appears multiple times, all occurrences will be removed.") },
+  { QT_TRANSLATE_NOOP("filter/action_line", "Set identity"),
+    QT_TRANSLATE_NOOP("filter/action_line", "Change the identity assigned to the message to one of the other email addresses defined in the preferences.") },
+  { QT_TRANSLATE_NOOP("filter/action_line", "Discard"),
+    QT_TRANSLATE_NOOP("filter/action_line", "Discard the current message.") }
 };
 
 //static
 QString
 action_line::label(int action_idx)
 {
-  return (action_idx>=0 && action_idx<action_line::idx_max) ? tr(m_descriptions[action_idx].label) : QString("");
+  return (action_idx>=0 && action_idx<action_line::idx_max) ?
+    QCoreApplication::translate("filter/action_line",
+				m_descriptions[action_idx].label)
+    : QString("");
 }
 
 //static
 QString
 action_line::description(int action_idx)
 {
-  return (action_idx>=0 && action_idx<action_line::idx_max) ? tr(m_descriptions[action_idx].description) : QString("");
+  return (action_idx>=0 && action_idx<action_line::idx_max) ?
+    QCoreApplication::translate("filter/action_line",
+				m_descriptions[action_idx].description)
+    : QString("");
 }
 
 filter_action_editor::filter_action_editor(QWidget* parent) : QDialog(parent)

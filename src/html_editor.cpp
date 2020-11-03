@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2019 Daniel Verite
+/* Copyright (C) 2004-2020 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
@@ -49,33 +49,33 @@ html_editor::m_action_definitions[] = {
 #define NA QWebPage::NoWebAction
 
   // {name, shortcut, icon, WebAction
-  {QT_TR_NOOP("Bold"), QT_TR_NOOP("Ctrl+B"), "icon-bold.png", SLOT(bold()), NA }
-  ,{QT_TR_NOOP("Italic"), QT_TR_NOOP("Ctrl+I"), "icon-italic.png", SLOT(italic()), NA }
-  ,{QT_TR_NOOP("Underline"), QT_TR_NOOP("Ctrl+U"), "icon-underline.png", SLOT(underline()), NA }
-  ,{QT_TR_NOOP("Strike through"), QT_TR_NOOP("Ctrl+S"), "icon-strikethrough.png", SLOT(strikethrough()) , NA}
-  ,{QT_TR_NOOP("Superscript"), NULL, "icon-superscript.png", SLOT(superscript()), NA }
-  ,{QT_TR_NOOP("Subscript"), NULL, "icon-subscript.png", SLOT(subscript()), NA }
+  {QT_TRANSLATE_NOOP("html/editor", "Bold"), QT_TRANSLATE_NOOP("html/editor", "Ctrl+B"), "icon-bold.png", SLOT(bold()), NA }
+  ,{QT_TRANSLATE_NOOP("html/editor", "Italic"), QT_TRANSLATE_NOOP("html/editor", "Ctrl+I"), "icon-italic.png", SLOT(italic()), NA }
+  ,{QT_TRANSLATE_NOOP("html/editor", "Underline"), QT_TRANSLATE_NOOP("html/editor", "Ctrl+U"), "icon-underline.png", SLOT(underline()), NA }
+  ,{QT_TRANSLATE_NOOP("html/editor", "Strike through"), QT_TRANSLATE_NOOP("html/editor", "Ctrl+S"), "icon-strikethrough.png", SLOT(strikethrough()) , NA}
+  ,{QT_TRANSLATE_NOOP("html/editor", "Superscript"), NULL, "icon-superscript.png", SLOT(superscript()), NA }
+  ,{QT_TRANSLATE_NOOP("html/editor", "Subscript"), NULL, "icon-subscript.png", SLOT(subscript()), NA }
 
   // separator before 6
-  ,{QT_TR_NOOP("Set foreground color"), NULL, "icon-foreground-color.png", SLOT(foreground_color()), NA }
-  ,{QT_TR_NOOP("Set background color"), NULL, "icon-background-color.png", SLOT(background_color()), NA }
-  ,{QT_TR_NOOP("Insert image"), NULL, "icon-image.png", SLOT(insert_image()), NA }
-  ,{QT_TR_NOOP("Insert link"), NULL, "icon-link.png", SLOT(insert_link()), NA }
-  ,{QT_TR_NOOP("Insert horizontal rule"), NULL, "icon-hr.png", SLOT(insert_hr()), NA }
-  ,{QT_TR_NOOP("Insert unordered list"), NULL, "icon-bullet-list.png", SLOT(insert_unordered_list()), NA }
-  ,{QT_TR_NOOP("Insert ordered list"), NULL, "icon-ordered-list.png", SLOT(insert_ordered_list()), NA }
-  ,{QT_TR_NOOP("Remove format"), NULL, "icon-eraser.png", SLOT(remove_format()), NA }
-  ,{QT_TR_NOOP("Cut"), NULL, "icon-cut.png", NULL, QWebPage::Cut }
-  ,{QT_TR_NOOP("Copy"), NULL, "icon-copy.png", NULL, QWebPage::Copy }
-  ,{QT_TR_NOOP("Paste"), NULL, "icon-paste.png", NULL, QWebPage::Paste }
-  ,{QT_TR_NOOP("Undo"), QT_TR_NOOP("Ctrl+Z"), "icon-undo.png", NULL, QWebPage::Undo }
-  ,{QT_TR_NOOP("Redo"), NULL, "icon-redo.png", NULL, QWebPage::Redo }
-  ,{QT_TR_NOOP("Align left"), NULL, "icon-align-left.png", SLOT(align_left()), NA }
-  ,{QT_TR_NOOP("Justify"), NULL, "icon-justify.png", SLOT(justify()), NA }
-  ,{QT_TR_NOOP("Align right"), NULL, "icon-align-right.png", SLOT(align_right()), NA }
-  ,{QT_TR_NOOP("Center"), NULL, "icon-center.png", SLOT(center()), NA }
-  ,{QT_TR_NOOP("Indent right"), NULL, "icon-indent-right.png", SLOT(indent_right()), NA }
-  ,{QT_TR_NOOP("Indent left"), NULL, "icon-indent-left.png", SLOT(indent_left()), NA }
+  ,{QT_TRANSLATE_NOOP("html/editor", "Set foreground color"), NULL, "icon-foreground-color.png", SLOT(foreground_color()), NA }
+  ,{QT_TRANSLATE_NOOP("html/editor", "Set background color"), NULL, "icon-background-color.png", SLOT(background_color()), NA }
+  ,{QT_TRANSLATE_NOOP("html/editor", "Insert image"), NULL, "icon-image.png", SLOT(insert_image()), NA }
+  ,{QT_TRANSLATE_NOOP("html/editor", "Insert link"), NULL, "icon-link.png", SLOT(insert_link()), NA }
+  ,{QT_TRANSLATE_NOOP("html/editor", "Insert horizontal rule"), NULL, "icon-hr.png", SLOT(insert_hr()), NA }
+  ,{QT_TRANSLATE_NOOP("html/editor", "Insert unordered list"), NULL, "icon-bullet-list.png", SLOT(insert_unordered_list()), NA }
+  ,{QT_TRANSLATE_NOOP("html/editor", "Insert ordered list"), NULL, "icon-ordered-list.png", SLOT(insert_ordered_list()), NA }
+  ,{QT_TRANSLATE_NOOP("html/editor", "Remove format"), NULL, "icon-eraser.png", SLOT(remove_format()), NA }
+  ,{QT_TRANSLATE_NOOP("html/editor", "Cut"), NULL, "icon-cut.png", NULL, QWebPage::Cut }
+  ,{QT_TRANSLATE_NOOP("html/editor", "Copy"), NULL, "icon-copy.png", NULL, QWebPage::Copy }
+  ,{QT_TRANSLATE_NOOP("html/editor", "Paste"), NULL, "icon-paste.png", NULL, QWebPage::Paste }
+  ,{QT_TRANSLATE_NOOP("html/editor", "Undo"), QT_TRANSLATE_NOOP("html/editor", "Ctrl+Z"), "icon-undo.png", NULL, QWebPage::Undo }
+  ,{QT_TRANSLATE_NOOP("html/editor", "Redo"), NULL, "icon-redo.png", NULL, QWebPage::Redo }
+  ,{QT_TRANSLATE_NOOP("html/editor", "Align left"), NULL, "icon-align-left.png", SLOT(align_left()), NA }
+  ,{QT_TRANSLATE_NOOP("html/editor", "Justify"), NULL, "icon-justify.png", SLOT(justify()), NA }
+  ,{QT_TRANSLATE_NOOP("html/editor", "Align right"), NULL, "icon-align-right.png", SLOT(align_right()), NA }
+  ,{QT_TRANSLATE_NOOP("html/editor", "Center"), NULL, "icon-center.png", SLOT(center()), NA }
+  ,{QT_TRANSLATE_NOOP("html/editor", "Indent right"), NULL, "icon-indent-right.png", SLOT(indent_right()), NA }
+  ,{QT_TRANSLATE_NOOP("html/editor", "Indent left"), NULL, "icon-indent-left.png", SLOT(indent_left()), NA }
 
 #undef NA
 };
@@ -523,7 +523,8 @@ html_editor::create_actions()
     QAction* a;
     if (def->webaction == QWebPage::NoWebAction) {
       // the action is owned by us
-      a = new QAction(tr(def->name), this);
+      a = new QAction(QCoreApplication::translate("html/editor", def->name),
+		      this);
     }
     else {
       // action already provided by QWebPage
@@ -532,7 +533,7 @@ html_editor::create_actions()
     if (a) {
       a->setIcon(HTML_ICON(def->icon));
       if (def->shortcut)
-	a->setShortcut(tr(def->shortcut));
+	a->setShortcut(QCoreApplication::translate("html/editor", def->shortcut));
       m_actions[def->name] = a;
       if (def->slot)
 	connect(a, SIGNAL(triggered()), this, def->slot);
