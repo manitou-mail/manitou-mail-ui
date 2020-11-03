@@ -472,6 +472,22 @@
         <source>Stop moving future messages of this thread into the trashcan?</source>
         <translation>Ne plus déplacer les futurs messages de ce fil de discussion dans la corbeille?</translation>
     </message>
+    <message>
+        <source>Empty parameter name</source>
+        <translation>Le nom de paramètre est vide</translation>
+    </message>
+    <message>
+        <source>Illegal character in parameter name</source>
+        <translation>Caractère non autorisé dans le nom de paramètre</translation>
+    </message>
+    <message>
+        <source>Unbalanced curly brackets</source>
+        <translation>Caractère accolade ouvrant non fermé</translation>
+    </message>
+    <message>
+        <source>Unexpected end of string</source>
+        <translation>Fin de chaîne de caractères inattendue</translation>
+    </message>
 </context>
 <context>
     <name>about_box</name>
@@ -576,81 +592,6 @@
     <message>
         <source>Physically delete the message</source>
         <translation>Supprime physiquement le message</translation>
-    </message>
-</context>
-<context>
-    <name>action_line</name>
-    <message>
-        <source>Assign tag</source>
-        <translation>Assigner une étiquette</translation>
-    </message>
-    <message>
-        <source>Assign a tag to the message.</source>
-        <translation>Assigner une étiquette au message.</translation>
-    </message>
-    <message>
-        <source>Set status</source>
-        <translation>Positionner le statut</translation>
-    </message>
-    <message>
-        <source>Force the status of the message as already read, archived or trashed.</source>
-        <translation>Force le statut du message à déjà lu, archivé ou en corbeille.</translation>
-    </message>
-    <message>
-        <source>Set priority</source>
-        <translation>Mettre priorité</translation>
-    </message>
-    <message>
-        <source>Set the priority of the message, either with a fixed value or a relative increment.</source>
-        <translation>Affecter la priorité au message, soit une valeur fixe soit un incrément relatif.</translation>
-    </message>
-    <message>
-        <source>Redirect</source>
-        <translation>Rediriger</translation>
-    </message>
-    <message>
-        <source>Resend the message to a different email address.</source>
-        <translation>Renvoyer le message vers une adresse email différente.</translation>
-    </message>
-    <message>
-        <source>Stop filters</source>
-        <translation>Stopper le filtrage</translation>
-    </message>
-    <message>
-        <source>Stop the filtering process for the current message.</source>
-        <translation>Stopper le processus de filtrage pour le message en cours.</translation>
-    </message>
-    <message>
-        <source>Set header</source>
-        <translation>Positionner l&apos;entête</translation>
-    </message>
-    <message>
-        <source>Set a message header field. If the field is already present, it will be updated with the new value, otherwise the field will be added.</source>
-        <translation>Positionne un champ d&apos;entête. Si le champ est déjà présent, son contenu sera mis à jour avec la nouvelle valeur. Autrement le champ sera ajouté.</translation>
-    </message>
-    <message>
-        <source>Remove header</source>
-        <translation>Supprime le champ d&apos;entête</translation>
-    </message>
-    <message>
-        <source>Remove a message header field. If it appears multiple times, all occurrences will be removed.</source>
-        <translation>Supprime un champ d&apos;entête. S&apos;il apparait plusieurs fois, toutes les occurrences seront supprimées.</translation>
-    </message>
-    <message>
-        <source>Set identity</source>
-        <translation>Positionne l&apos;identité</translation>
-    </message>
-    <message>
-        <source>Change the identity assigned to the message to one of the other email addresses defined in the preferences.</source>
-        <translation>Remplace l&apos;identité assignée au message avec l&apos;une des autres adresses définies dans les préférences.</translation>
-    </message>
-    <message>
-        <source>Discard</source>
-        <translation>Supprime</translation>
-    </message>
-    <message>
-        <source>Discard the current message.</source>
-        <translation>Supprime le message en cours.</translation>
     </message>
 </context>
 <context>
@@ -1204,6 +1145,81 @@ Cette pièce jointe doit être supprimée du message en cours de composition.</t
     </message>
 </context>
 <context>
+    <name>filter/action_line</name>
+    <message>
+        <source>Assign tag</source>
+        <translation>Assigner une étiquette</translation>
+    </message>
+    <message>
+        <source>Assign a tag to the message.</source>
+        <translation>Assigner une étiquette au message.</translation>
+    </message>
+    <message>
+        <source>Set status</source>
+        <translation>Positionner le statut</translation>
+    </message>
+    <message>
+        <source>Force the status of the message as already read, archived or trashed.</source>
+        <translation>Force le statut du message à déjà lu, archivé ou en corbeille.</translation>
+    </message>
+    <message>
+        <source>Set priority</source>
+        <translation>Mettre priorité</translation>
+    </message>
+    <message>
+        <source>Set the priority of the message, either with a fixed value or a relative increment.</source>
+        <translation>Affecter la priorité au message, soit une valeur fixe soit un incrément relatif.</translation>
+    </message>
+    <message>
+        <source>Redirect</source>
+        <translation>Rediriger</translation>
+    </message>
+    <message>
+        <source>Resend the message to a different email address.</source>
+        <translation>Renvoyer le message vers une adresse email différente.</translation>
+    </message>
+    <message>
+        <source>Stop filters</source>
+        <translation>Stopper le filtrage</translation>
+    </message>
+    <message>
+        <source>Stop the filtering process for the current message.</source>
+        <translation>Stopper le processus de filtrage pour le message en cours.</translation>
+    </message>
+    <message>
+        <source>Set header</source>
+        <translation>Positionner l&apos;entête</translation>
+    </message>
+    <message>
+        <source>Set a message header field. If the field is already present, it will be updated with the new value, otherwise the field will be added.</source>
+        <translation>Positionne un champ d&apos;entête. Si le champ est déjà présent, son contenu sera mis à jour avec la nouvelle valeur. Autrement le champ sera ajouté.</translation>
+    </message>
+    <message>
+        <source>Remove header</source>
+        <translation>Supprime le champ d&apos;entête</translation>
+    </message>
+    <message>
+        <source>Remove a message header field. If it appears multiple times, all occurrences will be removed.</source>
+        <translation>Supprime un champ d&apos;entête. S&apos;il apparait plusieurs fois, toutes les occurrences seront supprimées.</translation>
+    </message>
+    <message>
+        <source>Set identity</source>
+        <translation>Positionne l&apos;identité</translation>
+    </message>
+    <message>
+        <source>Change the identity assigned to the message to one of the other email addresses defined in the preferences.</source>
+        <translation>Remplace l&apos;identité assignée au message avec l&apos;une des autres adresses définies dans les préférences.</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation>Supprime</translation>
+    </message>
+    <message>
+        <source>Discard the current message.</source>
+        <translation>Supprime le message en cours.</translation>
+    </message>
+</context>
+<context>
     <name>filter_action_chooser</name>
     <message>
         <source>Add action</source>
@@ -1623,51 +1639,7 @@ Save now?</source>
     </message>
 </context>
 <context>
-    <name>html_editor</name>
-    <message>
-        <source>Image files (*.png *.jpg *.jpeg *.gif)</source>
-        <translation>Fichiers image (*.png *.jpg *.jpeg *.gif)</translation>
-    </message>
-    <message>
-        <source>PNG files (*.png)</source>
-        <translation>Fichiers PNG (*.png)</translation>
-    </message>
-    <message>
-        <source>JPEG files (*.jpg *.jpeg)</source>
-        <translation>Fichiers JPEG (*.jpg *.jpeg)</translation>
-    </message>
-    <message>
-        <source>GIF files (*.gif)</source>
-        <translation>FIchiers GIF (*.gif)</translation>
-    </message>
-    <message>
-        <source>All Files (*)</source>
-        <translation>Tous les fichiers (*)</translation>
-    </message>
-    <message>
-        <source>Open image...</source>
-        <translation>Ouvrir l&apos;image...</translation>
-    </message>
-    <message>
-        <source>HTML input</source>
-        <translation>Entrées HTML</translation>
-    </message>
-    <message>
-        <source>HTML operations</source>
-        <translation>Opérations HTML</translation>
-    </message>
-    <message>
-        <source>Header %1</source>
-        <translation>Header %1</translation>
-    </message>
-    <message>
-        <source>Error</source>
-        <translation>Erreur</translation>
-    </message>
-    <message>
-        <source>Unable to open URL</source>
-        <translation>Impossible d&apos;ouvrir l&apos;adresse (URL)</translation>
-    </message>
+    <name>html/editor</name>
     <message>
         <source>Bold</source>
         <translation>Gras</translation>
@@ -1787,6 +1759,53 @@ Save now?</source>
     <message>
         <source>Indent left</source>
         <translation>Indenter à gauche</translation>
+    </message>
+</context>
+<context>
+    <name>html_editor</name>
+    <message>
+        <source>Image files (*.png *.jpg *.jpeg *.gif)</source>
+        <translation>Fichiers image (*.png *.jpg *.jpeg *.gif)</translation>
+    </message>
+    <message>
+        <source>PNG files (*.png)</source>
+        <translation>Fichiers PNG (*.png)</translation>
+    </message>
+    <message>
+        <source>JPEG files (*.jpg *.jpeg)</source>
+        <translation>Fichiers JPEG (*.jpg *.jpeg)</translation>
+    </message>
+    <message>
+        <source>GIF files (*.gif)</source>
+        <translation>FIchiers GIF (*.gif)</translation>
+    </message>
+    <message>
+        <source>All Files (*)</source>
+        <translation>Tous les fichiers (*)</translation>
+    </message>
+    <message>
+        <source>Open image...</source>
+        <translation>Ouvrir l&apos;image...</translation>
+    </message>
+    <message>
+        <source>HTML input</source>
+        <translation>Entrées HTML</translation>
+    </message>
+    <message>
+        <source>HTML operations</source>
+        <translation>Opérations HTML</translation>
+    </message>
+    <message>
+        <source>Header %1</source>
+        <translation>Header %1</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation>Erreur</translation>
+    </message>
+    <message>
+        <source>Unable to open URL</source>
+        <translation>Impossible d&apos;ouvrir l&apos;adresse (URL)</translation>
     </message>
 </context>
 <context>
@@ -3411,6 +3430,10 @@ Les messages non encore importés seront perdus.</translation>
         <source>Query parameter</source>
         <translation>Paramètre de requête</translation>
     </message>
+    <message>
+        <source>Manage actions</source>
+        <translation>Gérer les actions</translation>
+    </message>
 </context>
 <context>
     <name>msg_select_dialog</name>
@@ -3577,6 +3600,10 @@ Les messages non encore importés seront perdus.</translation>
     <message>
         <source>Oldest first</source>
         <translation>Anciens en premier</translation>
+    </message>
+    <message>
+        <source>Query parameter</source>
+        <translation>Paramètre de requête</translation>
     </message>
 </context>
 <context>
@@ -4665,7 +4692,7 @@ Etes-vous certain de vouloir l&apos;écraser?</translation>
     <name>tags_dialog</name>
     <message>
         <source>Message Tags</source>
-        <translation>Etiquettes du message</translation>
+        <translation>Etiquettes</translation>
     </message>
     <message>
         <source>New</source>
@@ -4760,6 +4787,41 @@ Save now?</source>
     <message>
         <source>Cancel</source>
         <translation>Annuler</translation>
+    </message>
+</context>
+<context>
+    <name>threads_dialog</name>
+    <message>
+        <source>Actions on threads</source>
+        <translation>Actions sur les discussions</translation>
+    </message>
+    <message>
+        <source>Subject</source>
+        <translation>Sujet</translation>
+    </message>
+    <message>
+        <source>Action</source>
+        <translation>Action</translation>
+    </message>
+    <message>
+        <source>Created</source>
+        <translation>Créé le</translation>
+    </message>
+    <message>
+        <source>Last message</source>
+        <translation>Dernier message</translation>
+    </message>
+    <message>
+        <source>Archive</source>
+        <translation>Archiver</translation>
+    </message>
+    <message>
+        <source>Trash</source>
+        <translation>Mettre à la corbeille</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Supprimer</translation>
     </message>
 </context>
 <context>
