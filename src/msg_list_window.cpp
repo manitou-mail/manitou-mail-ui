@@ -3681,6 +3681,14 @@ msg_list_window::timer_func()
       enable_interaction(true);
     }
 
+    if (!m_thread.m_errstr.isEmpty()) {
+      // Database error during query
+      QMessageBox::critical(this, tr("Query error"),
+			    m_thread.m_errstr.length() < 1024 ?
+			    m_thread.m_errstr :
+			    m_thread.m_errstr.left(1024) + QString("..."));
+    }
+
     if (m_fetch_command.destination == fetch_command::extend_current_page) {
       // this is a "fetch more" operation. It uses the current filter (m_filter)
       m_filter->postprocess_fetch(m_thread);
