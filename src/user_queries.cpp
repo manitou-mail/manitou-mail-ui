@@ -45,14 +45,12 @@ save_filter_query(msgs_filter* filter, int mode, const QString title)
 {
   save_query_box* w = new save_query_box(0, filter, mode, title);
   QString initial_title = title;
-//  DBG_PRINTF(3, "initial_title=%s\n", initial_title.latin1());
+
   int r=w->exec();
   if (r==QDialog::Accepted) {
     QString query;
     db_cnx db;
     try {
-//      DBG_PRINTF(3, "new_title=%s\n", w->m_name->text().latin1());
-
       if (!initial_title.isEmpty() && initial_title != w->m_name->text()) {
 	// rename the title and replace the SQL sentence
 	sql_stream s("UPDATE user_queries SET title=:p1,sql_stmt=:p2 WHERE title=:p3", db);
