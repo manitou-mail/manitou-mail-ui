@@ -245,16 +245,16 @@ sql_stream::init(const char *query)
   m_nArgPos = 0;
   m_queryBuf = m_localQueryBuf;
   m_queryBufSize = sizeof(m_localQueryBuf)-1;
+  m_localQueryBuf[0] = '\0';
   m_queryFmt = query;
   m_chunk_size = 1024;
   m_bExecuted = 0;
   m_pgRes = NULL;
+  m_queryLen = 0;
 
-  int len=strlen(query);
-  if (len>m_queryBufSize)
-    query_make_space(len);
-
-  m_queryLen=m_initialQueryLen=len;
+  int len = strlen(query);
+  query_make_space(len);
+  m_queryLen = m_initialQueryLen = len;
   strcpy(m_queryBuf, query);
 
   parse(query);
@@ -265,16 +265,6 @@ sql_stream::init(const char *query)
 
 sql_stream::~sql_stream()
 {
-#if 0
-  if (m_nArgPos<(int)m_vars.size()) {
-    QString q(m_queryBuf);
-    if (q.length()>40) { // cut the query to an reasonable size for debug output
-      q.truncate(37);
-      q.append("...");
-    }
-    DBG_PRINTF(2, "WRN: m_nArgPos=%d while m_vars.size()=%d for query '%s'", m_nArgPos, (int)m_vars.size(), q.toLocal8Bit().constData());
-  }
-#endif
   if (m_pgRes)
     PQclear(m_pgRes);
   if (m_queryBuf!=m_localQueryBuf)
@@ -304,14 +294,14 @@ sql_stream::reset_results()
 void
 sql_stream::query_make_space(int len)
 {
-  if (m_queryLen+len < m_queryBufSize)
-    return;			// m_queryBuf is large enough
+  if (m_queryLen+len <= m_queryBufSize)
+    return;                    // m_queryBuf is large enough
   if (m_queryBuf==m_localQueryBuf) {
     char* p=(char*)malloc(1+m_queryBufSize+len+m_chunk_size);
     if (p) {
       strcpy (p, m_queryBuf);
-      m_queryBuf = p;
     }
+    m_queryBuf = p;
   }
   else {
     m_queryBuf=(char*)realloc(m_queryBuf, 1+m_queryBufSize+len+m_chunk_size);
