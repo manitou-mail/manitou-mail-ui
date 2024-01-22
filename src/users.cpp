@@ -448,9 +448,10 @@ user::change_password(const QString login,
   db_cnx db0;
   db_cnx* db = dbc ? dbc->m_db : &db0;
 
-  QString qlogin = db->escape_identifier(login);
-  QString qpassword = db->escape_string_literal(password);
   try {
+    QString qlogin = db->escape_identifier(login);
+    QString qpassword = db->escape_string_literal(db->encrypt_password(login, password));
+
     sql_stream s(QString("ALTER ROLE %1 PASSWORD '%2'")
 		 .arg(qlogin)
 		 .arg(qpassword), *db);

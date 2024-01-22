@@ -179,6 +179,29 @@ pgConnection::has_row_level_security()
   return PQserverVersion(m_pgConn) >= 90500;
 }
 
+int
+pgConnection::client_lib_version()
+{
+  return PQlibVersion();
+}
+
+QString pgConnection::encrypt_password(const QString username,
+				       const QString clear_password)
+{
+  /* hard-code the algorithm to avoid a round-trip to the server
+   * to get password_encryption. scram-sha-256 is supported
+   * since postgres 10.
+   */
+
+  char* passwd = PQencryptPasswordConn(m_pgConn,
+				       clear_password.toUtf8().constData(),
+				       username.toUtf8().constData(),
+				       "scram-sha-256");
+  QString p = QString(passwd);
+  PQfreemem(passwd);
+  return p;
+}
+
 void
 pgConnection::add_listener(db_listener* listener)
 {

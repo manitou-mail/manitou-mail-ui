@@ -130,6 +130,8 @@ public:
   bool ping();
   QString escape_string_literal(const QString);
   QString escape_identifier(const QString);
+  QString encrypt_password(const QString username,
+			   const QString clear_password);
 
   PGconn* connection() {
     return m_pgConn;
@@ -138,6 +140,7 @@ public:
   void add_listener(db_listener*);
   void remove_listener(db_listener*);
   bool has_row_level_security();
+  int client_lib_version();
 private:
   PGconn* m_pgConn;
   pg_notifier* m_notifier;
@@ -189,6 +192,13 @@ public:
   QString escape_string_literal(const QString);
   QString escape_identifier(const QString);
   QString escape_like_arg(const QString);
+  QString encrypt_password(const QString u, const QString p) {
+    // encrypt only with recent libpq
+    if (m_cnx->client_lib_version() > 100000)
+      return m_cnx->encrypt_password(u, p);
+    else
+      return p;
+  }
 private:
   pgConnection* m_cnx;
   bool m_alerts_enabled;
