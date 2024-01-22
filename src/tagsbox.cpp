@@ -46,7 +46,7 @@ tags_box_widget::tags_box_widget(QWidget* parent): QWidget(parent)
   try {
     fill_listview();
   }
-  catch (ui_error e) {
+  catch (ui_error& e) {
     QMessageBox::information(this, APP_NAME, e.msg());
   }
   //  m_list_tag_boxes.push_back(this);

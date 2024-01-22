@@ -386,7 +386,7 @@ attch_listview::save_attachments()
 	try {
 	  dir = (*it)->save_to_disk(fname, &m_abort);
 	}
-	catch(app_exception excpt) {
+	catch(app_exception& excpt) {
 	  QMessageBox::critical(this, APP_NAME, excpt.m_err_msg);
 	  m_abort = true;
 	}
@@ -411,7 +411,7 @@ attch_listview::save_attachments()
       try {
 	dir=(*it)->save_to_disk(fname, &m_abort);
       }
-      catch(app_exception excpt) {
+      catch(app_exception& excpt) {
 	QMessageBox::critical(this, APP_NAME, excpt.m_err_msg);
 	m_abort = true;
       }
@@ -428,7 +428,7 @@ attch_listview::save_attachments()
 	try {
 	  dir=(*it)->save_to_disk(fname, &m_abort);
 	}
-	catch(app_exception excpt) {
+	catch(app_exception& excpt) {
 	  QMessageBox::critical(this, APP_NAME, excpt.m_err_msg);
 	  m_abort = true;
 	}

@@ -70,7 +70,7 @@ save_filter_query(msgs_filter* filter, int mode, const QString title)
       }
       user_queries_repository::m_map[w->m_name->text()] = w->m_sql;
     }
-    catch (db_excpt p) {
+    catch (db_excpt& p) {
       DBEXCPT(p);
     }
   }
@@ -202,7 +202,7 @@ user_queries_repository::remove_query(const QString name)
     s << name;
     user_queries_repository::m_map.erase(name);
   }
-  catch (db_excpt p) {
+  catch (db_excpt& p) {
     DBEXCPT(p);
     return false;
   }

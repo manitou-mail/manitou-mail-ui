@@ -84,7 +84,7 @@ app_config::init()
       o+=2;
     }
   }
-  catch (db_excpt p) {
+  catch (db_excpt& p) {
     DBEXCPT(p);
     return false;
   }
@@ -105,7 +105,7 @@ app_config::get_all_conf_names(QStringList* l)
 	l->append(confname);
     }
   }
-  catch (db_excpt p) {
+  catch (db_excpt& p) {
     DBEXCPT(p);
     return false;
   }
@@ -165,7 +165,7 @@ app_config::store(const QString key_prefix /* =QString() */)
     //    db.commit_transaction();
     ret=true;
   }
-  catch (db_excpt p) {
+  catch (db_excpt& p) {
     //    db.rollback_transaction();
     DBEXCPT(p);
     ret=false;
@@ -300,7 +300,7 @@ app_config::diff_update(const app_config& newconf)
     db.commit_transaction();
     return true;
   }
-  catch (db_excpt p) {
+  catch (db_excpt& p) {
     db.rollback_transaction();
     DBEXCPT(p);
     return false;

@@ -42,7 +42,7 @@ filter_log_list::fetch(mail_id_t mail_id)
       this->append(e);
     }
   }
-  catch (db_excpt p) {
+  catch (db_excpt& p) {
     DBEXCPT(p);
     return false;
   }

@@ -157,7 +157,7 @@ mail_msg::fetch_body_text(bool partial)
       }
       m_body_fetched=true;
     }
-    catch (db_excpt p) {
+    catch (db_excpt& p) {
       DBEXCPT(p);
       m_sBody=QString("");
       return false;
@@ -1395,7 +1395,7 @@ mail_msg::setup_forward()
 	s >> fwd_header.m_to;
       }
     }
-    catch (db_excpt p) {
+    catch (db_excpt& p) {
       DBEXCPT(p);
     }
   }
@@ -1534,7 +1534,7 @@ mail_msg::fetch_body_html()
       }
       m_body_html_fetched = true;
     }
-    catch (db_excpt p) {
+    catch (db_excpt& p) {
       DBEXCPT(p);
       m_body_html = QString("");
       return false;
@@ -1564,7 +1564,7 @@ mail_msg::get_rawsize(int* size)
       *size = m_rawsize;
     }
   }
-  catch (db_excpt p) {
+  catch (db_excpt& p) {
     DBEXCPT(p);
     return false;
   }
@@ -1600,7 +1600,7 @@ mail_msg::get_msg_age(const QString unit, int* age)
     else
       *age=0;
   }
-  catch (db_excpt p) {
+  catch (db_excpt& p) {
     DBEXCPT(p);
     return false;
   }
@@ -1626,7 +1626,7 @@ mail_msg::get_sender_timestamp(time_t* t)
       *t = (time_t)sd;
     }
   }
-  catch (db_excpt p) {
+  catch (db_excpt& p) {
     DBEXCPT(p);
     return false;
   }
@@ -1652,7 +1652,7 @@ mail_msg::fetch_send_datetime(QDateTime* dt)
 	dt->setMSecsSinceEpoch(secs*1000);
     }
   }
-  catch (db_excpt p) {
+  catch (db_excpt& p) {
     DBEXCPT(p);
     return false;
   }
