@@ -766,6 +766,7 @@ filter_edit::test_expr()
     m_test_window_results->show_progressbar();
     m_filter_run_stopped = false;
     m_ftimer = new QTimer(this);
+    m_tested_expr = m_current_expr->m_expr_text;
     connect(m_ftimer, SIGNAL(timeout()), this, SLOT(timer_done()));
     m_waiting_for_results = true;
     m_ftimer->start(100);		// check results every 1/10s
@@ -786,7 +787,7 @@ filter_edit::timer_done()
       for (it=m_fthread->m_results->begin(); it!=m_fthread->m_results->end(); ++it) {
 	filter_evaluator filter_eval;
 	m_nb_filter_tested_msgs++;
-	filter_eval_result res = filter_eval.evaluate(*m_current_expr, m_expr_list, it->m_id);
+	filter_eval_result res = filter_eval.evaluate(m_tested_expr, m_expr_list, it->m_id);
 	if (res.result) {
 	  m_nb_filter_test_match++;
 	  if (m_test_window_results && !m_filter_run_stopped)
@@ -918,7 +919,8 @@ filter_edit::display_expression_validity()
 {
   if (m_current_expr) {
     filter_evaluator filter_eval;
-    filter_eval_result res = filter_eval.evaluate(*m_current_expr, m_expr_list, 0);
+    filter_eval_result res = filter_eval.evaluate(m_current_expr->m_expr_text,
+						  m_expr_list, 0);
     if (!res.errstr.isEmpty()) {
       ql_expr_full->show_button(1);
     }
@@ -1007,7 +1009,8 @@ filter_edit::validate_expression()
   if (!m_current_expr)
     return;
   filter_evaluator filter_eval;
-  filter_eval_result res = filter_eval.evaluate(*m_current_expr, m_expr_list, 0);
+  filter_eval_result res = filter_eval.evaluate(m_current_expr->m_expr_text,
+						m_expr_list, 0);
   if (!res.errstr.isEmpty()) {
     QMessageBox::critical(this, tr("Filter error"), tr("Error at character %1:\n%2").arg(res.evp+1).arg(res.errstr));
   }

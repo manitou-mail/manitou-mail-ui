@@ -116,7 +116,7 @@ typedef struct {
 
 class filter_evaluator {
 public:
-  filter_eval_result evaluate(const filter_expr fe,
+  filter_eval_result evaluate(const QString expr,
 			      const expr_list& elist,
 			      mail_id_t mail_id);
   static bool inner_eval(int current_prio, filter_eval_context* ctxt);

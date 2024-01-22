@@ -233,6 +233,12 @@ private:
   action_listview* lv_actions;
   expr_list m_expr_list;
   QLabel* m_lrules;
+
+  /* When testing an expression against the database, use this copy of
+     the expression instead of m_current_expr, because the user can
+     change m_current_expr */
+  QString m_tested_expr;
+
   QWidget* m_actions_container;
   filter_action_editor* m_action_editor;
   action_lvitem* m_current_action;

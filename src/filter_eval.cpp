@@ -1128,11 +1128,11 @@ filter_evaluator::inner_eval(int current_prio, filter_eval_context* ctxt)
 }
 
 filter_eval_result
-filter_evaluator::evaluate(const filter_expr fe, const expr_list& elist, mail_id_t mail_id)
+filter_evaluator::evaluate(const QString filter_expr, const expr_list& elist, mail_id_t mail_id)
 {
   filter_eval_context ctxt;
   ctxt.evp=0;
-  ctxt.expr = fe.m_expr_text;
+  ctxt.expr = filter_expr;
   ctxt.npar=0;
   ctxt.mail_id=mail_id;
   if (mail_id==0)
