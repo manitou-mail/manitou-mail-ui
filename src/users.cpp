@@ -710,6 +710,7 @@ db_role::has_multiple_privileges(QList<db_obj_privilege> list,
 
   try {
     QStringList table_values;
+    QStringList seq_values;
     QStringList func_values;
 
     for (int i=0; i<list.size(); i++) {
@@ -722,6 +723,11 @@ db_role::has_multiple_privileges(QList<db_obj_privilege> list,
 	QString qfunc = db->escape_string_literal(p.m_objname);
 	func_values.append(QString("('%1')").arg(qfunc));
       }
+      else if (p.m_objtype == "sequence") {
+	seq_values.append(QString("('%1','%2')").
+			  arg(db->escape_string_literal(p.m_objname)).
+			  arg(p.m_privtype));
+      }
       else {
 	throw db_excpt(QString(),
 		       QString("Unhandled object type: %1").arg(p.m_objtype),
@@ -732,6 +738,7 @@ db_role::has_multiple_privileges(QList<db_obj_privilege> list,
 
     bool has_priv_tables = true;
     bool has_priv_funcs = true;
+    bool has_priv_seqs = true;
 
     if (!table_values.isEmpty()) {
       QString values_clause = table_values.join(",");
@@ -745,6 +752,21 @@ db_role::has_multiple_privileges(QList<db_obj_privilege> list,
 
       if (!s.eos()) {
 	s >> has_priv_tables;
+      }
+    }
+
+    if (!seq_values.isEmpty()) {
+      QString values_clause = seq_values.join(",");
+      QString query = QString
+	("SELECT bool_and( has_sequence_privilege(:o, p.seqname, p.privtype) )"
+	 " FROM (VALUES %1) AS p(seqname,privtype)")
+	.arg(values_clause);
+
+      sql_stream s(query, *db);
+      s << m_oid;
+
+      if (!s.eos()) {
+	s >> has_priv_seqs;
       }
     }
 
@@ -763,7 +785,7 @@ db_role::has_multiple_privileges(QList<db_obj_privilege> list,
       }
     }
 
-    return has_priv_tables && has_priv_funcs;
+    return has_priv_tables && has_priv_funcs && has_priv_seqs;
   }
   catch(db_excpt& p) {
     if (dbc && dbc->propagate_exceptions)
@@ -841,13 +863,20 @@ db_role::revoke_execute_function(QString func_name, db_ctxt* dbc)
   return set_execute_priv_function(false, func_name, dbc);
 }
 
+/* Grant a privilege to that role */
 bool
 db_role::grant(const db_obj_privilege priv, db_ctxt* dbc)
 {
   if (priv.m_objtype == "function")
     return this->grant_execute_function(priv.m_objname, dbc);
-  else
+  else if (priv.m_objtype == "table")
     return this->set_table_priv(true, priv.m_objname, priv.m_privtype, dbc);
+  else if (priv.m_objtype == "sequence")
+    return this->set_sequence_priv(priv.m_objname, priv.m_privtype, dbc);
+  else
+    throw db_excpt(QString(),
+		   QString("Unhandled object type: %1").arg(priv.m_objtype),
+		   db_excpt::client_assertion);
 }
 
 bool
@@ -897,8 +926,33 @@ db_role::set_table_priv(bool set, QString tablename, QString privilege, db_ctxt*
       DBEXCPT(p);
   }
   return false;
-
 }
+
+bool
+db_role::set_sequence_priv(const QString seq_name,
+			   const QString privilege,
+			   db_ctxt* dbc)
+{
+  db_cnx db0;
+  db_cnx* db = dbc ? dbc->m_db : &db0;
+
+  try {
+    QString query = QString("GRANT %1 ON SEQUENCE %2 TO %3").
+      arg(privilege).
+      arg(db->escape_identifier(seq_name)).
+      arg(this->name());
+    sql_stream s(query, *db);
+    return true;
+  }
+  catch(db_excpt& p) {
+    if (dbc && dbc->propagate_exceptions)
+      throw p;
+    else
+      DBEXCPT(p);
+  }
+  return false;
+}
+
 
 bool
 db_role::rename(QString new_name, db_ctxt* dbc)

@@ -154,6 +154,10 @@ private:
   // grant or revoke depending on 'set'
   bool set_table_priv(bool set, QString tablename, QString privilege, db_ctxt* dbc=NULL);
 
+  bool set_sequence_priv(const QString seqname,
+			 const QString privilege,
+			 db_ctxt* dbc=NULL);
+
   int m_oid;
   bool m_is_superuser;
   QString m_name;

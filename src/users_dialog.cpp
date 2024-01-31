@@ -708,6 +708,8 @@ role_perms_edit_dialog::set_checkboxes()
     if (m_role_oid > 0) {
       db_role role(m_role_oid);
 
+      /* For each, ability, the role must have all related privileges
+	 for the corresponding checkbox to be checked. */
       QList<db_obj_privilege> privs_for_read = db_obj_privilege::ability_privileges("read", &dbc);
       m_initial_privs[priv_read] = role.has_multiple_privileges(privs_for_read, &dbc);
 
