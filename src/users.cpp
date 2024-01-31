@@ -471,6 +471,7 @@ user::change_login(const QString old_login,
 		   const QString password,
 		   db_ctxt* dbc)
 {
+  Q_UNUSED(password);
   DBG_PRINTF(4, "user::change_login(%s,%s)",
 	     old_login.toLocal8Bit().constData(),
 	     new_login.toLocal8Bit().constData());
@@ -617,15 +618,6 @@ user::oid_db_role(const QString login, bool case_sensitive)
   Q_UNUSED(case_sensitive);
   db_cnx db;
   try {
-#if 0
-    const char* query;
-    if (case_sensitive) {
-      query = "SELECT oid FROM pg_roles WHERE rolname=:p1";
-    }
-    else {
-      query = "SELECT oid FROM pg_roles WHERE lower(rolname)=lower(:p1)";
-    }
-#endif
     sql_stream s("SELECT oid FROM pg_roles WHERE rolname=:p1", db);
     s << login;
     if (!s.eos()) {
@@ -894,14 +886,7 @@ db_role::set_table_priv(bool set, QString tablename, QString privilege, db_ctxt*
       sql_stream s(query, *db);
     }
     else {
-#if 0
-      const char* privs[] = {"select", "insert", "update", "delete"};
-      for (uint i=0; i<sizeof(privs)/sizeof(privs[0]); i++) {
-	sql_stream s(base_query.arg(privs[i]).arg(qtable).arg(qname), *db);
-      }
-#else
       sql_stream s1(base_query.arg("select,insert,update,delete").arg(qtable).arg(qname), *db);
-#endif
     }
     return true;
   }
@@ -1019,24 +1004,3 @@ db_obj_privilege::ability_privileges(const QString ability, db_ctxt* dbc)
   return list;
 }
 
-#if 0
-/* Grant the privilege */
-void
-db_obj_privilege::grant(const QString rolename, db_ctxt* dbc) const
-{
-  db_cnx* db = dbc->m_db;
-  QString query = QString("GRANT %1 ON %2 TO %3").arg(m_privtype).
-    arg(db->escape_identifier(m_objname)).arg(db->escape_identifier(rolename));
-  sql_stream s(query, *db);
-}
-
-/* Revoke the privilege */
-void
-db_obj_privilege::revoke(const QString rolename, db_ctxt* dbc) const
-{
-  db_cnx* db = dbc->m_db;
-  QString query = QString("REVOKE %1 ON %2 FROM %3").arg(m_privtype).
-    arg(db->escape_identifier(m_objname)).arg(db->escape_identifier(rolename));
-  sql_stream s(query, *db);
-}
-#endif
