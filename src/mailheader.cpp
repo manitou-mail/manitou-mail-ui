@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2024 Daniel Verite
+/* Copyright (C) 2004-2025 Daniel Verite
 
    This file is part of Manitou-Mail (see http://www.manitou-mail.org)
 
